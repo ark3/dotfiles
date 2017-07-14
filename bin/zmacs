@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "zmacs" | awk '{ printf ("\033k%s\033\\", $NF) }'
+export TERM=screen-256color
+/data/software/bin/emacsclient -q -f ~/.emacs.d/server/server -t ~/notes/notes.txt

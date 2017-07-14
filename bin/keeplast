@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+import optparse, glob, os, math, shutil
+
+def main():
+    usage = """Usage: %prog [options] filename [...]
+
+Deletes all but the last N files (sorted ascending).
+Glob patterns (* and ?) are allowed in filenames."""
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("-n", "--count", action="store", type="int", metavar="N", default=7,
+                      help="How many files to keep (default %default)")
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Verbose: list files being deleted (default quiet)")
+    parser.add_option("-d", "--dirs", action="store_true", default=False,
+                      help="Delete directories too. Default is to skip directories.")
+    parser.add_option("--dry-run", action="store_true", default=False,
+                      help="Don't really delete anything. Implies verbose.")
+    options, args = parser.parse_args()
+
+    if options.count < 0:
+        parser.error("File count N must be non-negative.")
+
+    if len(args) < 1:
+        parser.error("Must specify at least one filename.")
+
+    if options.dry_run: options.verbose = True
+
+    names = []
+    for pattern in args:
+        names.extend(glob.glob(pattern))
+    names = list(reversed(sorted(names)))
+
+    if not names:
+        return  # Would not have printed anything anyway...
+
+    fmt = "%" + str(int(math.log10(len(names))) + 1) + "d"
+
+    while len(names) > options.count:
+        c = len(names)
+        name = names.pop()
+        if options.dry_run:
+            print fmt % c, "Would have deleted", name
+            continue
+        if os.path.isdir(name):
+            if options.dirs:
+                if options.verbose:
+                    print fmt % c, "Deleting", name, "recursively (directory)"
+                shutil.rmtree(name)
+            else:
+                if options.verbose:
+                    print fmt % c, "Skipping", name, "(directory)"
+        else:
+            if options.verbose:
+                print fmt % c, "Deleting", name
+            os.remove(name)
+
+    while options.verbose and names:
+        c = len(names)
+        name = names.pop()
+        if options.dry_run:
+            print fmt % c, "Would have kept   ", name
+        else:
+            print fmt % c, "Keeping ", name
+
+if __name__ == "__main__":
+    main()

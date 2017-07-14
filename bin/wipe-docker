@@ -1,0 +1,5 @@
+#!/bin/bash
+
+containers=$(docker ps -a --format "{{.Names}}")
+test "$containers" || exit 0
+docker rm --force $containers

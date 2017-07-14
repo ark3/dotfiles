@@ -1,0 +1,45 @@
+#!/usr/local/bin/python3
+
+import os
+import shutil
+
+
+origin = os.path.expanduser("~/Dropbox/Photos")
+target = os.path.expanduser("~/Pictures/Dropbox Photos")
+count = 250
+
+
+def path_to_name(path):
+    base = origin.replace("/", "__") + "__"
+    res = path.replace("/", "__")
+    assert res.startswith(base), (res, base)
+    return res[len(base):]
+
+
+def main():
+    target_names = set(os.listdir(target))
+
+    origin_paths = []  # list of ctime, path
+    for dirpath, dirnames, filenames in os.walk(origin):
+        for filename in filenames:
+            if filename.upper().endswith("JPG"):
+                path = os.path.join(dirpath, filename)
+                statinfo = os.stat(path)
+                origin_paths.append((statinfo.st_mtime, path))
+    origin_paths.sort(reverse=True)
+    origin_path_map = dict((path_to_name(origin_path), origin_path) for mtime, origin_path in origin_paths[:count])
+    origin_names = set(origin_path_map)
+
+    for name in target_names - origin_names:
+        path = os.path.join(target, name)
+        print("Removing {}".format(path))
+        os.unlink(path)
+
+    for name in origin_names - target_names:
+        path = origin_path_map[name]
+        print("Adding {}".format(path))
+        shutil.copy(path, os.path.join(target, name))
+
+
+if __name__ == "__main__":
+    exit(main())

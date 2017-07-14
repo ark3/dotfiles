@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import subprocess
+
+
+def call(*cmd):
+    print(">>> {}".format(" ".join(cmd)))
+    try:
+        res = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        print res
+    except subprocess.CalledProcessError as exc:
+        print exc.output
+        raise
+    return res
+
+
+def main():
+    call(*("pip install --upgrade pip".split()))
+    packages = call(*("pip list --outdated --local".split()))
+    for package in packages.splitlines():
+        if not packages.strip():
+            continue
+        call("pip", "install", "--upgrade", package.split()[0])
+
+
+if __name__ == "__main__":
+    main()
