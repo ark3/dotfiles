@@ -1,15 +1,31 @@
-- clean: ['~']
+- clean:
+  - '~'
+  - '~/bin'
+  - '~/.config/fish'
+
+
+- defaults:
+    link:
+      create: true
+      relink: true
+      force: false
 
 - link:
-    ~/.bash_profile: bash_profile
-    ~/.bashrc: bashrc
-    ~/.gitconfig: gitconfig
+    ~/.bash_profile:
+    ~/.bashrc:
+    ~/.gitconfig:
     ~/.ssh/config:
-        path: ssh/config
-        create: true
-    ~/.vimrc: vimrc
+      path: ssh/config
+    ~/.vimrc:
     ~/bin:
-        path: bin/
-        create: true
+    ~/.config/git/ignore:
+      path: config/git
+    ~/.config/fish:
+      path: config/fish
+    ~/.editorconfig:
+    ~/.inputrc:
+    ~/.pythonrc:
 
 
+- shell:
+  - [git submodule update --init --recursive, Installing submodules]

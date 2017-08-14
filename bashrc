@@ -32,12 +32,12 @@ alias gll='git log --stat'
 
 alias gdiff='git diff --no-index'
 
-alias l='ls --color=auto -sF'
-alias ls='ls --color=auto -sF'
-alias la='ls --color=auto -sFa'
-alias ll='ls --color=auto -sFl'
-alias lla='ls --color=auto -sFla'
-alias ltr='ls --color=auto -sFltr'
+alias l='ls -sFG'
+alias ls='ls -sFG'
+alias la='ls -sFGa'
+alias ll='ls -sFGl'
+alias lla='ls -sFGla'
+alias ltr='ls -sFGltr'
 
 alias md='mkdir'
 alias rd='rmdir'
@@ -190,7 +190,7 @@ export HISTFILESIZE=10000
 export HISTCONTROL=erasedups
 export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a'  # last_exit_code must be first!
 
-export PATH=$HOME/bin:/usr/local/opt/coreutils/libexec/gnubin:$PATH
+export PATH=$HOME/bin:$PATH
 
 export TEMP=/var/tmp
 export TMP=${TEMP}

@@ -1,0 +1,43 @@
+# Set up tab-completion and REPL history. If history loading doesn't work from
+# a new/empty file, try constructing a history file using
+# readline.write_history(name).
+
+try:
+    import fancycompleter
+except ImportError:
+    pass
+else:
+    fancycompleter.interact("~/.pyhistory-fancy")
+    # Not reached
+
+try:
+    import readline
+except ImportError:
+    print("WARNING: No readline module. Tab completion will not work.")
+else:
+    import rlcompleter, os.path, atexit
+
+    class irlcompleter(rlcompleter.Completer):
+        def complete(self, text, state, rlcompleter=rlcompleter):
+            if text == "":
+                rlcompleter.readline.insert_text("\t")
+                return None
+            else:
+                return rlcompleter.Completer.complete(self,text,state)
+
+    if 'libedit' in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+    readline.set_completer(irlcompleter().complete)
+
+    # Restore our command-line history, and save it when Python exits.
+    historyPath = os.path.expanduser("~/.pyhistory")
+    try:
+        readline.read_history_file(historyPath)
+    except IOError:
+        print("ERROR: Failed to open history file %r" % historyPath)
+        print("WARNING: Starting with empty history that may overwrite old history file...")
+    atexit.register(lambda x=historyPath, readline=readline: readline.write_history_file(x))
+
+    del atexit, historyPath, irlcompleter, os, readline, rlcompleter, __file__
