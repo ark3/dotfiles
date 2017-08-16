@@ -1,30 +1,30 @@
 [user]
-	name = Abhay Saxena
-	email = ark3@datawire.io
+  name = Abhay Saxena
+  email = ark3@datawire.io
 [color]
-	diff = auto
-	status = auto
-	branch = auto
+  diff = auto
+  status = auto
+  branch = auto
 [core]
-	preloadindex = true
-	excludesfile = /Users/ark3/.gitignore_global
+  preloadindex = true
+  excludesfile = ~/.config/git/ignore
 [diff]
-	tool = tkdiff
-	algorithm = histogram
+  tool = tkdiff
+  algorithm = histogram
 [push]
-	default = simple
+  default = simple
 [filter "lfs"]
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
 [difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
+  cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+  path = 
 [mergetool "sourcetree"]
-	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
+  cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+  trustExitCode = true
 [credential]
-	helper = osxkeychain
+  helper = osxkeychain
 [commit]
-	template = /Users/ark3/.stCommitMsg
+  template = /Users/ark3/.stCommitMsg

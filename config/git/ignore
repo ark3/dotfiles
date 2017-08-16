@@ -1,5 +1,4 @@
-# Automatically created by GitHub for Mac
-# To make edits, delete these initial comments, or else your changes may be lost!
+# Automatically created by GitHub for Mac, then edited by ark3
 
 # General
 *.DS_Store
@@ -27,3 +26,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Editor stuff
+.vscode
