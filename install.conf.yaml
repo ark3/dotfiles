@@ -19,7 +19,7 @@
     ~/.vimrc:
     ~/bin:
     ~/.config/git/ignore:
-      path: config/git
+      path: config/git/ignore
     ~/.config/fish:
       path: config/fish
     ~/.editorconfig:
