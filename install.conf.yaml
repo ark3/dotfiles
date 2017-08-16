@@ -25,7 +25,8 @@
     ~/.editorconfig:
     ~/.inputrc:
     ~/.pythonrc:
-
+    ~/.spacemacs:
+    ~/.tmux.conf:
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
