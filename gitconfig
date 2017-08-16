@@ -26,5 +26,6 @@
   trustExitCode = true
 [credential]
   helper = osxkeychain
+  helper = cache --timeout=28800
 [commit]
   template = /Users/ark3/.stCommitMsg
