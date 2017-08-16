@@ -17,9 +17,10 @@ if not set -q abbrs_initialized
   abbr pd 'pushd'
   abbr od 'popd'
 
-  abbr py 'python'
   abbr du 'du -h'
   abbr df 'df -h'
+  abbr em 'emacsclient -q -n'
+  abbr py 'python'
 
   abbr g 'git'
   abbr ga 'git add'
@@ -35,6 +36,7 @@ if not set -q abbrs_initialized
   abbr gp 'git pull --ff-only'
   abbr gr 'git remote'
   abbr gs 'git status'
+  abbr gss 'git status -sb'
 
   echo 'Done'
 end
