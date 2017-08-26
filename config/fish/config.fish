@@ -35,8 +35,8 @@ if not set -q abbrs_initialized
   abbr gm 'git merge'
   abbr gp 'git pull --ff-only'
   abbr gr 'git remote'
-  abbr gs 'git status'
-  abbr gss 'git status -sb'
+  abbr gss 'git status'
+  abbr gs 'git status -sb'
 
   echo 'Done'
 end
