@@ -66,12 +66,16 @@ function fish_right_prompt --description 'Write out the right side of the prompt
   end
 
   if not set -q __fish_prompt_hostname_short
-    set -g __fish_prompt_hostname_color (set_color 666)
+    set -g __fish_prompt_hostname_color (set_color FF0)
     switch (hostname)
       case 'timonium*'
         set -g __fish_prompt_hostname_short TMN
       case 'hexagon*'
         set -g __fish_prompt_hostname_short HEX
+      case 'Jesss-MacBook-Pro*'
+        set -g __fish_prompt_hostname_short JES
+      case 'ark3-workstation-temp*'
+        set -g __fish_prompt_hostname_short GKE
       case '*'
         set -g __fish_prompt_hostname_short (hostname)
     end
