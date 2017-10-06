@@ -49,6 +49,6 @@ set -x PYTHONSTARTUP ~/.pythonrc
 set -x SUDO_PROMPT "[sudo %u@%h] Password: "
 set -x VIRTUALFISH_DEFAULT_PYTHON /usr/local/bin/python3
 
-set -x PATH ~/bin $PATH
+set -x PATH ~/bin ~/datawire/bin $PATH
 
 eval (~/.virtualenvs/pytools/bin/python -m virtualfish compat_aliases projects)
