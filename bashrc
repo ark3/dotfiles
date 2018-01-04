@@ -53,8 +53,8 @@ alias xdisp='export DISPLAY=$(cat ~/.xdisplay)'
 alias xok='printf "\n  X is working  \n\n" | xmessage -buttons Okay -default Okay -timeout 3 -file - 2>/dev/null'
 
 function mcd {
-    mkdir $1
-    cd $1
+    mkdir "$1"
+    cd "$1"
 }
 
 function emr {
@@ -74,7 +74,7 @@ function ff0 {
 function fff {
     if [ x"$1" == x ]
     then find . -type f -print
-    else find $1 -type f -print
+    else find "$1" -type f -print
     fi
 }
 
