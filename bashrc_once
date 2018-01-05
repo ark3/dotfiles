@@ -7,7 +7,6 @@ export HISTTIMEFORMAT='%F %T '
 export HISTSIZE=10000
 export HISTFILESIZE=10000
 export HISTCONTROL=erasedups
-export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a'  # last_exit_code must be first!
 
 export TEMP=/var/tmp
 export TMP=${TEMP}

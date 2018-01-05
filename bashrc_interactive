@@ -35,6 +35,9 @@ last_exit_code() {
 
 shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete interactive_comments
 
+# Need to do this every time, not just once, because otherwise Apple Terminal sticks something in front...
+export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a'  # last_exit_code must be first!
+
 myhost=${HOSTNAME%%.*}
 if [ x$SUDO_USER == x ]; then
     export PS1='\[\e[32;1m\]${myhost}:\W ${git_info}\[\e[1;33m\]${exit_prompt}\[\e[32;1m\]\$ \[\e[0m\]'
