@@ -3,6 +3,12 @@ set visible-stats on
 set bell-style visible
 set completion-ignore-case on
 set completion-query-items 200
+set mark-symlinked-directories on
+set skip-completed-text on
+
+set input-meta on
+set output-meta on
+set convert-meta off
 
 "\e[1~": beginning-of-line
 "\e[4~": end-of-line
