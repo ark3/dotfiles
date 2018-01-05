@@ -1,0 +1,62 @@
+# Initialization for interactive shells
+
+umask 002
+
+. ~/dotfiles/bash_aliases
+
+# Adapted from https://github.com/jimeh/git-aware-prompt/blob/master/prompt.sh
+find_git_branch() {
+    # Based on: http://stackoverflow.com/a/13003854/170413
+    local branch
+    if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
+        if [[ "$branch" == "HEAD" ]]; then
+            branch='detached*'
+        fi
+
+        local status=$(git status --porcelain 2> /dev/null)
+        if [[ "$status" != "" ]]; then
+            git_info="($branch*) "
+        else
+            git_info="($branch) "
+        fi
+    else
+        git_info=""
+    fi
+}
+
+last_exit_code() {
+    local EXIT="$?"
+    if [ ${EXIT} != 0 ]; then
+        exit_prompt="(${EXIT}) "
+    else
+        exit_prompt=""
+    fi
+}
+
+shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete interactive_comments
+
+myhost=${HOSTNAME%%.*}
+if [ x$SUDO_USER == x ]; then
+    export PS1='\[\e[32;1m\]${myhost}:\W ${git_info}\[\e[1;33m\]${exit_prompt}\[\e[32;1m\]\$ \[\e[0m\]'
+else
+    export PS1='\[\e[32;1m\]${USER}@${myhost}:\W \$ \[\e[0m\]'
+fi
+
+
+if [ "$TERM" == "screen" ] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
+    #export PS1="\[\ek${myhost}\e\\\\\]${PS1}"
+    title "${myhost}"
+fi
+
+[ -f /etc/bash_completion ] && . /etc/bash_completion
+[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+
+if [ -f '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc' ]; then
+    source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc'
+    source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc'
+fi
+# added by travis gem
+[ -f /Users/ark3/.travis/travis.sh ] && source /Users/ark3/.travis/travis.sh
+
+export PATH=$(awk -F: '{for(i=1;i<=NF;i++){if(!a[$i]++)printf s$i;s=":"}}' <<< $PATH)  # Eliminate dups
+export PATH=$(sed -e s/:\.:/:/g -e s/^\.:// -e s/:\.$// <<< $PATH)  # So . is not in my path

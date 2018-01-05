@@ -1,0 +1,21 @@
+if [ -z "$PATH_DEFAULT" ]; then
+    export PATH_DEFAULT="$PATH"
+fi
+
+export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
+export HISTTIMEFORMAT='%F %T '
+export HISTSIZE=10000
+export HISTFILESIZE=10000
+export HISTCONTROL=erasedups
+export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a'  # last_exit_code must be first!
+
+export TEMP=/var/tmp
+export TMP=${TEMP}
+
+export LESS="-FiMXR"  # quit if one screen, case-insensitive search, verbose prompt, don't clear screen, allow colors
+export LESSOPEN="| src-hilite-lesspipe.sh %s"
+export PAGER=less
+export PYTHONSTARTUP=~/.pythonrc
+export SUDO_PROMPT="[sudo %u@%h] Password: "
+
+export PATH=$HOME/bin:$PATH
