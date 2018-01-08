@@ -33,10 +33,17 @@ last_exit_code() {
     fi
 }
 
+maybe_newline() {
+    ( IFS=';' read -sdR -p $'\E[6n' ROW COL;
+    (("${COL#*[}" > 1 )) && echo $(tput smso)%$(tput rmso); )
+}
+
 shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete interactive_comments
 
-# Need to do this every time, not just once, because otherwise Apple Terminal sticks something in front...
-export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a'  # last_exit_code must be first!
+# Must set this for every shell invocation, not just once in the environment.
+# The `last_exit_code` call must be first, but Apple Terminal sticks something
+# in front...
+export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a; maybe_newline'
 
 myhost=${HOSTNAME%%.*}
 if [ x$SUDO_USER == x ]; then
