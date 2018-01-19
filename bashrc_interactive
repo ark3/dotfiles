@@ -45,18 +45,13 @@ shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete 
 # in front...
 export PROMPT_COMMAND='last_exit_code; find_git_branch; history -a; maybe_newline'
 
-myhost=${HOSTNAME%%.*}
-if [ x$SUDO_USER == x ]; then
-    export PS1='\[\e[32;1m\]${myhost}:\W ${git_info}\[\e[1;33m\]${exit_prompt}\[\e[32;1m\]\$ \[\e[0m\]'
-else
-    export PS1='\[\e[32;1m\]${USER}@${myhost}:\W \$ \[\e[0m\]'
-fi
-
-
+myhost="${HOSTNAME%%.*}"
 if [ "$TERM" == "screen" ] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
-    #export PS1="\[\ek${myhost}\e\\\\\]${PS1}"
-    title "${myhost}"
+    myhosttitle=$(printf "\033k${myhost}\033\\")
+else
+    myhosttitle=""
 fi
+export PS1='\[\e[32;1m\]${myhost}${myhosttitle}:\W ${git_info}\[\e[1;33m\]${exit_prompt}\[\e[32;1m\]\$ \[\e[0m\]'
 
 [ -f /etc/bash_completion ] && . /etc/bash_completion
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
