@@ -84,19 +84,19 @@ function fff {
 }
 
 function fpy {
-    echo "Use `rg -t py <pattern>` or `rg -t py --files` "
+    echo 'Use `rg -t py <pattern>` or `rg -t py --files` '
 }
 
 function fcc {
-    echo "Use `rg -t cpp <pattern>` or `rg -t cpp --files` "
+    echo 'Use `rg -t cpp <pattern>` or `rg -t cpp --files` '
 }
 
 function fjs {
-    echo "Use `rg -t js <pattern>` or `rg -t js --files` "
+    echo 'Use `rg -t js <pattern>` or `rg -t js --files` '
 }
 
 function fq {
-    echo "WTF? Use `rg -g \"*.q\" <pattern>` or `rg -g \"*.q\" --files`"
+    echo 'WTF? Use `rg -g \"*.q\" <pattern>` or `rg -g \"*.q\" --files`'
 }
 
 function title {
