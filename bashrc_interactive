@@ -51,6 +51,7 @@ prompt_command() {
 
     # Hostname
     local myhost="${HOSTNAME%%.*}"
+    [[ $myhost = ark3-workstation* ]] && myhost="GKE"
     local host_prompt=
     if [ -n "$remote" ]; then
         host_prompt="${BOLD}${MAGENTA}[${myhost}]${NOCOLOR} "
