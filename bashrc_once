@@ -4,8 +4,8 @@ fi
 
 export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
 export HISTTIMEFORMAT='%F %T '
-export HISTSIZE=10000
-export HISTFILESIZE=10000
+export HISTSIZE=10000000
+export HISTFILESIZE=100000
 export HISTCONTROL=erasedups
 
 export TEMP=/var/tmp
@@ -17,4 +17,21 @@ export PAGER=less
 export PYTHONSTARTUP=~/.pythonrc
 export SUDO_PROMPT="[sudo %u@%h] Password: "
 
+export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
+
 export PATH=$HOME/bin:$PATH
+
+# Colors
+# https://github.com/sapegin/dotfiles/blob/bash/tilde/bash_profile.bash
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+BLUE="$(tput setaf 4)"
+MAGENTA="$(tput setaf 5)"
+CYAN="$(tput setaf 6)"
+WHITE="$(tput setaf 7)"
+GRAY="$(tput setaf 8)"
+BOLD="$(tput bold)"
+UNDERLINE="$(tput sgr 0 1)"
+INVERT="$(tput sgr 1 0)"
+NOCOLOR="$(tput sgr0)"
