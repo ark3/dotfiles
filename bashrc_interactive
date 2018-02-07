@@ -55,7 +55,7 @@ prompt_command() {
     if [ -n "$remote" ]; then
         host_prompt="${BOLD}${MAGENTA}[${myhost}]${NOCOLOR} "
     fi
-    if [ "$TERM" == "screen" ] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
+    if [[ $TERM = screen* ]] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
         printf "\033k${myhost}\033\\"
     fi
 
