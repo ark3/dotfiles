@@ -79,3 +79,5 @@ prompt_command() {
 }
 
 export PROMPT_COMMAND=prompt_command
+
+shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete interactive_comments
