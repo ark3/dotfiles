@@ -12,9 +12,9 @@
 
 - link:
     ~/.bash_profile:
-      path: bashrc_dispatch
+      path: dispatch_bash
     ~/.bashrc:
-      path: bashrc_dispatch
+      path: dispatch_bash
     ~/.gitconfig:
     ~/.ssh/config:
       path: ssh/config
