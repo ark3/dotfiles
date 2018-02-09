@@ -14,7 +14,7 @@
     ~/.bash_profile:
       path: dispatch_bash
     ~/.bashrc:
-      path: dispatch_bash
+      path: interactive
     ~/.gitconfig:
     ~/.ssh/config:
       path: ssh/config

@@ -2,6 +2,10 @@ if [ -z "$PATH_DEFAULT" ]; then
     export PATH_DEFAULT="$PATH"
 fi
 
+umask 002
+
+shopt -s cdspell checkhash checkwinsize cmdhist extglob histappend hostcomplete interactive_comments
+
 export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
 export HISTTIMEFORMAT='%F %T '
 export HISTSIZE=10000000
@@ -18,5 +22,3 @@ export PYTHONSTARTUP=~/.pythonrc
 export SUDO_PROMPT="[sudo %u@%h] Password: "
 
 export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
-
-export PATH=$HOME/bin:$PATH
