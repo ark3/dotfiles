@@ -1,5 +1,28 @@
-export PATH=$HOME/bin:$PATH
+# Set PATH
 
-export PATH=$(awk -F: '{for(i=1;i<=NF;i++){if(!a[$i]++)printf s$i;s=":"}}' <<< $PATH)  # Eliminate dups
-export PATH=$(sed -e s/:\.:/:/g -e s/^\.:// -e s/:\.$// <<< $PATH)  # So . is not in my path
+NEWPATH=
+function _maybe_add_path() {
+    local component=$1
+    echo -e ${NEWPATH//:/\\n} | grep -qx "$component" && return
+    [ "$component" == "." ] && return
+    [ -z "$component" ] && return
+    [ ! -d "$component" ] && return
 
+    if [ -z "$NEWPATH" ]; then
+        NEWPATH=$component
+    else
+        NEWPATH="$NEWPATH:$component"
+    fi
+}
+
+_maybe_add_path "$HOME/bin"
+_maybe_add_path "$HOME/datawire/bin"
+
+for path_comp in $(echo -e ${PATH//:/\\n}); do
+    _maybe_add_path "$path_comp"
+done
+
+PATH=$NEWPATH
+
+unset path_comp
+unset NEWPATH
