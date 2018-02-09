@@ -107,29 +107,18 @@ function pipgrep {
     pip freeze | fgrep "==" | egrep "$1" | sed "s/==.*//"
 }
 
-# https://github.com/driv/upto/blob/master/upto.sh
-function upto {
-    EXPRESSION="$1"
-    if [ -z "$EXPRESSION" ]; then
-        echo "A folder expression must be provided." >&2
-        return 1
-    fi
-    CURRENT_FOLDER="$(pwd)"
-    MATCHED_DIR=""
-    MATCHING=true
-
-    while [ "$MATCHING" = true ]; do
-        if [[ "$CURRENT_FOLDER" =~ "$EXPRESSION" ]]; then
-            MATCHED_DIR="$CURRENT_FOLDER"
-            CURRENT_FOLDER="$(dirname $CURRENT_FOLDER)"
-        else
-            MATCHING=false
-        fi
-    done
-    if [ -n "$MATCHED_DIR" ]; then
-        cd $MATCHED_DIR
-    else
-        echo "No Match." >&2
-        return 1
-    fi
+# https://github.com/redbaron/upto
+function upto() {
+  local D="${PWD%"${PWD#*/*([^/])$1*/}"}"
+  [[ -z "$D" ]] || cd "$D"
 }
+
+# complete upto
+_upto () {
+	# necessary locals for _init_completion
+	local cur prev words cword
+	_init_completion || return
+
+	COMPREPLY+=( $( compgen -W "${PWD//\// }" -- $cur ) )
+}
+complete -F _upto upto
