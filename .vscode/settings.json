@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "bash*": "shellscript"
+        "bash*": "shellscript",
+        "**/bash/*": "shellscript"
     }
 }
