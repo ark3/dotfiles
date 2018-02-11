@@ -2,6 +2,7 @@
 
 # Colors
 # https://github.com/sapegin/dotfiles/blob/bash/tilde/bash_profile.bash
+# https://unix.stackexchange.com/questions/269077/tput-setaf-color-table-how-to-determine-color-codes
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
 YELLOW="$(tput setaf 3)"
@@ -11,6 +12,7 @@ CYAN="$(tput setaf 6)"
 WHITE="$(tput setaf 7)"
 GRAY="$(tput setaf 8)"
 BOLD="$(tput bold)"
+GRAYBG="$(tput setab 238)"
 UNDERLINE="$(tput sgr 0 1)"
 INVERT="$(tput sgr 1 0)"
 NOCOLOR="$(tput sgr0)"
@@ -70,10 +72,14 @@ prompt_command() {
     fi
 
     history -a
+    local line_prompt=$(printf ' %.0s' $(seq 1 $(tput cols)))
     local time_prompt="$INVERT$BOLD$GREEN \A $NOCOLOR "
     local dir_prompt="\w"
 
-    PS1="${time_prompt}$host_prompt$venv_prompt$git_info$exit_prompt${dir_prompt}\n\[${GREEN}\]$ \[${NOCOLOR}\]"
+    PS1="${GRAYBG}${line_prompt}${NOCOLOR}\r"
+    PS1+="${time_prompt}$host_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
+    PS1+="\[${GREEN}\]$ \[${NOCOLOR}\]"
+
     PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
     PS4='\[${GREEN}\]+ \[${NOCOLOR}\]'  # Prefix for "set -x"
 }
