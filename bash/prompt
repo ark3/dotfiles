@@ -16,7 +16,7 @@ GRAYFG="$(tput setaf 238)"
 UNDERLINE="$(tput sgr 0 1)"
 INVERT="$(tput sgr 1 0)"
 NOCOLOR="$(tput sgr0)"
-MANYQ=$(printf "qqqqqqqqqq%.0s" {1..200})
+LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
 # Must set this for every shell invocation, not just once in the environment.
 # Exit code stuff must be first, but Apple Terminal sticks something in front.
@@ -73,7 +73,7 @@ prompt_command() {
     fi
 
     history -a
-    local line_prompt=$(printf "\e(0%s\e(B" ${MANYQ:0:$(tput cols)})
+    local line_prompt=${LINE:0:$(tput cols)}
     local time_prompt="$INVERT$BOLD$GREEN \A $NOCOLOR "
     local dir_prompt="\w"
 
