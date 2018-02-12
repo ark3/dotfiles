@@ -12,10 +12,11 @@ CYAN="$(tput setaf 6)"
 WHITE="$(tput setaf 7)"
 GRAY="$(tput setaf 8)"
 BOLD="$(tput bold)"
-GRAYBG="$(tput setab 238)"
+GRAYFG="$(tput setaf 238)"
 UNDERLINE="$(tput sgr 0 1)"
 INVERT="$(tput sgr 1 0)"
 NOCOLOR="$(tput sgr0)"
+MANYQ=$(printf "qqqqqqqqqq%.0s" {1..200})
 
 # Must set this for every shell invocation, not just once in the environment.
 # Exit code stuff must be first, but Apple Terminal sticks something in front.
@@ -72,11 +73,11 @@ prompt_command() {
     fi
 
     history -a
-    local line_prompt=$(printf ' %.0s' $(seq 1 $(tput cols)))
+    local line_prompt=$(printf "\e(0%s\e(B" ${MANYQ:0:$(tput cols)})
     local time_prompt="$INVERT$BOLD$GREEN \A $NOCOLOR "
     local dir_prompt="\w"
 
-    PS1="${GRAYBG}${line_prompt}${NOCOLOR}\r"
+    PS1="${GRAYFG}${line_prompt}${NOCOLOR}\r"
     PS1+="${time_prompt}$host_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
     PS1+="\[${GREEN}\]$ \[${NOCOLOR}\]"
 
