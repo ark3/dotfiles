@@ -16,10 +16,10 @@
 	algorithm = histogram
 [filter "lfs"]
 	# These are added by the Github app in some order
-	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
 	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
 [gui]
 	# Run using `git gui`
 	fontui = -family \".SF NS Text\" -size 13 -weight normal -slant roman -underline 0 -overstrike 0
