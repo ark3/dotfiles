@@ -3,3 +3,5 @@
 containers=$(docker ps -a --format "{{.Names}}" | egrep -v '^envoy-build$')
 test "$containers" || exit 0
 docker rm --force $containers
+
+docker images "ark3/telepresence-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
