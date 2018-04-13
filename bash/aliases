@@ -38,6 +38,7 @@ alias ip='dig +short myip.opendns.com @resolver1.opendns.com'
 alias path='echo -e ${PATH//:/\\n}'
 alias pspy='ps wwwaxu| egrep "^(USER|$USER.*[pP]ython)"'
 alias py='python'
+alias k='kubectl'
 
 alias l='ls'
 alias la='ls -a'

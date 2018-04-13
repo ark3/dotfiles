@@ -9,5 +9,12 @@ if [ -f '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.
     source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc'
 fi
 
-# added by travis gem
-[ -f /Users/ark3/.travis/travis.sh ] && source /Users/ark3/.travis/travis.sh
+[ -f ~/.travis/travis.sh ] && source ~/.travis/travis.sh
+
+# https://github.com/cykerway/complete-alias/blob/master/completions/bash_completion.sh
+source ~/dotfiles/bash/complete-alias
+aliases=(k gco ga gb gc gd)
+for a in "${aliases[@]}"; do
+    complete -F _complete_alias "$a"
+done
+unset a aliases
