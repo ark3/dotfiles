@@ -1,0 +1,7 @@
+Host strife
+  Hostname strife.xelfer.com
+
+Host may
+  Hostname localhost
+  Port 20022
+  ProxyJump strife
