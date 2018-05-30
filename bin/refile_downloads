@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+
+"""
+Re-file (move) downloaded PDFs based on the date in the filename.
+"""
+
+import argparse
+import re
+import sys
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
+source = Path("~/Downloads").expanduser()
+destination = Path("~/Dropbox/Mail/byDate").expanduser()
+
+patterns = [
+    (re.compile(r"\d{8}"), "%Y%m%d"),
+    (re.compile(r"\d{4}-\d{2}-\d{2}"), "%Y-%m-%d"),
+    (re.compile(r"\d{4}-\d{2}"), "%Y-%m"),
+    (re.compile(r"\d{2}-\d{2}-\d{4}"), "%m-%d-%Y"),
+]
+
+one_week_ago = (datetime.now() - timedelta(weeks=1)).timestamp()
+
+_this_year = date.today().year
+years_str = [str(_this_year - idx) for idx in range(5)]
+year_re = re.compile(r"\d{4}")
+
+short_month_names = "jan feb mar apr may jun jul aug sep oct nov dec".split()
+
+
+def find_date_in_name(filename_or_path):
+    filename = str(filename_or_path).lower()
+    for regex, layout in patterns:
+        match = regex.search(filename)
+        if match is None:
+            continue
+        try:
+            dt = datetime.strptime(match.group(), layout)
+            return dt.date().replace(day=1)
+        except ValueError:
+            pass
+
+    match = year_re.search(filename)
+    if match is not None and match.group() in years_str:
+        for idx, month in enumerate(short_month_names, 1):
+            if month in filename:
+                try:
+                    return date(int(match.group()), idx, 1)
+                except ValueError:
+                    pass
+
+    return None
+
+
+def find_moves():
+    res = defaultdict(list)
+
+    # Find PDF files
+    candidates = source.glob("*.pdf")
+    for filename in candidates:
+        # Skip files that are too old
+        if filename.stat().st_mtime < one_week_ago:
+            continue
+
+        # Look for embedded date; skip files without one
+        month = find_date_in_name(filename)
+        if month is None:
+            continue
+
+        res[month].append(filename)
+    return res
+
+
+def show_moves(moves):
+    for month in sorted(moves):
+        paths = sorted(map(str, moves[month]))
+        print("{:%Y-%m} <- {}".format(month, "\n           ".join(paths)))
+
+
+def perform_moves(moves):
+    for month in sorted(moves):
+        dest_dir = destination / "{:%Y}".format(month) / "{:%Y-%m}".format(month)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for source_path in sorted(moves[month]):
+            target_path = dest_dir / source_path.name
+            source_path.rename(target_path)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-f", "--force", help="Perform the displayed moves", action="store_true"
+    )
+    args = parser.parse_args()
+
+    moves = find_moves()
+
+    if not moves:
+        print("Nothing to re-file.", file=sys.stderr)
+        return
+
+    show_moves(moves)
+    if args.force:
+        perform_moves(moves)
+    else:
+        print("\nUse -f / --force to perform these moves", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
