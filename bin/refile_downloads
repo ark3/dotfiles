@@ -16,9 +16,11 @@ destination = Path("~/Dropbox/Mail/byDate").expanduser()
 
 patterns = [
     (re.compile(r"\d{8}"), "%Y%m%d"),
+    (re.compile(r"\d{6}"), "%Y%m"),
     (re.compile(r"\d{4}-\d{2}-\d{2}"), "%Y-%m-%d"),
     (re.compile(r"\d{4}-\d{2}"), "%Y-%m"),
     (re.compile(r"\d{2}-\d{2}-\d{4}"), "%m-%d-%Y"),
+    (re.compile(r"\d{2}_\d{2}_\d{4}"), "%m_%d_%Y"),
 ]
 
 one_week_ago = (datetime.now() - timedelta(weeks=1)).timestamp()
@@ -58,7 +60,7 @@ def find_moves():
     res = defaultdict(list)
 
     # Find PDF files
-    candidates = source.glob("*.pdf")
+    candidates = source.glob("*.[pP][dD][fF]")
     for filename in candidates:
         # Skip files that are too old
         if filename.stat().st_mtime < one_week_ago:
