@@ -7,7 +7,7 @@ Re-file (move) downloaded PDFs based on the date in the filename.
 import argparse
 import re
 import sys
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -75,18 +75,35 @@ def find_moves():
     return res
 
 
-def show_moves(moves):
+def prepare_moves(moves):
+    final_moves = OrderedDict()
     for month in sorted(moves):
-        paths = sorted(map(str, moves[month]))
-        print("{:%Y-%m} <- {}".format(month, "\n           ".join(paths)))
+        dest_dir = destination / "{:%Y}".format(month) / "{:%Y-%m}".format(month)
+        source_paths = sorted(moves[month], key=lambda path: str(path))
+        items = [
+            (source_path, dest_dir / source_path.name)
+            for source_path in source_paths
+        ]
+        final_moves[month] = items
+    return final_moves
+
+
+def show_moves(moves):
+    for month, items in moves.items():
+        first = True
+        for source_path, target_path in items:
+            clobber = f" [CLOBBERS {target_path}]" if target_path.exists() else ""
+            if first:
+                lead = "{:%Y-%m} <- ".format(month)
+                first = False
+            else:
+                lead = "           "
+            print(f"{lead}{source_path}{clobber}")
 
 
 def perform_moves(moves):
-    for month in sorted(moves):
-        dest_dir = destination / "{:%Y}".format(month) / "{:%Y-%m}".format(month)
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        for source_path in sorted(moves[month]):
-            target_path = dest_dir / source_path.name
+    for month, items in moves.items():
+        for source_path, target_path in items:
             source_path.rename(target_path)
 
 
@@ -103,9 +120,11 @@ def main() -> None:
         print("Nothing to re-file.", file=sys.stderr)
         return
 
-    show_moves(moves)
+    final_moves = prepare_moves(moves)
+
+    show_moves(final_moves)
     if args.force:
-        perform_moves(moves)
+        perform_moves(final_moves)
     else:
         print("\nUse -f / --force to perform these moves", file=sys.stderr)
 
