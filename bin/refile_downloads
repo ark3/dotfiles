@@ -93,17 +93,20 @@ def show_moves(moves):
         first = True
         for source_path, target_path in items:
             clobber = f" [CLOBBERS {target_path}]" if target_path.exists() else ""
+            new_dir = " " if target_path.parent.exists() else "*"
             if first:
                 lead = "{:%Y-%m} <- ".format(month)
                 first = False
             else:
                 lead = "           "
-            print(f"{lead}{source_path}{clobber}")
+            print(f"{new_dir}{lead}{source_path}{clobber}")
 
 
 def perform_moves(moves):
     for month, items in moves.items():
         for source_path, target_path in items:
+            if not target_path.parent.exists():
+                target_path.parent.mkdir(parents=True, exist_ok=True)
             source_path.rename(target_path)
 
 
