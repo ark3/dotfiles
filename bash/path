@@ -17,6 +17,7 @@ function _maybe_add_path() {
 
 _maybe_add_path "$HOME/bin"
 _maybe_add_path "$HOME/datawire/bin"
+_maybe_add_path "$HOME/.local/bin"
 
 for path_comp in $(echo -e ${PATH//:/\\n}); do
     _maybe_add_path "$path_comp"
