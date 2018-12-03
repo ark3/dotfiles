@@ -1,7 +1,9 @@
 #!/bin/bash
 
+docker images "datawire/telepresence-*-OSX-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
+docker images "datawire/telepresence-*-LNX-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
+docker images "ark3/telepresence-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
+
 containers=$(docker ps -a --format "{{.Names}}" | egrep -v '^envoy-build$')
 test "$containers" || exit 0
 docker rm --force $containers
-
-docker images "ark3/telepresence-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
