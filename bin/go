@@ -1,12 +1,18 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import os
 import glob
+from shutil import which
 
 if len(sys.argv) > 1:
+    wrong_go = which("go")
+    path_items = [item for item in os.environ["PATH"].split(os.pathsep) if item != os.path.dirname(wrong_go)]
+    path = os.pathsep.join(path_items)
+    print(path)
+    right_go = which("go", path=path)
     argv = sys.argv[:]
-    argv[0] = "/usr/local/bin/go"
+    argv[0] = right_go
     os.execv(argv[0], argv)
     exit(0)  # not reached
 
