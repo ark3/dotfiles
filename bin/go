@@ -9,7 +9,6 @@ if len(sys.argv) > 1:
     wrong_go = which("go")
     path_items = [item for item in os.environ["PATH"].split(os.pathsep) if item != os.path.dirname(wrong_go)]
     path = os.pathsep.join(path_items)
-    print(path)
     right_go = which("go", path=path)
     argv = sys.argv[:]
     argv[0] = right_go
