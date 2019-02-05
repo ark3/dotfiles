@@ -7,9 +7,12 @@ from shutil import which
 
 if len(sys.argv) > 1:
     wrong_go = which("go")
+    assert wrong_go is not None
     path_items = [item for item in os.environ["PATH"].split(os.pathsep) if item != os.path.dirname(wrong_go)]
     path = os.pathsep.join(path_items)
     right_go = which("go", path=path)
+    if right_go is None:
+        exit("Go commmand not found!")
     argv = sys.argv[:]
     argv[0] = right_go
     os.execv(argv[0], argv)
