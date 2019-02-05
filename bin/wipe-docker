@@ -1,6 +1,15 @@
 #!/bin/bash
 
-docker images "datawire/telepresence-*-OSX-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
-docker images "datawire/telepresence-*-LNX-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
-docker images "ark3/telepresence-*" --format '{{.Repository}}:{{.Tag}}' | xargs docker rmi
+(
+    for pattern in \
+    "datawire/telepresence-*-OSX-*" \
+    "datawire/telepresence-*-LNX-*" \
+    "ark3/telepresence-*" \
+    "host.docker.internal:31000/*" \
+    "localhost:31000/*" \
+    "quay.io/datawire/*-dev"
+    do
+        docker images -q "$pattern"
+    done
+) | sort -u | xargs docker rmi -f
 docker system prune --volumes -f > /dev/null
