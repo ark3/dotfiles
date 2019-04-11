@@ -22,3 +22,8 @@ export PYTHONSTARTUP=~/.pythonrc
 export SUDO_PROMPT="[sudo %u@%h] Password: "
 
 export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
+
+# Add Kubernaut token using jq
+if [ -f ~/.config/kubernaut/config.json ] && which jq >/dev/null ; then
+    export KUBERNAUT_TOKEN=$(jq -r '.["kubernaut.io"]["token"]' < ~/.config/kubernaut/config.json)
+fi
