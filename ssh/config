@@ -5,3 +5,6 @@ Host may
   Hostname localhost
   Port 20022
   ProxyJump strife
+
+Host gke
+  Hostname 35.229.120.99
