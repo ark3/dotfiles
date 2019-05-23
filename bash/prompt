@@ -53,6 +53,14 @@ prompt_command() {
         fi
     fi
 
+    # Kube context
+    local kctx_prompt=
+    if [ -n "$KUBECONFIG" ]; then
+        kctx_prompt="${MAGENTA}$(basename $(basename ${KUBECONFIG} .yaml) .knaut)${NOCOLOR} "
+    else
+        kctx_prompt="${MAGENTA}$(kubectl config view -o=jsonpath='{.current-context}')${NOCOLOR} "
+    fi
+
     # Virtualenv
     local venv_prompt=
     if [ -n "$VIRTUAL_ENV" ]; then
@@ -80,7 +88,7 @@ prompt_command() {
     local dir_prompt="\w"
 
     PS1="${GRAYFG}${line_prompt}${NOCOLOR}\r"
-    PS1+="${time_prompt}$host_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
+    PS1+="${time_prompt}$host_prompt$kctx_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
     PS1+="\[${GREEN}\]$ \[${NOCOLOR}\]"
 
     PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
