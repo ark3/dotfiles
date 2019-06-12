@@ -78,9 +78,12 @@ prompt_command() {
     if [ -n "$remote" ]; then
         host_prompt="${BOLD}${MAGENTA}[${myhost}]${NOCOLOR} "
     fi
-    if [[ $TERM = screen* ]] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
-        printf "\033k${myhost}\033\\"
-    fi
+    # This is supposed to display the hostname in the window or tab title.
+    # However, the test is not quite right. The VSCode terminal (for example)
+    # shows the hostname inline.
+    # if [[ $TERM = screen* ]] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
+    #     printf "\033k${myhost}\033\\"
+    # fi
 
     history -a
     local line_prompt=${LINE:0:$(tput cols)}
