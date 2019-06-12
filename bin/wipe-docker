@@ -7,7 +7,8 @@
     "ark3/telepresence-*" \
     "host.docker.internal:31000/*" \
     "localhost:31000/*" \
-    "quay.io/datawire/*-dev"
+    "quay.io/datawire/*-dev" \
+    "gcr.io/datawireio/metriton:*ark3"
     do
         docker images -q "$pattern"
     done
