@@ -28,3 +28,6 @@
 	default = current
 [fetch]
 	prune = true
+[url "git@github.com:"]
+    pushInsteadOf = https://github.com/
+    insteadOf = https://github.com/
