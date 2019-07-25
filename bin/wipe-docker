@@ -4,9 +4,10 @@
     for pattern in \
     "datawire/telepresence-*-OSX-*" \
     "datawire/telepresence-*-LNX-*" \
-    "ark3/telepresence-*" \
-    "host.docker.internal:31000/*" \
-    "localhost:31000/*" \
+    "ark3/*" \
+    "host.docker.internal:31000/*/*" \
+    "localhost:31000/*/*" \
+    "localhost:5000/*/*" \
     "quay.io/datawire/*-dev" \
     "gcr.io/datawireio/metriton:*ark3"
     do
