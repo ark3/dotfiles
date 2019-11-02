@@ -8,3 +8,7 @@ Host may
 
 Host gke
   Hostname 35.229.120.99
+
+Host mac
+  Hostname DU726.macincloud.com
+  ForwardAgent yes
