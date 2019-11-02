@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+k3sctl up
+k3sctl config > ~/.kube/k3s.yaml
+
+cat <<EOF
+export DOCKER_REGISTRY=localhost:5000
+export DEV_REGISTRY=$DOCKER_REGISTRY
+export TELEPRESENCE_REGISTRY=$DOCKER_REGISTRY
+export KUBECONFIG=/home/ark3/.kube/k3s.yaml
+export DEV_KUBECONFIG=$KUBECONFIG
+# eval \$(k3s)
+EOF
