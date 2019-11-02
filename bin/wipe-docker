@@ -4,14 +4,20 @@
     for pattern in \
     "datawire/telepresence-*-OSX-*" \
     "datawire/telepresence-*-LNX-*" \
+    "quay.io/datawire/ambassador*" \
+    "quay.io/datawire/*-dev" \
+    "envoyproxy/*" \
     "ark3/*" \
     "host.docker.internal:31000/*/*" \
     "localhost:31000/*/*" \
+    "localhost:31000/*" \
     "localhost:5000/*/*" \
-    "quay.io/datawire/*-dev" \
+    "localhost:5000/*" \
     "gcr.io/datawireio/metriton:*ark3"
     do
         docker images -q "$pattern"
     done
+    docker images --format "{{.ID}};{{.Tag}}" | awk '-F;' '{if (length($2) > 12) print $1}'
 ) | sort -u | xargs docker rmi -f
+docker volume ls -qf dangling=true | xargs -r docker volume rm
 docker system prune --volumes -f > /dev/null
