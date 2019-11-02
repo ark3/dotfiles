@@ -93,6 +93,9 @@ prompt_command() {
     PS1="${GRAYFG}${line_prompt}${NOCOLOR}\r"
     PS1+="${time_prompt}$host_prompt$kctx_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
     PS1+="\[${GREEN}\]$ \[${NOCOLOR}\]"
+    if [ -n "$PROMPT_QUIET" ]; then
+	PS1="\[${GREEN}\]$ \[${NOCOLOR}\]"
+    fi
 
     PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
     PS4='\[${GREEN}\]+ \[${NOCOLOR}\]'  # Prefix for "set -x"
