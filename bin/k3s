@@ -7,11 +7,13 @@ set -o nounset
 k3sctl up
 k3sctl config > ~/.kube/k3s.yaml
 
+reg=localhost:5000
+kc=~/.kube/k3s.yaml
 cat <<EOF
-export DOCKER_REGISTRY=localhost:5000
-export DEV_REGISTRY=$DOCKER_REGISTRY
-export TELEPRESENCE_REGISTRY=$DOCKER_REGISTRY
-export KUBECONFIG=/home/ark3/.kube/k3s.yaml
-export DEV_KUBECONFIG=$KUBECONFIG
+export DOCKER_REGISTRY=$reg
+export DEV_REGISTRY=$reg
+export TELEPRESENCE_REGISTRY=$reg
+export KUBECONFIG=$kc
+export DEV_KUBECONFIG=$kc
 # eval \$(k3s)
 EOF
