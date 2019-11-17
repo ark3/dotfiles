@@ -5,15 +5,24 @@ set -o pipefail
 set -o nounset
 
 k3sctl up
-k3sctl config > ~/.kube/k3s.yaml
 
 reg=localhost:5000
 kc=~/.kube/k3s.yaml
+telver=$(telepresence --version)
+
+for suffix in k8s k8s-priv; do  # skip ocp because we probably won't use it on k3s
+    docker pull -q datawire/telepresence-${suffix}:${telver} > /dev/null
+    docker tag datawire/telepresence-${suffix}:${telver} ${reg}/telepresence-${suffix}:${telver} > /dev/null
+    docker push ${reg}/telepresence-${suffix}:${telver} > /dev/null
+done
+
+k3sctl config > $kc
+
 cat <<EOF
 export DOCKER_REGISTRY=$reg
 export DEV_REGISTRY=$reg
 export TELEPRESENCE_REGISTRY=$reg
 export KUBECONFIG=$kc
 export DEV_KUBECONFIG=$kc
-# eval \$(k3s)
+# eval "\$(k3s)"
 EOF
