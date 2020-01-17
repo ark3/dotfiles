@@ -4,19 +4,19 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-k3sctl up
-
-reg=localhost:5000
-kc=~/.kube/k3s.yaml
+eval "$(k3sctl up)"
+reg="$(k3sctl registry)"
 telver=$(telepresence --version)
 
-for suffix in k8s k8s-priv; do  # skip ocp because we probably won't use it on k3s
-    docker pull -q datawire/telepresence-${suffix}:${telver} > /dev/null
-    docker tag datawire/telepresence-${suffix}:${telver} ${reg}/telepresence-${suffix}:${telver} > /dev/null
-    docker push ${reg}/telepresence-${suffix}:${telver} > /dev/null
+for suffix in k8s k8s-priv local; do  # skip ocp because we probably won't use it on k3s
+    docker pull -q "datawire/telepresence-${suffix}:${telver}" > /dev/null
+    docker tag "datawire/telepresence-${suffix}:${telver}" "${reg}/telepresence-${suffix}:${telver}" > /dev/null
+    docker push "${reg}/telepresence-${suffix}:${telver}" > /dev/null
+    docker exec -it "$K3S_CONTAINER" crictl pull "${reg}/telepresence-${suffix}:${telver}" > /dev/null
 done
 
-k3sctl config > $kc
+kc=~/.kube/k3s.yaml
+until k3sctl config > $kc; do sleep 0.5; done
 
 cat <<EOF
 export DOCKER_REGISTRY=$reg
