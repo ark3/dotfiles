@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+PROJECT=datawireio
+NAME=${USER}-gke
+ZONE=us-central1-a
+NODES=3
+
+export KUBECONFIG="$HOME/.kube/$NAME.yaml"
+
+gcloud beta container \
+	--project "${PROJECT}" \
+	clusters create "${NAME}" \
+	--zone "${ZONE}" \
+	--no-enable-basic-auth \
+  --release-channel "stable" \
+	--preemptible \
+	--machine-type "n2-standard-2" \
+	--num-nodes "${NODES}" \
+	--image-type "COS" \
+	--disk-type "pd-standard" \
+	--disk-size "100" \
+	--no-enable-stackdriver-kubernetes \
+	--enable-ip-alias \
+	--enable-autoupgrade \
+	--enable-autorepair \
+	--default-max-pods-per-node "110" \
+	--addons HorizontalPodAutoscaling \
+	--metadata disable-legacy-endpoints=true \
+	--network "projects/datawireio/global/networks/default" \
+	--subnetwork "projects/datawireio/regions/us-central1/subnetworks/default" \
+	--scopes https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append
+
+kubectl delete limits limits
+kubectl cluster-info
+echo
+echo "export KUBECONFIG=$KUBECONFIG DEV_KUBECONFIG=$KUBECONFIG DEV_REGISTRY=docker.io/$USER DOCKER_REGISTRY=docker.io/$USER"
+echo
+echo "To delete this cluster use:"
+echo "  rm \"$KUBECONFIG\" ; unset KUBECONFIG; gcloud container clusters delete $NAME --zone $ZONE --project $PROJECT"
+echo
