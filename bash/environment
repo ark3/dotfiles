@@ -8,13 +8,14 @@ export CDPATH=.:/Users/ark3/datawire
 
 export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
 export HISTTIMEFORMAT='%F %T '
-export HISTSIZE=10000000
-export HISTFILESIZE=100000
+export HISTSIZE=100000000
+export HISTFILESIZE=1000000
 export HISTCONTROL=erasedups
 
 export TEMP=/var/tmp
 export TMP=${TEMP}
 
+command -v emacsclient > /dev/null && export EDITOR=emacsclient
 export LESS="-FiMXR"  # quit if one screen, case-insensitive search, verbose prompt, don't clear screen, allow colors
 export LESSOPEN="| src-hilite-lesspipe.sh %s"
 export PAGER=less
