@@ -1,11 +1,14 @@
+#!/hint/bash
 # Initialization for interactive shells
 
 # Colors
 # https://github.com/sapegin/dotfiles/blob/bash/tilde/bash_profile.bash
 # https://unix.stackexchange.com/questions/269077/tput-setaf-color-table-how-to-determine-color-codes
 if [ -t 1 ]; then
+    BLACK="$(tput setaf 0)"
     RED="$(tput setaf 1)"
     GREEN="$(tput setaf 2)"
+    GREENBG="$(tput setab 2)"
     YELLOW="$(tput setaf 3)"
     BLUE="$(tput setaf 4)"
     MAGENTA="$(tput setaf 5)"
@@ -87,7 +90,7 @@ prompt_command() {
 
     history -a
     local line_prompt=${LINE:0:$(tput cols)}
-    local time_prompt="$INVERT$BOLD$GREEN \A $NOCOLOR "
+    local time_prompt="$BLACK$GREENBG \A $NOCOLOR "
     local dir_prompt="\w"
 
     PS1="${GRAYFG}${line_prompt}${NOCOLOR}\r"
