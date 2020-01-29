@@ -32,10 +32,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(javascript
-     html
-     yaml
-     (auto-completion :variables
+   '((auto-completion :variables
                       auto-completion-return-key-behavior 'complete
                       auto-completion-tab-key-behavior 'complete
                       auto-completion-complete-with-key-sequence nil
@@ -58,8 +55,10 @@ This function should only modify configuration layer settings."
          gofmt-command "gofumports"
          go-use-golangci-lint t
          go-tab-width 4)
+     html
      ivy
      lsp
+     javascript
      markdown
      ;; multiple-cursors
      ;; spell-checking
@@ -69,12 +68,14 @@ This function should only modify configuration layer settings."
              python-formatter 'lsp
              python-format-on-save t
              python-sort-imports-on-save t)
+     rust
      syntax-checking
      themes-megapack
      treemacs
      (version-control :variables
                        version-control-global-margin t
                        version-control-diff-side 'left)
+     yaml
      )
 
    ;; List of additional packages that will be installed without being
@@ -527,7 +528,7 @@ This function is called at the very end of Spacemacs initialization."
      ("\\?\\?\\?+" . "#dc752f"))))
  '(package-selected-packages
    (quote
-    (ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line)))
+    (rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line)))
  '(pdf-view-midnight-colors (quote ("#b2b2b2" . "#292b2e"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
