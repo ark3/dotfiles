@@ -17,11 +17,14 @@ done
 
 kc=~/.kube/k3s.yaml
 until k3sctl config > $kc; do sleep 0.5; done
+KUBECONFIG=$kc kubectl create deploy hello --image=ark3/hello-world >& /dev/null
+KUBECONFIG=$kc kubectl expose deploy hello --port 80 --target-port 8000 >& /dev/null
 
 cat <<EOF
 export DOCKER_REGISTRY=$reg
 export DEV_REGISTRY=$reg
 export TELEPRESENCE_REGISTRY=$reg
+export VERSION_SUFFIX=
 export KUBECONFIG=$kc
 export DEV_KUBECONFIG=$kc
 # eval "\$(k3s)"
