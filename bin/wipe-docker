@@ -1,5 +1,8 @@
 #!/bin/bash
 
+docker container prune -f
+docker network prune -f
+docker volume prune -f
 (
     for pattern in \
     "datawire/telepresence-*-OSX-*" \
@@ -19,5 +22,3 @@
     done
     docker images --format "{{.ID}};{{.Tag}}" | awk '-F;' '{if (length($2) > 12) print $1}'
 ) | sort -u | xargs docker rmi -f
-docker volume ls -qf dangling=true | xargs -r docker volume rm
-docker system prune --volumes -f > /dev/null
