@@ -56,6 +56,7 @@ This function should only modify configuration layer settings."
          go-use-golangci-lint t
          go-tab-width 4)
      html
+     (ibuffer :variables ibuffer-group-buffers-by 'projects)
      ivy
      lsp
      javascript
@@ -71,11 +72,14 @@ This function should only modify configuration layer settings."
              python-format-on-save t
              python-sort-imports-on-save t)
      rust
+     semantic
      (shell :variables
             shell-default-shell 'vterm)
      syntax-checking
      themes-megapack
-     treemacs
+     (treemacs :variables
+               treemacs-use-follow-mode t
+               treemacs-use-filewatch-mode t)
      (version-control :variables
                        version-control-global-margin t
                        version-control-diff-side 'left)
@@ -89,7 +93,9 @@ This function should only modify configuration layer settings."
    ;; To use a local version of a package, use the `:location' property:
    ;; '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages
+   '(visual-fill-column  ; Do visual wrap at the fill column
+     )
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -179,6 +185,11 @@ It should only modify the values of Spacemacs settings."
    ;; (default 'vim)
    dotspacemacs-editing-style 'emacs
 
+   ;; If non-nil show the version string in the Spacemacs buffer. It will
+   ;; appear as (spacemacs version)@(emacs version)
+   ;; (default t)
+   dotspacemacs-startup-buffer-show-version t
+
    ;; Specify the startup banner. Default value is `official', it displays
    ;; the official spacemacs logo. An integer value is the index of text
    ;; banner, `random' chooses a random text banner in `core/banners'
@@ -231,7 +242,7 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-colorize-cursor-according-to-state t
 
    ;; Default font or prioritized list of fonts.
-   dotspacemacs-default-font '("Source Code Pro"
+   dotspacemacs-default-font '("LigaSourceCodePro"
                                :size 10.0
                                :weight normal
                                :width normal)
@@ -302,7 +313,7 @@ It should only modify the values of Spacemacs settings."
 
    ;; Which-key delay in seconds. The which-key buffer is the popup listing
    ;; the commands bound to the current keystroke sequence. (default 0.4)
-   dotspacemacs-which-key-delay 0.2
+   dotspacemacs-which-key-delay 0.4
 
    ;; Which-key frame position. Possible values are `right', `bottom' and
    ;; `right-then-bottom'. right-then-bottom tries to display the frame to the
@@ -493,8 +504,6 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  (setq-default dotspacemacs-persistent-server t)
-  (setq-default dotspacemacs-line-numbers t)
   (setq mouse-yank-at-point t)
   (setq vc-follow-symlinks t)
   (global-git-commit-mode t) ; Smart stuff when used as $EDITOR by git
@@ -503,6 +512,9 @@ before packages are loaded."
     (add-hook 'org-mode-hook 'org-indent-mode))
   (global-set-key (kbd "C-<next>") 'evil-scroll-line-up)
   (global-set-key (kbd "C-<prior>") 'evil-scroll-line-down)
+
+  (lsp-treemacs-sync-mode 1)
+  (tooltip-mode 1)
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -539,12 +551,12 @@ This function is called at the very end of Spacemacs initialization."
      ("XXX+" . "#dc752f")
      ("\\?\\?\\?+" . "#dc752f")))
  '(package-selected-packages
-   '(rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
+   '(olivetti rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(default ((t (:background nil)))))
 )
