@@ -7,7 +7,7 @@ set -o nounset
 PROJECT=datawireio
 NAME=${USER}-gke
 ZONE=us-central1-a
-NODES=3
+NODES=1
 
 export KUBECONFIG="$HOME/.kube/$NAME.yaml"
 
@@ -16,7 +16,7 @@ gcloud beta container \
 	clusters create "${NAME}" \
 	--zone "${ZONE}" \
 	--no-enable-basic-auth \
-  --release-channel "stable" \
+	--release-channel "stable" \
 	--preemptible \
 	--machine-type "n2-standard-2" \
 	--num-nodes "${NODES}" \
