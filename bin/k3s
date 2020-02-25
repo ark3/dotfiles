@@ -4,7 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-k3d get-kubeconfig >& /dev/null || k3d c --enable-registry --wait 90 1>2
+k3d get-kubeconfig >& /dev/null || k3d c --enable-registry -x=--no-deploy=traefik --wait 90 1>&2
 reg=registry.local:5000
 telver=$(telepresence --version)
 
@@ -15,12 +15,13 @@ for suffix in k8s k8s-priv local; do  # skip ocp because we probably won't use i
 done
 
 KUBECONFIG=~/.kube/k3s.yaml
-ln -sf "$(k3d get-kubeconfig)" "$KUBECONFIG"
+NEW_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' k3d-k3s-default-server)
+sed -e "s/127.0.0.1/$NEW_IP/g" -e "s/localhost/$NEW_IP/g" < "$(k3d get-kubeconfig)" > "$KUBECONFIG"
 export KUBECONFIG
 
 if ! kubectl get svc,deploy hello >& /dev/null; then
-    kubectl create deploy hello --image=ark3/hello-world #>& /dev/null
-    kubectl expose deploy hello --port 80 --target-port 8000 #>& /dev/null
+    kubectl create deploy hello --image=ark3/hello-world >& /dev/null
+    kubectl expose deploy hello --port 80 --target-port 8000 >& /dev/null
 fi
 
 cat <<EOF
