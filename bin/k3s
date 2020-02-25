@@ -4,28 +4,26 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-eval "$(k3sctl up)"
-reg="$(k3sctl registry)"
+k3d get-kubeconfig >& /dev/null || k3d c --enable-registry --wait 90 1>2
+reg=registry.local:5000
 telver=$(telepresence --version)
 
 for suffix in k8s k8s-priv local; do  # skip ocp because we probably won't use it on k3s
     docker pull -q "datawire/telepresence-${suffix}:${telver}" > /dev/null
     docker tag "datawire/telepresence-${suffix}:${telver}" "${reg}/telepresence-${suffix}:${telver}" > /dev/null
     docker push "${reg}/telepresence-${suffix}:${telver}" > /dev/null
-    docker exec -it "$K3S_CONTAINER" crictl pull "${reg}/telepresence-${suffix}:${telver}" > /dev/null
 done
 
-kc=~/.kube/k3s.yaml
-until k3sctl config > $kc; do sleep 0.5; done
-KUBECONFIG=$kc kubectl create deploy hello --image=ark3/hello-world >& /dev/null
-KUBECONFIG=$kc kubectl expose deploy hello --port 80 --target-port 8000 >& /dev/null
+KUBECONFIG=~/.kube/k3s.yaml
+ln -sf "$(k3d get-kubeconfig)" "$KUBECONFIG"
+export KUBECONFIG
+
+if ! kubectl get svc,deploy hello >& /dev/null; then
+    kubectl create deploy hello --image=ark3/hello-world #>& /dev/null
+    kubectl expose deploy hello --port 80 --target-port 8000 #>& /dev/null
+fi
 
 cat <<EOF
-export DOCKER_REGISTRY=$reg
-export DEV_REGISTRY=$reg
-export TELEPRESENCE_REGISTRY=$reg
-export VERSION_SUFFIX=
-export KUBECONFIG=$kc
-export DEV_KUBECONFIG=$kc
-# eval "\$(k3s)"
+export DOCKER_REGISTRY=$reg DEV_REGISTRY=$reg TELEPRESENCE_REGISTRY=$reg VERSION_SUFFIX= KUBECONFIG=$KUBECONFIG DEV_KUBECONFIG=$KUBECONFIG DOCKER_NETWORK=k3d-k3s-default
+# eval \$(k3s)
 EOF
