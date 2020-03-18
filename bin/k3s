@@ -5,14 +5,17 @@ set -o pipefail
 set -o nounset
 
 k3d get-kubeconfig >& /dev/null || k3d c --enable-registry -x=--no-deploy=traefik --wait 90 1>&2
+k3d start
 reg=registry.local:5000
 telver=$(telepresence --version)
 
-for suffix in k8s k8s-priv local; do  # skip ocp because we probably won't use it on k3s
-    docker pull -q "datawire/telepresence-${suffix}:${telver}" > /dev/null
-    docker tag "datawire/telepresence-${suffix}:${telver}" "${reg}/telepresence-${suffix}:${telver}" > /dev/null
-    docker push "${reg}/telepresence-${suffix}:${telver}" > /dev/null
-done
+if ! docker pull -q "${reg}/telepresence-local:${telver}" > /dev/null; then
+    for suffix in k8s k8s-priv local; do  # skip ocp because we probably won't use it on k3s
+        docker pull -q "datawire/telepresence-${suffix}:${telver}" > /dev/null
+        docker tag "datawire/telepresence-${suffix}:${telver}" "${reg}/telepresence-${suffix}:${telver}" > /dev/null
+        docker push "${reg}/telepresence-${suffix}:${telver}" > /dev/null
+    done
+fi
 
 KUBECONFIG=~/.kube/k3s.yaml
 NEW_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' k3d-k3s-default-server)
