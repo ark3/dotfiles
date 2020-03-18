@@ -1,10 +1,13 @@
 #!/bin/bash
 
+docker pull -q tianon/true >& /dev/null  # Hack to avoid 0-arg rmi
 docker container prune -f
 docker network prune -f
 docker volume prune -f
 (
     for pattern in \
+    "aes" \
+    "builder" \
     "datawire/telepresence-*-OSX-*" \
     "datawire/telepresence-*-LNX-*" \
     "quay.io/datawire/ambassador*" \
@@ -16,9 +19,11 @@ docker volume prune -f
     "localhost:31000/*" \
     "localhost:5000/*/*" \
     "localhost:5000/*" \
+    "registry.local:5000/*/*" \
+    "registry.local:5000/*" \
     "gcr.io/datawireio/metriton:*ark3"
     do
         docker images -q "$pattern"
     done
     docker images --format "{{.ID}};{{.Tag}}" | awk '-F;' '{if (length($2) > 12) print $1}'
-) | sort -u | xargs docker rmi -f
+) | sort -u | xargs docker rmi -f tianon/true:latest
