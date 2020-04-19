@@ -36,35 +36,40 @@ This function should only modify configuration layer settings."
                       auto-completion-return-key-behavior 'complete
                       auto-completion-tab-key-behavior 'complete
                       auto-completion-complete-with-key-sequence nil
-                      auto-completion-complete-with-key-sequence-delay 0.1
-                      auto-completion-idle-delay nil
-                      auto-completion-private-snippets-directory nil
-                      auto-completion-enable-snippets-in-popup t
-                      auto-completion-enable-help-tooltip t
-                      auto-completion-use-company-box nil
-                      auto-completion-enable-sort-by-usage t)
+                      auto-completion-idle-delay nil)
      (colors :variables
              colors-colorize-identifiers 'variables)
      chrome
+     (deft :variables
+       deft-zetteldeft t
+       deft-directory "~/org/deft"
+       deft-recursive t)
      docker
      emacs-lisp
      git
      (go :variables
          go-backend 'lsp
          go-format-before-save t
-         gofmt-command "gofumports"
+         ;; gofmt-command "gofumports" ;; doesn't play well with others...
+         gofmt-command "goimports"
          go-use-golangci-lint t
          go-tab-width 4)
      html
      (ibuffer :variables ibuffer-group-buffers-by 'projects)
-     ivy
+     (ivy :variables
+          ivy-enable-advanced-buffer-information t)
      lsp
      javascript
-     markdown
+     (markdown :variables
+               markdown-list-indent-width 2
+               markdown-indent-on-enter 'indent-and-new-item
+               markdown-fontify-code-blocks-natively t)
      ;; multiple-cursors
      ;; spell-checking
      (org :variables
+          org-enable-sticky-header t
           org-enable-github-support t)
+     prettier
      (python :variables
              python-backend 'lsp
              python-lsp-server 'pyls
@@ -105,7 +110,7 @@ This function should only modify configuration layer settings."
    dotspacemacs-frozen-packages '()
 
    ;; A list of packages that will not be installed and loaded.
-   dotspacemacs-excluded-packages '()
+   dotspacemacs-excluded-packages '(org-bullets)
 
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
@@ -407,7 +412,7 @@ It should only modify the values of Spacemacs settings."
 
    ;; If non-nil `smartparens-strict-mode' will be enabled in programming modes.
    ;; (default nil)
-   dotspacemacs-smartparens-strict-mode t
+   dotspacemacs-smartparens-strict-mode nil
 
    ;; If non-nil pressing the closing parenthesis `)' key in insert mode passes
    ;; over any automatically added closing parenthesis, bracket, quote, etc...
@@ -514,13 +519,20 @@ before packages are loaded."
   (setq vc-follow-symlinks t)
   (setq lsp-idle-delay 0.5)  ; wait this long after typing/changes
   (global-git-commit-mode t) ; Smart stuff when used as $EDITOR by git
-  (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
   (with-eval-after-load 'org
-    (add-hook 'org-mode-hook 'org-indent-mode))
-  (global-set-key (kbd "C-<next>") 'evil-scroll-line-up)
-  (global-set-key (kbd "C-<prior>") 'evil-scroll-line-down)
+    (add-hook 'org-mode-hook #'org-indent-mode))
+  (with-eval-after-load 'markdown-mode
+    (remove-hook 'markdown-mode-hook 'orgtbl-mode))
+  (global-set-key (kbd "C-<next>") #'evil-scroll-line-up)
+  (global-set-key (kbd "C-<prior>") #'evil-scroll-line-down)
   (xclip-mode 1)
   (tooltip-mode 1)
+
+  ; Text mode stuff
+  (add-hook 'text-mode-hook #'turn-on-visual-line-mode)
+  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+  (setq visual-fill-column-center-text t)
+  (setq split-window-preferred-function #'visual-fill-column-split-window-sensibly)
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
