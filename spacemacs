@@ -70,6 +70,7 @@ This function should only modify configuration layer settings."
           org-enable-sticky-header t
           org-enable-github-support t)
      prettier
+     protobuf
      (python :variables
              python-backend 'lsp
              python-lsp-server 'pyls
@@ -524,7 +525,8 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  (setq default-frame-alist '((top . 0) (left . -1) (width . 140) (height . 45)))
+  (define-key evil-emacs-state-map (kbd "C-z") nil) ; allow stuff to bind to C-z
+  (setq default-frame-alist '((width . 140) (height . 45)))
   (setq read-process-output-max (* 1024 1024)) ; suggested by LSP docs
   (setq mouse-yank-at-point t)
   (setq vc-follow-symlinks t)
@@ -538,6 +540,11 @@ before packages are loaded."
   (global-set-key (kbd "C-<prior>") #'evil-scroll-line-down)
   (xclip-mode 1)
   (tooltip-mode 1)
+
+  (setq vterm-max-scrollback 50000)
+  (with-eval-after-load `vterm
+    (define-key vterm-mode-map (kbd "M-n") 'vterm--self-insert)
+    (define-key vterm-mode-map (kbd "M-p") 'vterm--self-insert))
 
   ; Text mode stuff
   (add-hook 'text-mode-hook #'turn-on-visual-line-mode)
