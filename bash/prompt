@@ -36,8 +36,10 @@ prompt_command() {
     fi
 
     # Maybe newline
-    ( IFS=';' read -sdR -p $'\E[6n' ROW COL;
-    (("${COL#*[}" > 1 )) && echo $(tput smso)%$(tput rmso); )
+    if [[ $INSIDE_EMACS != *comint* ]]; then
+        ( IFS=';' read -sdR -p $'\E[6n' ROW COL;
+          (("${COL#*[}" > 1 )) && echo $(tput smso)%$(tput rmso); )
+    fi
 
     # Git
     # Based on: http://stackoverflow.com/a/13003854/170413
