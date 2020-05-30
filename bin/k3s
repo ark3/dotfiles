@@ -27,6 +27,7 @@ regvol=reg-$USER
 if k3d get-kubeconfig --name "$cluster" >& /dev/null; then
     # Cluster exists, but might not be running. Start it if needed.
     k3d start --name "$cluster"
+    KUBECONFIG="$(k3d get-kubeconfig --name "$cluster")" kubectl get ns,svc,deploy,po > /dev/null
 else
     # Create the cluster and start it.
     k3d create \
