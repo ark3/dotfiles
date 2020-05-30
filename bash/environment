@@ -4,8 +4,6 @@ fi
 
 umask 002
 
-export CDPATH=.:/Users/ark3/datawire
-
 export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
 export HISTTIMEFORMAT='%F %T '
 export HISTSIZE=100000000
