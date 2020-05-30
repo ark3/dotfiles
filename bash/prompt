@@ -90,6 +90,12 @@ prompt_command() {
     #     printf "\033k${myhost}\033\\"
     # fi
 
+    # Prompt/directory tracking for vterm in Emacs
+    local vterm=
+    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+        vterm=$(printf "\e]%s\e\\" "51;A$(whoami)@$(hostname):$(pwd)")
+    fi
+
     history -a
     local line_prompt=${LINE:0:$(tput cols)}
     local time_prompt="$BLACK$GREENBG \A $NOCOLOR "
@@ -98,8 +104,9 @@ prompt_command() {
     PS1="${GRAYFG}${line_prompt}${NOCOLOR}\r"
     PS1+="${time_prompt}$host_prompt$kctx_prompt$venv_prompt$git_info$exit_prompt${dir_prompt} \n"
     PS1+="\[${GREEN}\]$ \[${NOCOLOR}\]"
+    PS1+="$vterm"
     if [ -n "$PROMPT_QUIET" ]; then
-	PS1="\[${GREEN}\]$ \[${NOCOLOR}\]"
+        PS1="\[${GREEN}\]$ \[${NOCOLOR}\]"
     fi
 
     PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
