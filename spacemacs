@@ -37,10 +37,11 @@ This function should only modify configuration layer settings."
                       auto-completion-tab-key-behavior 'complete
                       auto-completion-enable-sort-by-usage t
                       auto-completion-idle-delay nil)
-     (colors :variables
-             colors-colorize-identifiers 'variables)
+     ;; (colors :variables
+     ;;         colors-colorize-identifiers 'variables)
      chrome
      (deft :variables
+       deft-extensions '("md" "txt" "org")
        deft-zetteldeft t
        deft-directory "~/org/deft"
        deft-recursive t)
@@ -75,8 +76,8 @@ This function should only modify configuration layer settings."
              python-backend 'lsp
              python-lsp-server 'mspyls
              python-formatter 'lsp
-             python-format-on-save t
-             python-sort-imports-on-save t)
+             python-format-on-save nil
+             python-sort-imports-on-save nil)
      (ranger :variables
               ranger-show-preview t)
      rust
@@ -529,7 +530,7 @@ before packages are loaded."
   (define-key evil-emacs-state-map (kbd "C-z") nil) ; allow stuff to bind to C-z
 
   (setq frame-resize-pixelwise t)
-  (setq default-frame-alist '((width . 140) (height . 45)))
+  ;; (setq default-frame-alist '((width . 140) (height . 45)))
   (setq mouse-yank-at-point t)
 
   (setq vc-follow-symlinks t)
@@ -550,10 +551,10 @@ before packages are loaded."
   (xclip-mode 1)
   (tooltip-mode 1)
 
-  (setq vterm-max-scrollback 50000)
+  (setq vterm-max-scrollback 99000)
   (with-eval-after-load `vterm
-    (define-key vterm-mode-map (kbd "M-n") 'vterm--self-insert)
-    (define-key vterm-mode-map (kbd "M-p") 'vterm--self-insert))
+    (define-key vterm-mode-map (kbd "M-n") 'vterm-send-M-n)
+    (define-key vterm-mode-map (kbd "M-p") 'vterm-send-M-p))
 
   (setq edit-server-new-frame nil)
   (edit-server-start)
