@@ -1,5 +1,10 @@
 #!/bin/bash
 
+exec kubectl-gke "$@"
+
+echo "This script is disabled. Please use 'kubectl gke' instead."
+exit 1
+
 set -o errexit
 set -o pipefail
 set -o nounset
