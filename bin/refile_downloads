@@ -56,14 +56,14 @@ def find_date_in_name(filename_or_path):
     return None
 
 
-def find_moves():
+def find_moves(forever=False):
     res = defaultdict(list)
 
     # Find PDF files
     candidates = source.glob("*.[pP][dD][fF]")
     for filename in candidates:
         # Skip files that are too old
-        if filename.stat().st_mtime < one_week_ago:
+        if not forever and filename.stat().st_mtime < one_week_ago:
             continue
 
         # Look for embedded date; skip files without one
@@ -115,9 +115,13 @@ def main() -> None:
     parser.add_argument(
         "-f", "--force", help="Perform the displayed moves", action="store_true"
     )
+    parser.add_argument(
+        "--forever", help="Move any matching files, not just new-ish files", action="store_true"
+    )
+
     args = parser.parse_args()
 
-    moves = find_moves()
+    moves = find_moves(forever=args.forever)
 
     if not moves:
         print("Nothing to re-file.", file=sys.stderr)
@@ -125,6 +129,7 @@ def main() -> None:
 
     final_moves = prepare_moves(moves)
 
+    print(f"Move target is {destination}")
     show_moves(final_moves)
     if args.force:
         perform_moves(final_moves)
