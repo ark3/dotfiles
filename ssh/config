@@ -1,13 +1,13 @@
 Host strife
   Hostname strife.xelfer.com
 
+Host cloudvm
+  Hostname cloudvm.xelfer.com
+
 Host may
   Hostname localhost
   Port 20022
   ProxyJump strife
-
-Host gke
-  Hostname 35.229.120.99
 
 Host mac
   Hostname DU726.macincloud.com
