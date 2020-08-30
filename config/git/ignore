@@ -31,5 +31,8 @@ Temporary Items
 .vscode
 .idea
 
+# Local configuration
+.envrc
+
 # Caches
 .*cache*
