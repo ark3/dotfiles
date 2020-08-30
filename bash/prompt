@@ -67,9 +67,12 @@ prompt_command() {
     # Kube context
     local kctx_prompt=
     if [ -n "$KUBECONFIG" ]; then
-        kctx_prompt="${MAGENTA}$(basename $(basename ${KUBECONFIG} .yaml) .knaut)${NOCOLOR} "
+        kctx_prompt="$(basename $(basename ${KUBECONFIG} .yaml) .knaut)"
     else
-        kctx_prompt="${MAGENTA}$(kubectl config view -o=jsonpath='{.current-context}')${NOCOLOR} "
+        kctx_prompt="$(kubectl config view -o=jsonpath='{.current-context}')"
+    fi
+    if [ -n "$kctx_prompt" ]; then
+        kctx_prompt="${MAGENTA}${kctx_prompt}${NOCOLOR} "
     fi
 
     # Virtualenv
