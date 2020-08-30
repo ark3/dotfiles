@@ -565,7 +565,7 @@ before packages are loaded."
   (with-eval-after-load `vterm
     (define-key vterm-mode-map (kbd "M-n") 'vterm-send-M-n)
     (define-key vterm-mode-map (kbd "M-p") 'vterm-send-M-p)
-    (define-key vterm-mode-map (kbd "M-y") 'vterm-send-M-y) ; S-insert to paste
+    (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-y) ; S-insert to paste
     )
 
   (setq edit-server-new-frame nil)
