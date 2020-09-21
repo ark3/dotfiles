@@ -65,11 +65,17 @@ prompt_command() {
     fi
 
     # Kube context
+    local kubectl=
+    if command -v kubectl > /dev/null; then
+        kubectl=kubectl
+    else
+        kubectl=true
+    fi
     local kctx_prompt=
     if [ -n "$KUBECONFIG" ]; then
         kctx_prompt="$(basename $(basename ${KUBECONFIG} .yaml) .knaut)"
     else
-        kctx_prompt="$(kubectl config view -o=jsonpath='{.current-context}')"
+        kctx_prompt="$(${kubectl} config view -o=jsonpath='{.current-context}')"
     fi
     if [ -n "$kctx_prompt" ]; then
         kctx_prompt="${MAGENTA}${kctx_prompt}${NOCOLOR} "
