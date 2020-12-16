@@ -1,3 +1,5 @@
+#!/hint/bash
+
 # Copyright (C) 2016-2017 Cyker Way
 #
 # This program is free software: you can redistribute it and/or modify it under
@@ -336,4 +338,3 @@ _complete_alias () {
 #complete -F _complete_alias myalias1
 #complete -F _complete_alias myalias2
 #complete -F _complete_alias myalias3
-

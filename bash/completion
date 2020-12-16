@@ -1,3 +1,5 @@
+#!/hint/bash
+
 [ -f /etc/bash_completion ] && . /etc/bash_completion
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 [ -f /usr/local/share/bash-completion/bash_completion ] && . /usr/local/share/bash-completion/bash_completion

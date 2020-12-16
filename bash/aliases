@@ -1,4 +1,5 @@
 #!/hint/bash
+
 # Aliases and functions
 
 case "$(uname -s)" in

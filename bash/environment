@@ -1,3 +1,5 @@
+#!/hint/bash
+
 if [ -z "$PATH_DEFAULT" ]; then
     export PATH_DEFAULT="$PATH"
 fi
