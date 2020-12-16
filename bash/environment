@@ -28,3 +28,8 @@ export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
 if [ -f ~/.config/kubernaut/config.json ] && which jq >/dev/null ; then
     export KUBERNAUT_TOKEN=$(jq -r '.["kubernaut.io"]["token"]' < ~/.config/kubernaut/config.json)
 fi
+
+# Set up for Nix
+if [ -e /home/ark3/.nix-profile/etc/profile.d/nix.sh ]; then
+    . /home/ark3/.nix-profile/etc/profile.d/nix.sh
+fi
