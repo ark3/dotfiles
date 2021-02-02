@@ -92,7 +92,14 @@ def show_moves(moves):
     for month, items in moves.items():
         first = True
         for source_path, target_path in items:
-            clobber = f" [CLOBBERS {target_path}]" if target_path.exists() else ""
+            if target_path.exists():
+                if (source_path.stat().st_size == target_path.stat().st_size and
+                    source_path.read_bytes() == target_path.read_bytes()):
+                    clobber = f" [replaces identical {target_path}]"
+                else:
+                    clobber = f" [CLOBBERS {target_path}]"
+            else:
+                clobber = ""
             new_dir = " " if target_path.parent.exists() else "*"
             if first:
                 lead = "{:%Y-%m} <- ".format(month)
