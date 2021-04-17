@@ -105,6 +105,7 @@ prompt_command() {
     # fi
 
     history -a
+    history -n
     local line_prompt=${LINE:0:$(tput cols)}
     local time_prompt="$BLACK$GREENBG \A $NOCOLOR "
     local dir_prompt="\w"
