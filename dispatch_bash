@@ -12,6 +12,8 @@ PRF="${HOME}/dotfiles/bash/"
 [ -f "${PRF}completion" ]   && . "${PRF}completion"
 [ -f "${PRF}path" ]         && . "${PRF}path"
 
+[ -f "${HOME}/.local/bash" ] && . "${HOME}/.local/bash"
+
 # Unset local variables
 unset PRF
 unset BASHRC_DISPATCH_PID
