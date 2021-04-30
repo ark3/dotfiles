@@ -70,11 +70,12 @@ This function should only modify configuration layer settings."
      (org :variables
           org-enable-sticky-header t
           org-enable-github-support t)
+     osx
      prettier
      protobuf
      (python :variables
              python-backend 'lsp
-             python-lsp-server 'mspyls
+             python-lsp-server 'pyright
              python-formatter 'lsp
              python-format-on-save nil
              python-sort-imports-on-save nil)
@@ -284,8 +285,8 @@ It should only modify the values of Spacemacs settings."
    ;; Default font or prioritized list of fonts. The `:size' can be specified as
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
-   dotspacemacs-default-font '("LigaSourceCodePro"
-                               :size 10.0
+   dotspacemacs-default-font '("Source Code Pro"
+                               :size 12.0
                                :weight normal
                                :width normal)
 
@@ -587,6 +588,7 @@ before packages are loaded."
   (define-key evil-emacs-state-map (kbd "C-z") nil) ; allow stuff to bind to C-z
 
   (setq frame-resize-pixelwise t)
+  (setq-default line-spacing 1)
   ;; (setq default-frame-alist '((width . 140) (height . 45)))
   (setq mouse-yank-at-point t)
 
@@ -617,7 +619,7 @@ before packages are loaded."
   (setq edit-server-new-frame nil)
   (edit-server-start)
 
-  ; Text mode stuff
+  ;; Text mode stuff
   (add-hook 'text-mode-hook
             (lambda ()
               (set-fill-column 100)
@@ -626,15 +628,29 @@ before packages are loaded."
   (setq visual-fill-column-center-text t)
   (setq split-window-preferred-function #'visual-fill-column-split-window-sensibly)
 
-  ; WSL copy/paste
-  (global-set-key (kbd "C-c C-c") 'wsl-copy)
-  (global-set-key (kbd "C-c C-v") 'wsl-paste)
+  (when (spacemacs/system-is-mac)
+    ;; Use `Command' for some `meta' shortcuts, via the OSX layer
+    (define-key key-translation-map (kbd-mac-command "m") (kbd "M-m"))
+    (define-key key-translation-map (kbd-mac-command "<return>") (kbd "<M-return>"))
+    (define-key key-translation-map (kbd-mac-command "x") (kbd "M-x"))
 
-  ; WSL browser support
-  (setq
-   browse-url-generic-program "/usr/bin/wslview"
-   browse-url-browser-function 'browse-url-generic)
-  )
+
+    ;; These don't work...
+    (global-set-key (kbd-mac-command "M-h") 'ns-do-hide-others) ; doesn't work
+    (global-set-key (kbd-mac-command "`") 'other-window)        ; doesn't work
+    )
+
+  (when (spacemacs/system-is-mswindows)
+    ;; WSL copy/paste
+    (global-set-key (kbd "C-c C-c") 'wsl-copy)
+    (global-set-key (kbd "C-c C-v") 'wsl-paste)
+
+    ;; WSL browser support
+    (setq
+     browse-url-generic-program "/usr/bin/wslview"
+     browse-url-browser-function 'browse-url-generic))
+
+  ) ;; dotspacemacs/user-config
 
 (defun wsl-copy (start end)
   (interactive "r")
