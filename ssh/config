@@ -1,17 +1,7 @@
 Host strife
+  User ark3
   Hostname strife.xelfer.com
 
-Host cloudvm
-  Hostname cloudvm.xelfer.com
-
-Host may
-  Hostname localhost
-  Port 20022
-  ProxyJump strife
-
-Host mac
-  Hostname DU726.macincloud.com
-  ForwardAgent yes
 
 # -- github-keygen - begin --
 # Version: 1.305
