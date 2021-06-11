@@ -66,9 +66,12 @@ This function should only modify configuration layer settings."
                markdown-indent-on-enter 'indent-and-new-item
                markdown-fontify-code-blocks-natively t)
      ;; multiple-cursors
+     nav-flash
      ;; spell-checking
      (org :variables
           org-enable-sticky-header t
+          org-enable-valign t
+          org-enable-appear-support t
           org-enable-github-support t)
      osx
      prettier
@@ -108,6 +111,7 @@ This function should only modify configuration layer settings."
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages
    '(
+     ox-clip             ; Copy region in org-mode as formatted text
      visual-fill-column  ; Do visual wrap at the fill column
      xclip               ; Interface with the X clipboard in TTY mode
      )
@@ -237,6 +241,9 @@ It should only modify the values of Spacemacs settings."
 
    ;; True if the home buffer should respond to resize events. (default t)
    dotspacemacs-startup-buffer-responsive t
+
+   ;; Show numbers before the startup list lines. (default t)
+   dotspacemacs-show-startup-list-numbers t
 
    ;; The minimum delay in seconds between number key presses. (default 0.4)
    dotspacemacs-startup-buffer-multi-digit-delay 0.4
@@ -523,7 +530,7 @@ It should only modify the values of Spacemacs settings."
    ;; `trailing' to delete only the whitespace at end of lines, `changed' to
    ;; delete only whitespace for changed lines or `nil' to disable cleanup.
    ;; (default nil)
-   dotspacemacs-whitespace-cleanup 'changed
+   dotspacemacs-whitespace-cleanup nil
 
    ;; If non nil activate `clean-aindent-mode' which tries to correct
    ;; virtual indentation of simple modes. This can interfer with mode specific
@@ -531,6 +538,9 @@ It should only modify the values of Spacemacs settings."
    ;; If it does deactivate it here.
    ;; (default t)
    dotspacemacs-use-clean-aindent-mode nil
+
+   ;; Accept SPC as y for prompts if non nil. (default nil)
+   dotspacemacs-use-SPC-as-y nil
 
    ;; If non-nil shift your number row to match the entered keyboard layout
    ;; (only in insert state). Currently supported keyboard layouts are:
@@ -588,17 +598,19 @@ before packages are loaded."
   (define-key evil-emacs-state-map (kbd "C-z") nil) ; allow stuff to bind to C-z
 
   (setq frame-resize-pixelwise t)
-  (setq-default line-spacing 1)
-  ;; (setq default-frame-alist '((width . 140) (height . 45)))
+  (setq-default line-spacing 2)
+  (setq default-frame-alist '((width . 140) (height . 45)))
   (setq mouse-yank-at-point t)
 
   (setq vc-follow-symlinks t)
-  ;(global-git-commit-mode t) ; Smart stuff when used as $EDITOR by git
 
   (setq lsp-idle-delay 0.5)  ; wait this long after typing/changes
   (setq lsp-file-watch-threshold 20000)
 
   (with-eval-after-load 'org
+    (setq-default org-hide-emphasis-markers t)
+    (add-hook 'org-mode-hook #'visual-line-mode)
+    (add-hook 'org-mode-hook #'variable-pitch-mode)
     (add-hook 'org-mode-hook #'org-indent-mode))
 
   (with-eval-after-load 'markdown-mode
@@ -620,11 +632,7 @@ before packages are loaded."
   (edit-server-start)
 
   ;; Text mode stuff
-  (add-hook 'text-mode-hook
-            (lambda ()
-              (set-fill-column 100)
-              (turn-on-visual-line-mode)))
-  (add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
+  ;(add-hook 'visual-line-mode-hook #'visual-fill-column-mode)
   (setq visual-fill-column-center-text t)
   (setq split-window-preferred-function #'visual-fill-column-split-window-sensibly)
 
@@ -677,11 +685,24 @@ This function is called at the very end of Spacemacs initialization."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-faces-vector
+   [default bold shadow italic underline success warning error])
  '(ansi-color-names-vector
    ["#0a0814" "#f2241f" "#67b11d" "#b1951d" "#4f97d7" "#a31db1" "#28def0" "#b2b2b2"])
+ '(awesome-tray-mode-line-active-color "#2fafff")
+ '(awesome-tray-mode-line-inactive-color "#323232")
  '(custom-safe-themes
-   '("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default))
+   '("0f7fa4835d02a927d7d738a0d2d464c38be079913f9d4aba9c97f054e67b8db9" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default))
+ '(elfeed-feeds
+   '(("http://nullprogram.com/feed/" blog emacs)
+     "http://www.50ply.com/atom.xml" "https://alchemy-jira.ext.str.us/activity?maxResults=5&os_authType=basic&title=undefined"
+     ("http://nedroid.com/feed/" webcomic)))
  '(evil-want-Y-yank-to-eol nil)
+ '(exwm-floating-border-color "#646464")
+ '(flymake-error-bitmap '(flymake-double-exclamation-mark modus-themes-fringe-red))
+ '(flymake-note-bitmap '(exclamation-mark modus-themes-fringe-cyan))
+ '(flymake-warning-bitmap '(exclamation-mark modus-themes-fringe-yellow))
+ '(highlight-tail-colors '(("#2f4a00" . 0) ("#00415e" . 20)))
  '(hl-todo-keyword-faces
    '(("TODO" . "#dc752f")
      ("NEXT" . "#dc752f")
@@ -698,13 +719,50 @@ This function is called at the very end of Spacemacs initialization."
      ("FIXME" . "#dc752f")
      ("XXX+" . "#dc752f")
      ("\\?\\?\\?+" . "#dc752f")))
+ '(ibuffer-deletion-face 'modus-themes-mark-del)
+ '(ibuffer-filter-group-name-face 'modus-themes-mark-symbol)
+ '(ibuffer-marked-face 'modus-themes-mark-sel)
+ '(ibuffer-title-face 'modus-themes-pseudo-header)
+ '(org-src-block-faces 'nil)
  '(package-selected-packages
-   '(zig-mode utop tuareg caml tide typescript-mode seeing-is-believing rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocopfmt rubocop rspec-mode robe rbenv rake ocp-indent ob-elixir mvn minitest meghanada maven-test-mode lsp-java groovy-mode groovy-imports pcache gradle-mode flycheck-ocaml merlin flycheck-mix flycheck-credo emojify emoji-cheat-sheet-plus dune company-emoji chruby bundler inf-ruby alchemist elixir-mode olivetti rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
- '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e")))
+   '(elfeed-org noflet elfeed zig-mode utop tuareg caml tide typescript-mode seeing-is-believing rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocopfmt rubocop rspec-mode robe rbenv rake ocp-indent ob-elixir mvn minitest meghanada maven-test-mode lsp-java groovy-mode groovy-imports pcache gradle-mode flycheck-ocaml merlin flycheck-mix flycheck-credo emojify emoji-cheat-sheet-plus dune company-emoji chruby bundler inf-ruby alchemist elixir-mode olivetti rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
+ '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e"))
+ '(safe-local-variable-values
+   '((org-confirm-babel-evaluate)
+     (javascript-backend . tide)
+     (javascript-backend . tern)
+     (javascript-backend . lsp)))
+ '(vc-annotate-background nil)
+ '(vc-annotate-background-mode nil)
+ '(vc-annotate-color-map
+   '((20 . "#ff8059")
+     (40 . "#feacd0")
+     (60 . "#f78fe7")
+     (80 . "#f4923b")
+     (100 . "#eecc00")
+     (120 . "#cfdf30")
+     (140 . "#f8dec0")
+     (160 . "#bfebe0")
+     (180 . "#44bc44")
+     (200 . "#70c900")
+     (220 . "#6ae4b9")
+     (240 . "#4ae8fc")
+     (260 . "#00d3d0")
+     (280 . "#c6eaff")
+     (300 . "#2fafff")
+     (320 . "#79a8ff")
+     (340 . "#00bcff")
+     (360 . "#b6a0ff")))
+ '(vc-annotate-very-old-color nil)
+ '(xterm-color-names
+   ["black" "#ff8059" "#44bc44" "#eecc00" "#2fafff" "#feacd0" "#00d3d0" "gray65"])
+ '(xterm-color-names-bright
+   ["gray35" "#f4923b" "#70c900" "#cfdf30" "#79a8ff" "#f78fe7" "#4ae8fc" "white"]))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(fixed-pitch ((t (:height 120 :family "Source Code Pro"))))
+ '(variable-pitch ((t (:height 1.0 :family "IA Writer DuoSpace")))))
 )
