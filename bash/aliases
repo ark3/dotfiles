@@ -87,6 +87,14 @@ function fff {
     fi
 }
 
+function cdf {
+    if command -v fzf > /dev/null; then
+        cd $(find ${1:-.} -type d -print0 | fzf --read0 +m)
+    else
+        echo >&2 "cdf: error: fzf not found"; return 3;
+    fi
+}
+
 function fpy {
     echo 'Use `rg -t py <pattern>` or `rg -t py --files` '
 }
