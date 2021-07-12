@@ -8,4 +8,5 @@
 :set scrolloff=5
 :set showmatch
 :set noswapfile
+:set modelines=5       " Enabled modelines: https://vim.fandom.com/wiki/Modeline_magic
 :syntax enable
