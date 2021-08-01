@@ -32,7 +32,8 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '((auto-completion :variables
+   '(csv
+     (auto-completion :variables
                       auto-completion-return-key-behavior 'complete
                       auto-completion-tab-key-behavior 'complete
                       auto-completion-enable-sort-by-usage t
@@ -60,6 +61,7 @@ This function should only modify configuration layer settings."
      (ivy :variables
           ivy-enable-advanced-buffer-information t)
      lsp
+     java
      javascript
      (markdown :variables
                markdown-live-preview-engine 'vmd
@@ -465,12 +467,12 @@ It should only modify the values of Spacemacs settings."
 
    ;; If non-nil smartparens-mode will be enabled in programming modes.
    ;; (default t)
-   dotspacemacs-activate-smartparens-mode t
+   dotspacemacs-activate-smartparens-mode nil
 
    ;; If non-nil pressing the closing parenthesis `)' key in insert mode passes
    ;; over any automatically added closing parenthesis, bracket, quote, etc...
    ;; This can be temporary disabled by pressing `C-q' before `)'. (default nil)
-   dotspacemacs-smart-closing-parenthesis t
+   dotspacemacs-smart-closing-parenthesis nil
 
    ;; Select a scope to highlight delimiters. Possible values are `any',
    ;; `current', `all' or `nil'. Default is `all' (highlight any scope and
@@ -610,11 +612,11 @@ before packages are loaded."
 
   (with-eval-after-load 'org
     (setq-default org-hide-emphasis-markers t)
-    (add-hook 'org-mode-hook #'visual-line-mode)
-    (add-hook 'org-mode-hook #'variable-pitch-mode)
+    (add-hook 'org-mode-hook #'text-stuff)
     (add-hook 'org-mode-hook #'org-indent-mode))
 
   (with-eval-after-load 'markdown-mode
+    (add-hook 'markdown-mode-hook #'text-stuff)
     (remove-hook 'markdown-mode-hook 'orgtbl-mode))
 
   (global-set-key (kbd "C-<next>") #'evil-scroll-line-up)
@@ -660,6 +662,12 @@ before packages are loaded."
      browse-url-browser-function 'browse-url-generic))
 
   ) ;; dotspacemacs/user-config
+
+(defun text-stuff ()
+  (setq fill-column 100)
+  (visual-line-mode 1)
+  (visual-fill-column-mode 1)
+  (variable-pitch-mode 1))
 
 (defun wsl-copy (start end)
   (interactive "r")
@@ -726,7 +734,7 @@ This function is called at the very end of Spacemacs initialization."
  '(ibuffer-title-face 'modus-themes-pseudo-header)
  '(org-src-block-faces 'nil)
  '(package-selected-packages
-   '(vmd-mode elfeed-org noflet elfeed zig-mode utop tuareg caml tide typescript-mode seeing-is-believing rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocopfmt rubocop rspec-mode robe rbenv rake ocp-indent ob-elixir mvn minitest meghanada maven-test-mode lsp-java groovy-mode groovy-imports pcache gradle-mode flycheck-ocaml merlin flycheck-mix flycheck-credo emojify emoji-cheat-sheet-plus dune company-emoji chruby bundler inf-ruby alchemist elixir-mode olivetti rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
+   '(csv-mode vmd-mode elfeed-org noflet elfeed zig-mode utop tuareg caml tide typescript-mode seeing-is-believing rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocopfmt rubocop rspec-mode robe rbenv rake ocp-indent ob-elixir mvn minitest meghanada maven-test-mode lsp-java groovy-mode groovy-imports pcache gradle-mode flycheck-ocaml merlin flycheck-mix flycheck-credo emojify emoji-cheat-sheet-plus dune company-emoji chruby bundler inf-ruby alchemist elixir-mode olivetti rust-mode ansi package-build shut-up epl git commander f dash s livid-mode skewer-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode htmlize haml-mode emmet-mode counsel-css company-web web-completion-data yaml-mode web-beautify tern prettier-js nodejs-repl js2-refactor multiple-cursors js2-mode js-doc import-js grizzl simple-httpd add-node-modules-path yapfify stickyfunc-enhance pytest pyenv-mode py-isort pippel pipenv pyvenv pip-requirements lsp-python-ms python live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope helm xcscope helm-core ggtags dap-mode bui tree-mode cython-mode counsel-gtags company-anaconda blacken anaconda-mode pythonic yasnippet-snippets wgrep treemacs-magit smex smeargle mmm-mode markdown-toc magit-svn magit-gitflow magit-popup lsp-ui lsp-treemacs ivy-yasnippet ivy-xref ivy-purpose ivy-hydra godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gmail-message-mode ham-mode html-to-markdown gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy flymd flycheck-pos-tip pos-tip evil-magit magit transient git-commit with-editor edit-server counsel-projectile counsel swiper ivy company-statistics company-lsp lsp-mode markdown-mode dash-functional company-go go-mode company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e"))
  '(safe-local-variable-values
    '((org-confirm-babel-evaluate)
@@ -765,5 +773,5 @@ This function is called at the very end of Spacemacs initialization."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(fixed-pitch ((t (:height 120 :family "Source Code Pro"))))
- '(variable-pitch ((t (:height 1.0 :family "IA Writer DuoSpace")))))
+ '(variable-pitch ((t (:height 1.2 :family "PT Sans")))))
 )
