@@ -18,6 +18,10 @@
     ~/.gitconfig:
     ~/.ssh/config:
       path: ssh/config
+    ~/.emacs.d/early-init.el:
+      path: emacs.d/early-init.el
+    ~/.emacs.d/init.el:
+      path: emacs.d/init.el
     ~/.vimrc:
     ~/bin:
     ~/.config/git/ignore:
