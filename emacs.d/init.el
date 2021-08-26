@@ -18,8 +18,8 @@
   "Value of `current-time' when Emacs begins loading `user-init-file'.")
 
 (message "Loading Emacs, pre-init...done (%.3fs)"
-         (float-time (time-subtract before-user-init-time
-                                    before-init-time)))
+	 (float-time (time-subtract before-user-init-time
+				    before-init-time)))
 
 (message "Loading %s..." user-init-file)
 
@@ -34,18 +34,26 @@
       (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
+	(url-retrieve-synchronously
+	 "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	 'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;; Use straight.el for use-package expressions
+(straight-use-package 'use-package)
+
 ;; Always use straight to install
 (setq straight-use-package-by-default t)
 
-;; Use straight.el for use-package expressions
-(straight-use-package 'use-package)
+;; Don't defer loading by default
+(setq use-package-always-demand t)
+
+;; Prevent Emacs-provided Org from being loaded
+
+(straight-register-package 'org)
+(straight-register-package 'org-contrib)
 
 
 ;;; General stuff
@@ -55,16 +63,17 @@
 	 ("s-<down>" . end-of-buffer)
 	 ("C-<next>" . View-scroll-line-forward)
 	 ("C-<prior>" . View-scroll-line-backward)
+	 ("M-SPC" . cycle-spacing)
 	 ("M-`" . bury-buffer))
   :init
   (setq inhibit-startup-screen t
-        initial-scratch-message nil
-        sentence-end-double-space nil
-        ring-bell-function 'ignore
-        frame-resize-pixelwise t)
+	initial-scratch-message nil
+	sentence-end-double-space nil
+	ring-bell-function 'ignore
+	frame-resize-pixelwise t)
 
   (setq user-full-name "Abhay Saxena"
-        user-mail-address "ark3@email.com")
+	user-mail-address "ark3@email.com")
 
   ;; always allow 'y' instead of 'yes'.
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -72,8 +81,8 @@
   ;; default to utf-8 for all the things
   (set-charset-priority 'unicode)
   (setq locale-coding-system 'utf-8
-        coding-system-for-read 'utf-8
-        coding-system-for-write 'utf-8)
+	coding-system-for-read 'utf-8
+	coding-system-for-write 'utf-8)
   (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
   (set-selection-coding-system 'utf-8)
@@ -87,9 +96,9 @@
   (recentf-mode 1)
   (setq recentf-exclude `(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"
 			  ,(expand-file-name "straight/build/" user-emacs-directory)
-                          ,(expand-file-name "eln-cache/" user-emacs-directory)
-                          ,(expand-file-name "etc/" user-emacs-directory)
-                          ,(expand-file-name "var/" user-emacs-directory))
+			  ,(expand-file-name "eln-cache/" user-emacs-directory)
+			  ,(expand-file-name "etc/" user-emacs-directory)
+			  ,(expand-file-name "var/" user-emacs-directory))
 	recentf-max-saved-items 250
 
 	desktop-restore-frames nil
@@ -115,7 +124,6 @@
     (let ((buffer-quit-function (lambda () ())))
       ad-do-it))
 
-
   ;; Don't persist a custom file, this bites me more than it helps
   (setq custom-file (make-temp-file "")) ; use a temp file as a placeholder
   (setq custom-safe-themes t)            ; mark all themes as safe, since we can't persist now
@@ -123,11 +131,15 @@
 
   ;; stop emacs from littering the file system with backup files
   (setq make-backup-files nil
-        auto-save-default nil
-        create-lockfiles nil)
+	auto-save-default nil
+	create-lockfiles nil)
 
-  ;; follow symlinks 
-  (setq vc-follow-symlinks t)
+  ;; autosave files in-place regularly
+  (auto-save-visited-mode t)
+
+  ;; follow symlinks
+  (setq vc-follow-symlinks t
+	find-file-visit-truename t)
 
   ;; don't show any extra window chrome
   (when (window-system)
@@ -144,8 +156,38 @@
     (tool-bar-mode -1)
     (toggle-scroll-bar -1))
 
-  ;; enable winner mode globally for undo/redo window layout changes
-  (winner-mode t)
+  ;; Buffer/window stuff
+  (winner-mode t)   ;; enable winner mode globally for undo/redo window layout changes
+  (defun toggle-window-split ()
+    (interactive)
+    (if (= (count-windows) 2)
+	(let* ((this-win-buffer (window-buffer))
+	       (next-win-buffer (window-buffer (next-window)))
+	       (this-win-edges (window-edges (selected-window)))
+	       (next-win-edges (window-edges (next-window)))
+	       (this-win-2nd (not (and (<= (car this-win-edges)
+					   (car next-win-edges))
+				       (<= (cadr this-win-edges)
+					   (cadr next-win-edges)))))
+	       (splitter
+		(if (= (car this-win-edges)
+		       (car (window-edges (next-window))))
+		    'split-window-horizontally
+		  'split-window-vertically)))
+	  (delete-other-windows)
+	  (let ((first-win (selected-window)))
+	    (funcall splitter)
+	    (if this-win-2nd (other-window 1))
+	    (set-window-buffer (selected-window) this-win-buffer)
+	    (set-window-buffer (next-window) next-win-buffer)
+	    (select-window first-win)
+	    (if this-win-2nd (other-window 1))))))
+  (global-set-key (kbd "C-x -") #'toggle-window-split)
+  (global-set-key (kbd "C-x C--") #'windmove-swap-states-left)
+
+  (customize-set-variable 'mouse-wheel-scroll-amount
+			  '(1 ((shift) . hscroll) ((meta) . nil))
+			  "Turn off mouse-wheel-text-scale")
 
   (show-paren-mode t)
   (global-auto-revert-mode 1)
@@ -156,9 +198,24 @@
 	load-prefer-newer t
 	)
 
-  ;; clean up the mode line
+  ;; Tramp
+  (require 'tramp)
+  ;;; include the remote PATH in tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  ;;; Don't create .tramp_history
+  (setq tramp-histfile-override nil)
+
+  ;; Avoid "ls does not support --dired" message on MacOS
+  (when (string= system-type "darwin")
+    (require 'ls-lisp)
+    (setq ls-lisp-use-insert-directory-program nil))
+
+  (setq dired-dwim-target t)
+  (setq windmove-wrap-around t)
+
+  ;; Mode line
   (display-time-mode -1)
-  (setq column-number-mode t)
+  (column-number-mode t)
   )
 
 (use-package diminish)
@@ -204,34 +261,39 @@
   ;; Show Embark actions via which-key
   (setq embark-action-indicator
 	(lambda (map _target)
-          (which-key--show-keymap "Embark" map nil nil 'no-paging)
-          #'which-key--hide-popup-ignore-command)
+	  (which-key--show-keymap "Embark" map nil nil 'no-paging)
+	  #'which-key--hide-popup-ignore-command)
 	embark-become-indicator embark-action-indicator)
 
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
+	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+		 nil
+		 (window-parameters (mode-line-format . none)))))
 
 (use-package consult)
-(use-package embark-consult)
+
+(use-package embark-consult
+  :after (embark consult))
 
 (use-package wgrep)
 
 (use-package vertico
-  :init
+  :config
   (vertico-mode)
   (setq vertico-resize nil) ; Don't grow and shrink the Vertico minibuffer
   )
 
 (use-package corfu
-  :init
+  :config
   (corfu-global-mode)
+  (setq-default tab-always-indent 'complete
+		tab-first-completion 'word-or-paren-or-punct
+)
   )
 
 (use-package bufler
-  :bind (("C-x b" . bufler-switch-buffer)
+  :bind (;;("C-x b" . bufler-switch-buffer) ;; didn't really enjoy this
 	 ("C-x C-b" . bufler-list))
   )
 
@@ -242,8 +304,8 @@
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion))))
+	completion-category-defaults nil
+	completion-category-overrides '((file (styles partial-completion))))
   )
 
 (use-package fancy-dabbrev
@@ -260,7 +322,7 @@
 
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
+	'(read-only t cursor-intangible t face minibuffer-prompt))
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
@@ -284,6 +346,20 @@
   :config
   (exec-path-from-shell-initialize))
 
+(use-package helpful
+  :bind (;; Remap standard commands.
+	 ([remap display-local-help] . helpful-at-point)
+	 ([remap describe-function]  . helpful-callable)
+	 ([remap describe-variable]  . helpful-variable)
+	 ([remap describe-symbol]    . helpful-symbol)
+	 ([remap describe-key]       . helpful-key)
+	 ([remap describe-command]   . helpful-command)
+	 :map help-map
+	 ("F" . #'helpful-function)
+	 ("M-f" . #'helpful-macro)
+	 ("C" . #'helpful-command)
+	 )
+  )
 
 ;;; Text stuff
 
@@ -307,28 +383,54 @@
 (use-package org
   :hook ((org-mode . text-stuff)
 	 (org-mode . org-autolist-mode))
-  :config (setq org-hide-emphasis-markers t)
+  :custom
+  (org-export-backends '(md ascii html beamer odt latex org))
+  (org-hide-emphasis-markers t)
+  (org-startup-folded 'content)
+  (org-export-with-toc nil)
+  (org-export-with-section-numbers nil)
 )
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :hook (markdown-mode . text-stuff)
   :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.mkdn\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
+	 ("\\.md\\'" . markdown-mode)
+	 ("\\.mkdn\\'" . markdown-mode)
+	 ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 
 
 ;;; Programming stuff
+
+(add-hook 'prog-mode-hook
+  (lambda ()
+    (display-line-numbers-mode t)
+    (display-fill-column-indicator-mode t)
+    (setq fill-column 80)))
 
 (defun my/vterm-copy-mode-cancel ()
   "Exit vterm-copy-mode without copying anything"
   (interactive)
   (vterm-copy-mode -1))
 
+(defun project-vterm ()
+  "Invoke `vterm' in the project's root.
+Switch to the project specific term buffer if it already exists."
+  (interactive)
+  (let* ((default-directory (project-root (project-current t)))
+	 (project-vterm-name (project-prefixed-buffer-name "vterm")))
+    (unless (buffer-live-p (get-buffer project-vterm-name))
+      (unless (require 'vterm nil 'noerror)
+	(error "Package 'vterm' is not available"))
+      (vterm project-vterm-name)
+      (vterm-send-string (concat "cd " default-directory))
+      (vterm-send-return))
+    (pop-to-buffer-same-window (get-buffer project-vterm-name))))
+
 (use-package vterm
   :bind (("C-c v" . vterm)
+	 ("C-x p v" . project-vterm)
 	 :map vterm-mode-map
 	 ("M-n" . vterm-send-M-n)
 	 ("M-p" . vterm-send-M-p)
@@ -354,17 +456,23 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
 	magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
+	magit-prefer-remote-upstream t
+	project-switch-commands '((project-find-file "Find file")
+				  (project-dired "Dired")
+				  (project-eshell "Eshell")
+				  (project-shell "Shell")
+				  (project-vterm "Vterm")
+				  (magit-project-status "Magit" "m"))
 	)
   )
 
 (use-package git-gutter
-  :defer t
   :init
   :config
   (setq git-gutter:disabled-modes '(org-mode asm-mode image-mode)
-        git-gutter:update-interval 1
-        git-gutter:window-width 2
-        git-gutter:ask-p nil)
+	git-gutter:update-interval 1
+	git-gutter:window-width 2
+	git-gutter:ask-p nil)
   (global-git-gutter-mode)
   )
 
@@ -387,21 +495,37 @@
   [0 0 0 0 0 0 0 0 0 0 0 0 0 128 192 224 240 248]
   nil nil 'center))
 
+(use-package flycheck)
+
 (use-package lsp-mode
   :init
   (setq lsp-keymap-prefix "C-c l"	; prefix for lsp-command-map
 	read-process-output-max (* 1024 1024) ; 1mb
 	lsp-idle-delay 0.5		      ; default 0.5
 	lsp-file-watch-threshold 20000
+	lsp-completion-provider :none
 	)
-  :hook ((prog-mode . lsp-deferred)
+  :hook ((python-mode . lsp-deferred)
+	 (java-mode . lsp-deferred)
+	 (go-mode . lsp-deferred)
 	 (lsp-mode . lsp-enable-which-key-integration)
 	 (lsp-mode . lsp-ui-mode))
 )
 
 (use-package lsp-ui :commands lsp-ui-mode)
 
-(use-package lsp-java)
+(use-package lsp-java
+  :config
+  (add-to-list
+   'lsp-java-vmargs
+   (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
+  (add-to-list
+   'lsp-java-vmargs
+   (substitute-in-file-name "-Xbootclasspath/a:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
+  (setq lsp-java-maven-download-sources t
+	lsp-java-content-provider-preferred "fernflower")
+  )
+
 (use-package go-mode)
 (use-package lsp-pyright)
 ;  :hook (python-mode . (lambda ()
@@ -418,6 +542,27 @@
 (use-package ws-butler
   :hook ((prog-mode . ws-butler-mode)))
 
+(use-package blacken)
+
+(use-package dockerfile-mode)
+(use-package docker-tramp)
+
+(use-package google-c-style
+  :straight (google-c-style
+	     :type git :host github :repo "google/styleguide")
+  :config
+  (add-hook 'c-mode-common-hook 'google-set-c-style)
+  (add-hook 'c-mode-common-hook 'google-make-newline-indent)
+  )
+
+(use-package google-java-format
+  :straight (google-java-format
+	     :type git :host github :repo "google/google-java-format"
+	     :files ("core/src/main/scripts/google-java-format.el"))
+  :config
+  (setq google-java-format-executable "/usr/local/bin/google-java-format")
+  )
+
 ;;; Wrap-up
 
 ;; Restore garbage collection to a reasonable value.
@@ -426,11 +571,11 @@
 (add-hook 'emacs-startup-hook
   (lambda ()
     (setq gc-cons-threshold 16777216 ; 16mb
-          gc-cons-percentage 0.1)))
+	  gc-cons-percentage 0.1)))
 
 (message "Loading init file...done (%.3fs)"
-         (float-time (time-subtract (current-time)
-                                    before-user-init-time)))
+	 (float-time (time-subtract (current-time)
+				    before-user-init-time)))
 
 
 ;;; End of init.el
