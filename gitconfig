@@ -6,6 +6,7 @@
 	status = auto
 	branch = auto
 [core]
+	editor = emacsclient
 	excludesfile = ~/.config/git/ignore
 [merge]
 	tool = meld
@@ -24,6 +25,9 @@
 	# Run using `git gui`
 	fontui = -family \".SF NS Text\" -size 13 -weight normal -slant roman -underline 0 -overstrike 0
 	fontdiff = -family \"Fira Code\" -size 12 -weight normal -slant roman -underline 0 -overstrike 0
+[branch]
+	autosetupmerge = always   # New local branch tracks remote branch
+	autosetuprebase = always  # Pull will rebase, not merge
 [push]
 	default = current
 [fetch]
