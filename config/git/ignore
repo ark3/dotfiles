@@ -30,6 +30,7 @@ Temporary Items
 # Editor stuff
 .vscode
 .idea
+.factorypath
 
 # Local configuration
 .envrc
