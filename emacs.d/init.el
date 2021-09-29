@@ -516,13 +516,17 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package lsp-java
   :config
-  (add-to-list
-   'lsp-java-vmargs
-   (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
-  (add-to-list
-   'lsp-java-vmargs
-   (substitute-in-file-name "-Xbootclasspath/a:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
   (setq lsp-java-maven-download-sources t
+	lsp-java-vmargs	(list
+			 "-XX:+UseParallelGC"
+			 "-XX:GCTimeRatio=4"
+			 "-XX:AdaptiveSizePolicyWeight=90"
+			 "-Dsun.zip.disableMemoryMapping=true"
+			 "-noverify"
+			 (substitute-in-file-name
+			  "--class-path=$HOME/.m2/repository/javax/annotation/javax.annotation-api/1.3.2")
+			 (substitute-in-file-name
+			  "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
 	lsp-java-content-provider-preferred "fernflower")
   )
 
