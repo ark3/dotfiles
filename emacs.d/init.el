@@ -117,6 +117,9 @@
   ;; don't want ESC as a modifier
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+  ;; Hardly ever want suspend-frame
+  (global-unset-key (kbd "C-z"))
+
   ;; But don't mess up window layout. Instead, short-circuit the cond
   ;; expression by defining a do-nothing buffer-quit-function.
   (defadvice keyboard-escape-quit
@@ -237,7 +240,10 @@
   :init (which-key-mode)
   :diminish which-key-mode
   :config
-  (setq which-key-idle-delay 0.5))
+  (setq which-key-idle-delay 3
+	which-key-idle-secondary-delay 0.05
+	which-key-show-early-on-C-h t)
+  )
 
 (use-package marginalia
   :ensure t
