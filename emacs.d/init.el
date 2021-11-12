@@ -61,6 +61,8 @@
 (use-package emacs
   :bind (("s-<up>" . beginning-of-buffer)
 	 ("s-<down>" . end-of-buffer)
+	 ("M-<down>" . scroll-up-command)
+	 ("M-<up>" . scroll-down-command)
 	 ("C-<next>" . View-scroll-line-forward)
 	 ("C-<prior>" . View-scroll-line-backward)
 	 ("M-SPC" . cycle-spacing)
@@ -119,6 +121,7 @@
 
   ;; Hardly ever want suspend-frame
   (global-unset-key (kbd "C-z"))
+  (global-unset-key (kbd "C-x C-z"))
 
   ;; But don't mess up window layout. Instead, short-circuit the cond
   ;; expression by defining a do-nothing buffer-quit-function.
@@ -194,6 +197,7 @@
 
   (show-paren-mode t)
   (global-auto-revert-mode 1)
+  (put 'narrow-to-region 'disabled nil)
 
   ;; less noise when compiling elisp
   (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local)
@@ -240,7 +244,7 @@
   :init (which-key-mode)
   :diminish which-key-mode
   :config
-  (setq which-key-idle-delay 3
+  (setq which-key-idle-delay 1
 	which-key-idle-secondary-delay 0.05
 	which-key-show-early-on-C-h t)
   )
@@ -315,7 +319,14 @@
   )
 
 (use-package fancy-dabbrev
-  :config (global-fancy-dabbrev-mode))
+  :disabled
+  :config
+  (global-fancy-dabbrev-mode)
+  (setq fancy-dabbrev-preview-delay 0.3
+	dabbrev-case-distinction nil
+	dabbrev-case-fold-search t
+	dabbrev-case-replace nil)
+  )
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -348,7 +359,9 @@
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
-  :init (setq exec-path-from-shell-variables '("PATH" "MANPATH" "JAVA_HOME"))
+  :init
+  (setq exec-path-from-shell-variables '("PATH" "MANPATH" "JAVA_HOME")
+	exec-path-from-shell-warn-duration-millis 1500)
   :config
   (exec-path-from-shell-initialize))
 
@@ -374,6 +387,11 @@
   (visual-fill-column-mode 1)
   (org-indent-mode 1)
   (variable-pitch-mode 1))
+
+(use-package flyspell
+  :custom
+  (ispell-program-name "aspell")
+  )
 
 (use-package visual-fill-column
   :init
@@ -458,6 +476,7 @@ Switch to the project specific term buffer if it already exists."
   :init (setq-default git-magit-status-fullscreen t)
   :bind (("C-c g s" . magit-status)
 	 ("C-c g g" . magit-file-dispatch)
+	 ("C-x p m" . magit-project-status)
 	 )
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
@@ -468,7 +487,7 @@ Switch to the project specific term buffer if it already exists."
 				  (project-eshell "Eshell")
 				  (project-shell "Shell")
 				  (project-vterm "Vterm")
-				  (magit-project-status "Magit" "m"))
+				  (magit-project-status "Magit"))
 	)
   )
 
@@ -510,6 +529,7 @@ Switch to the project specific term buffer if it already exists."
 	lsp-idle-delay 0.5		      ; default 0.5
 	lsp-file-watch-threshold 20000
 	lsp-completion-provider :none
+	lsp-enable-snippet nil
 	)
   :hook ((python-mode . lsp-deferred)
 	 (java-mode . lsp-deferred)
@@ -523,6 +543,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package lsp-java
   :config
   (setq lsp-java-maven-download-sources t
+        lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
 	lsp-java-vmargs	(list
 			 "-XX:+UseParallelGC"
 			 "-XX:GCTimeRatio=4"
