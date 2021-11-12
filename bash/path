@@ -24,6 +24,7 @@ _maybe_add_path "$HOME/go/bin"
 _maybe_add_path "$HOME/.krew/bin"
 _maybe_add_path "$HOME/.cargo/bin"
 _maybe_add_path "/usr/local/go/bin"
+_maybe_add_path "/opt/X11/bin"
 _maybe_add_path "/snap/bin"
 
 for path_comp in $(echo -e ${PATH//:/\\n}); do
