@@ -197,6 +197,7 @@
 
   (show-paren-mode t)
   (global-auto-revert-mode 1)
+  (transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
 
   ;; less noise when compiling elisp
@@ -236,8 +237,22 @@
     (add-to-list 'recentf-exclude no-littering-etc-directory))
   )
 
+(use-package hl-line+
+  :hook
+  (window-scroll-functions . hl-line-flash)
+  (focus-in . hl-line-flash)
+  (post-command . hl-line-flash)
+
+  :custom
+  (global-hl-line-mode nil)
+  (hl-line-flash-show-period 0.4)
+  (hl-line-inhibit-highlighting-for-modes '(dired-mode))
+  (hl-line-overlay-priority -100) ;; sadly, seems not observed by diredfl
+  )
 
 (use-package modus-themes
+  :init
+  (setq modus-themes-hl-line '(intense accented))
   :config (load-theme 'modus-vivendi))
 
 (use-package which-key
@@ -266,22 +281,51 @@
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
+)
 
+(use-package consult
+  :bind (
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ("<help> a" . consult-apropos)            ;; orig. apropos-comman
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flycheck)
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ("M-s f" . consult-find)
+         ("M-s F" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s m" . consult-multi-occur)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ("M-s e" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)           ;; needed by consult-line to detect isearch
+	 )
+  :init
+  (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
   :config
-  ;; Show Embark actions via which-key
-  (setq embark-action-indicator
-	(lambda (map _target)
-	  (which-key--show-keymap "Embark" map nil nil 'no-paging)
-	  #'which-key--hide-popup-ignore-command)
-	embark-become-indicator embark-action-indicator)
-
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-		 nil
-		 (window-parameters (mode-line-format . none)))))
-
-(use-package consult)
+  (setq consult-project-root-function (lambda ()
+					(when-let (project (project-current))
+					  (car (project-roots project))))
+	consult-preview-key (kbd "M-.")
+	consult-narrow-key "<"
+	)
+  )
 
 (use-package embark-consult
   :after (embark consult))
@@ -292,15 +336,34 @@
   :config
   (vertico-mode)
   (setq vertico-resize nil) ; Don't grow and shrink the Vertico minibuffer
+
+  ;; Use `consult-completion-in-region' if Vertico is enabled.
+  ;; Otherwise use the default `completion--in-region' function.
+  (setq completion-in-region-function
+	(lambda (&rest args)
+          (apply (if vertico-mode
+                     #'consult-completion-in-region
+                   #'completion--in-region)
+		 args)))
   )
 
 (use-package corfu
+  :disabled
   :config
   (corfu-global-mode)
   (setq-default tab-always-indent 'complete
 		tab-first-completion 'word-or-paren-or-punct
-)
   )
+)
+
+(use-package dabbrev
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand))
+  :config
+  (setq dabbrev-case-distinction nil
+	dabbrev-case-fold-search t
+	dabbrev-case-replace nil)
+)
 
 (use-package bufler
   :bind (;;("C-x b" . bufler-switch-buffer) ;; didn't really enjoy this
@@ -309,13 +372,13 @@
 
 
 ;; Use the `orderless' completion style.
-;; Enable `partial-completion' for fil path expansion.
+;; Enable `partial-completion' for file path expansion.
 ;; You may prefer to use `initials' instead of `partial-completion'.
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
 	completion-category-defaults nil
-	completion-category-overrides '((file (styles partial-completion))))
+	completion-category-overrides '((file (styles basic partial-completion))))
   )
 
 (use-package fancy-dabbrev
@@ -331,12 +394,6 @@
 ;; A few more useful configurations...
 (use-package emacs
   :init
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; Alternatively try `consult-completing-read-multiple'.
-  (defun crm-indicator (args)
-    (cons (concat "[CRM] " (car args)) (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
 	'(read-only t cursor-intangible t face minibuffer-prompt))
@@ -348,7 +405,9 @@
   ;;       #'command-completion-default-include-p)
 
   ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t))
+  (setq enable-recursive-minibuffers t)
+  (minibuffer-depth-indicate-mode t)
+)
 
 (use-package edit-server
   :init
@@ -522,6 +581,12 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package flycheck)
 
+(use-package consult-flycheck
+  :after (consult flycheck))
+
+(use-package yasnippet
+  :hook (prog-mode . yas-minor-mode))
+
 (use-package lsp-mode
   :init
   (setq lsp-keymap-prefix "C-c l"	; prefix for lsp-command-map
@@ -529,7 +594,6 @@ Switch to the project specific term buffer if it already exists."
 	lsp-idle-delay 0.5		      ; default 0.5
 	lsp-file-watch-threshold 20000
 	lsp-completion-provider :none
-	lsp-enable-snippet nil
 	)
   :hook ((python-mode . lsp-deferred)
 	 (java-mode . lsp-deferred)
