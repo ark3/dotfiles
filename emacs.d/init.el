@@ -141,7 +141,7 @@
 	create-lockfiles nil)
 
   ;; autosave files in-place regularly
-  (auto-save-visited-mode t)
+  ;;; (auto-save-visited-mode t) ;; trying super-save-mode instead
 
   ;; follow symlinks
   (setq vc-follow-symlinks t
@@ -199,6 +199,8 @@
   (global-auto-revert-mode 1)
   (transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
+  (add-hook 'after-save-hook
+            'executable-make-buffer-file-executable-if-script-p)
 
   ;; less noise when compiling elisp
   (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local)
@@ -228,6 +230,13 @@
 
 (use-package diminish)
 
+;; https://github.com/bbatsov/super-save
+(use-package super-save
+  :config
+  (setq super-save-remote-files nil
+	super-save-auto-save-when-idle nil)
+  (super-save-mode +1))
+
 ;; https://github.com/emacscollective/no-littering
 (use-package no-littering
   :demand
@@ -246,7 +255,7 @@
   :custom
   (global-hl-line-mode nil)
   (hl-line-flash-show-period 0.4)
-  (hl-line-inhibit-highlighting-for-modes '(dired-mode))
+  (hl-line-inhibit-highlighting-for-modes '(dired-mode vterm-mode))
   (hl-line-overlay-priority -100) ;; sadly, seems not observed by diredfl
   )
 
@@ -254,6 +263,10 @@
   :init
   (setq modus-themes-hl-line '(intense accented))
   :config (load-theme 'modus-vivendi))
+
+(use-package avy
+  :bind
+  (("C-;" . avy-goto-char-timer)))
 
 (use-package which-key
   :init (which-key-mode)
@@ -274,7 +287,6 @@
 
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)
    ("s-." . embark-dwim)
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
 
@@ -548,6 +560,10 @@ Switch to the project specific term buffer if it already exists."
 				  (project-vterm "Vterm")
 				  (magit-project-status "Magit"))
 	)
+  )
+
+(use-package git-timemachine
+  :bind (("C-c g t" . git-timemachine))
   )
 
 (use-package git-gutter
