@@ -223,6 +223,10 @@
   (setq dired-dwim-target t)
   (setq windmove-wrap-around t)
 
+  ;; Scrolling
+  (setq scroll-conservatively 10000
+	comint-scroll-show-maximum-output nil)
+
   ;; Mode line
   (display-time-mode -1)
   (column-number-mode t)
@@ -232,6 +236,7 @@
 
 ;; https://github.com/bbatsov/super-save
 (use-package super-save
+  :diminish super-save-mode
   :config
   (setq super-save-remote-files nil
 	super-save-auto-save-when-idle nil)
@@ -536,6 +541,10 @@ Switch to the project specific term buffer if it already exists."
   :config (setq vterm-max-scrollback 99000)
   )
 
+(use-package bash-completion
+  :config
+  (bash-completion-setup))
+
 (use-package ansi-color
   :config
   (defun my-colorize-compilation-buffer ()
@@ -671,7 +680,7 @@ Switch to the project specific term buffer if it already exists."
 	     :type git :host github :repo "google/google-java-format"
 	     :files ("core/src/main/scripts/google-java-format.el"))
   :config
-  (setq google-java-format-executable "/usr/local/bin/google-java-format")
+  (setq google-java-format-executable (executable-find "google-java-format"))
   )
 
 ;;; Wrap-up
