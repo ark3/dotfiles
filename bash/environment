@@ -7,8 +7,8 @@ fi
 umask 002
 
 export HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded by a space
-export HISTTIMEFORMAT='%F %T '
-export HISTSIZE=100000000
+export HISTTIMEFORMAT='%F %T '	       # ISO date and time
+export HISTSIZE=-1		       # No limit
 export HISTFILESIZE=1000000
 export HISTCONTROL=erasedups
 
