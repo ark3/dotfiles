@@ -225,7 +225,15 @@
 
   ;; Scrolling
   (setq scroll-conservatively 10000
+	scroll-margin 3
+	scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
+	comint-terminfo-terminal "ansi"
 	comint-scroll-show-maximum-output nil)
+
+  ;; Shell
+  (setq shell-pushd-regexp (rx (or "pushd" "pd"))
+        shell-popd-regexp (rx (or "popd" "od"))
+        shell-cd-regexp "cd")
 
   ;; Mode line
   (display-time-mode -1)
@@ -239,7 +247,7 @@
   :diminish super-save-mode
   :config
   (setq super-save-remote-files nil
-	super-save-auto-save-when-idle nil)
+        super-save-auto-save-when-idle nil)
   (super-save-mode +1))
 
 ;; https://github.com/emacscollective/no-littering
@@ -271,15 +279,16 @@
 
 (use-package avy
   :bind
-  (("C-;" . avy-goto-char-timer)))
+  (("C-;" . avy-goto-char-timer)
+   ("C-'" . avy-goto-word-1)))
 
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1
-	which-key-idle-secondary-delay 0.05
-	which-key-show-early-on-C-h t)
+        which-key-idle-secondary-delay 0.05
+        which-key-show-early-on-C-h t)
   )
 
 (use-package marginalia
@@ -332,16 +341,16 @@
          ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi)           ;; needed by consult-line to detect isearch
-	 )
+         )
   :init
   (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
   :config
   (setq consult-project-root-function (lambda ()
-					(when-let (project (project-current))
-					  (car (project-roots project))))
-	consult-preview-key (kbd "M-.")
-	consult-narrow-key "<"
-	)
+                                        (when-let (project (project-current))
+                                          (car (project-roots project))))
+        consult-preview-key (kbd "M-.")
+        consult-narrow-key "<"
+        )
   )
 
 (use-package embark-consult
@@ -357,11 +366,11 @@
   ;; Use `consult-completion-in-region' if Vertico is enabled.
   ;; Otherwise use the default `completion--in-region' function.
   (setq completion-in-region-function
-	(lambda (&rest args)
+        (lambda (&rest args)
           (apply (if vertico-mode
                      #'consult-completion-in-region
                    #'completion--in-region)
-		 args)))
+                 args)))
   )
 
 (use-package corfu
@@ -369,7 +378,7 @@
   :config
   (corfu-global-mode)
   (setq-default tab-always-indent 'complete
-		tab-first-completion 'word-or-paren-or-punct
+                tab-first-completion 'word-or-paren-or-punct
   )
 )
 
@@ -378,13 +387,13 @@
          ("C-M-/" . dabbrev-expand))
   :config
   (setq dabbrev-case-distinction nil
-	dabbrev-case-fold-search t
-	dabbrev-case-replace nil)
+        dabbrev-case-fold-search t
+        dabbrev-case-replace nil)
 )
 
 (use-package bufler
   :bind (;;("C-x b" . bufler-switch-buffer) ;; didn't really enjoy this
-	 ("C-x C-b" . bufler-list))
+         ("C-x C-b" . bufler-list))
   )
 
 
@@ -394,8 +403,8 @@
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
-	completion-category-defaults nil
-	completion-category-overrides '((file (styles basic partial-completion))))
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles basic partial-completion))))
   )
 
 (use-package fancy-dabbrev
@@ -403,9 +412,9 @@
   :config
   (global-fancy-dabbrev-mode)
   (setq fancy-dabbrev-preview-delay 0.3
-	dabbrev-case-distinction nil
-	dabbrev-case-fold-search t
-	dabbrev-case-replace nil)
+        dabbrev-case-distinction nil
+        dabbrev-case-fold-search t
+        dabbrev-case-replace nil)
   )
 
 ;; A few more useful configurations...
@@ -413,7 +422,7 @@
   :init
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
-	'(read-only t cursor-intangible t face minibuffer-prompt))
+        '(read-only t cursor-intangible t face minibuffer-prompt))
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
@@ -437,23 +446,23 @@
   :if (memq window-system '(mac ns))
   :init
   (setq exec-path-from-shell-variables '("PATH" "MANPATH" "JAVA_HOME")
-	exec-path-from-shell-warn-duration-millis 1500)
+        exec-path-from-shell-warn-duration-millis 1500)
   :config
   (exec-path-from-shell-initialize))
 
 (use-package helpful
   :bind (;; Remap standard commands.
-	 ([remap display-local-help] . helpful-at-point)
-	 ([remap describe-function]  . helpful-callable)
-	 ([remap describe-variable]  . helpful-variable)
-	 ([remap describe-symbol]    . helpful-symbol)
-	 ([remap describe-key]       . helpful-key)
-	 ([remap describe-command]   . helpful-command)
-	 :map help-map
-	 ("F" . #'helpful-function)
-	 ("M-f" . #'helpful-macro)
-	 ("C" . #'helpful-command)
-	 )
+         ([remap display-local-help] . helpful-at-point)
+         ([remap describe-function]  . helpful-callable)
+         ([remap describe-variable]  . helpful-variable)
+         ([remap describe-symbol]    . helpful-symbol)
+         ([remap describe-key]       . helpful-key)
+         ([remap describe-command]   . helpful-command)
+         :map help-map
+         ("F" . #'helpful-function)
+         ("M-f" . #'helpful-macro)
+         ("C" . #'helpful-command)
+         )
   )
 
 ;;; Text stuff
@@ -473,8 +482,8 @@
   :init
   (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
   (setq visual-fill-column-center-text t
-	visual-fill-column-enable-sensible-window-split t
-	)
+        visual-fill-column-enable-sensible-window-split t
+        )
   :config
   )
 
@@ -482,7 +491,7 @@
 
 (use-package org
   :hook ((org-mode . text-stuff)
-	 (org-mode . org-autolist-mode))
+         (org-mode . org-autolist-mode))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
@@ -495,9 +504,9 @@
   :commands (markdown-mode gfm-mode)
   :hook (markdown-mode . text-stuff)
   :mode (("README\\.md\\'" . gfm-mode)
-	 ("\\.md\\'" . markdown-mode)
-	 ("\\.mkdn\\'" . markdown-mode)
-	 ("\\.markdown\\'" . markdown-mode))
+         ("\\.md\\'" . markdown-mode)
+         ("\\.mkdn\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 
 
@@ -507,7 +516,12 @@
   (lambda ()
     (display-line-numbers-mode t)
     (display-fill-column-indicator-mode t)
-    (setq fill-column 80)))
+    (setq fill-column 80
+          show-paren-delay 0
+          show-paren-style 'mixed
+          show-paren-when-point-inside-paren t
+          show-paren-when-point-in-periphery t
+          )))
 
 (defun my/vterm-copy-mode-cancel ()
   "Exit vterm-copy-mode without copying anything"
@@ -519,10 +533,15 @@
 Switch to the project specific term buffer if it already exists."
   (interactive)
   (let* ((default-directory (project-root (project-current t)))
-	 (project-vterm-name (project-prefixed-buffer-name "vterm")))
+         (project-vterm-name
+          (string-replace
+           "service-alchemy-" "s-a-"
+           (string-replace
+            "lib-alchemy-" "l-a-"
+            (project-prefixed-buffer-name "vterm")))))
     (unless (buffer-live-p (get-buffer project-vterm-name))
       (unless (require 'vterm nil 'noerror)
-	(error "Package 'vterm' is not available"))
+        (error "Package 'vterm' is not available"))
       (vterm project-vterm-name)
       (vterm-send-string (concat "cd " default-directory))
       (vterm-send-return))
@@ -530,16 +549,59 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package vterm
   :bind (("C-c v" . vterm)
-	 ("C-x p v" . project-vterm)
-	 :map vterm-mode-map
-	 ("M-n" . vterm-send-M-n)
-	 ("M-p" . vterm-send-M-p)
-	 ("C-y" . vterm-send-C-y)
-	 :map vterm-copy-mode-map
-	 ("C-c C-c" . my/vterm-copy-mode-cancel)
-	 )
-  :config (setq vterm-max-scrollback 99000)
-  )
+         ("C-x p v" . project-vterm)
+         :map vterm-mode-map
+         ("M-n" . vterm-send-M-n)
+         ("M-p" . vterm-send-M-p)
+         ("C-y" . vterm-send-C-y)
+         :map vterm-copy-mode-map
+         ("C-c C-c" . vterm-copy-mode)
+         )
+  :config
+  (setq vterm-max-scrollback 99000)
+  (defun my/vterm-set-header-message (host &optional kctx venv git gitc exit)
+    (let ((git-color-number (string-to-number (or gitc "0"))))
+      (setq-local my/vterm-header-host host)
+      (setq-local my/vterm-header-kctx kctx)
+      (setq-local my/vterm-header-venv venv)
+      (setq-local my/vterm-header-git git)
+      (setq-local my/vterm-header-gitc git-color-number)
+      (setq-local my/vterm-header-exit exit)))
+  (add-to-list 'vterm-eval-cmds '("set" my/vterm-set-header-message))
+  (defun my/vterm-setup ()
+    (my/vterm-set-header-message "Starting up...")
+    (setq header-line-format
+          '(" "
+	    ;; (:eval
+	    ;;  (propertize
+	    ;;   (format-time-string " %H:%M ")
+	    ;;   'face 'modus-themes-pseudo-header))
+	    (:eval (propertize ">>" 'face '(:weight 'bold)))
+	    " "
+	    ;; "host:"
+	    (:eval (propertize my/vterm-header-host 'face
+			       (list :foreground (face-foreground 'ansi-color-yellow)
+				     :weight 'bold)))
+	    ;; "/kctx:"
+	    (:eval (propertize my/vterm-header-kctx 'face
+			       (list :foreground (face-foreground 'ansi-color-magenta))))
+	    ;; "/venv:"
+	    (:eval (propertize my/vterm-header-venv 'face
+			       (list :foreground (face-foreground 'ansi-color-blue))))
+	    ;; "/git:"
+	    (:eval (propertize my/vterm-header-git  'face
+			       (list :foreground
+				     (face-foreground
+				      (aref ansi-color-normal-colors-vector
+					    my/vterm-header-gitc)))))
+	    ;; "/exit:"
+	    (:eval (propertize my/vterm-header-exit 'face
+			       (list :foreground (face-foreground 'ansi-color-red))))
+	    ;; "// "
+	    (:eval (string-trim (abbreviate-file-name (vterm--get-pwd)) "" "/"))
+	    ))
+      )
+  :hook (vterm-mode . my/vterm-setup))
 
 (use-package bash-completion
   :config
@@ -550,6 +612,10 @@ Switch to the project specific term buffer if it already exists."
   (defun my-colorize-compilation-buffer ()
     (when (eq major-mode 'compilation-mode)
       (ansi-color-apply-on-region compilation-filter-start (point-max))))
+  (defun display-ansi-colors ()
+    (interactive)
+    (let ((inhibit-read-only t))
+      (ansi-color-apply-on-region (point-min) (point-max))))
   :hook (compilation-filter . my-colorize-compilation-buffer))
 
 (use-package magit
@@ -630,6 +696,9 @@ Switch to the project specific term buffer if it already exists."
 (use-package lsp-ui :commands lsp-ui-mode)
 
 (use-package lsp-java
+  :bind	(
+	 :map lsp-command-map
+	      ("=j" . google-java-format-buffer))
   :config
   (setq lsp-java-maven-download-sources t
         lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
@@ -652,14 +721,87 @@ Switch to the project specific term buffer if it already exists."
 ;                          (require 'lsp-pyright)
 ;                          (lsp))))
 
-(use-package yaml-mode
-  :bind ("C-<tab>" . outline-cycle)
-  :hook ((yaml-mode . outline-minor-mode)
-	 (yaml-mode . lsp-mode)
-	 (yaml-mode . (lambda ()  (progn (setq outline-regexp "^ *##")))))
+(use-package tree-sitter-langs
+  :hook
+  (tree-sitter-after-on . tree-sitter-hl-mode)
+)
+
+(use-package tree-sitter
+  :diminish
+  :config
+  (global-tree-sitter-mode)
+  :after (tree-sitter-langs)
   )
 
+(use-package cmake-mode)
+
+(use-package yaml-mode)
+
+(use-package hideshow ; built-in
+  ;; https://karthinks.com/software/simple-folding-with-hideshow/
+  :diminish
+  :bind (:map prog-mode-map
+              ("C-<tab>" . hs-cycle)
+              ("C-S-<tab>" . hs-global-cycle)
+              ("<backtab>" . hs-global-cycle)
+              ("C-S-<iso-lefttab>" . hs-global-cycle))
+  :config
+  (setq hs-hide-comments-when-hiding-all nil
+        ;; Nicer code-folding overlays (with fringe indicators)
+        hs-set-up-overlay #'hideshow-set-up-overlay-fn)
+
+  (defface hideshow-folded-face
+    `((t (:inherit font-lock-comment-face :weight light)))
+    "Face to hightlight `hideshow' overlays."
+    :group 'hideshow)
+
+  (defun hideshow-set-up-overlay-fn (ov)
+    (when (eq 'code (overlay-get ov 'hs))
+      (overlay-put
+       ov 'display (propertize "  [...]  " 'face 'hideshow-folded-face))))
+
+  (dolist (hs-command (list #'hs-cycle
+                            #'hs-global-cycle))
+    (advice-add hs-command :before
+                (lambda (&optional end) "Advice to ensure `hs-minor-mode' is enabled"
+                  (unless (bound-and-true-p hs-minor-mode)
+                    (hs-minor-mode +1)))))
+
+  (defun hs-cycle (&optional level)
+    (interactive "p")
+    (if (= level 1)
+        (pcase last-command
+          ('hs-cycle
+           (hs-hide-level 1)
+           (setq this-command 'hs-cycle-children))
+          ('hs-cycle-children
+           ;;TODO: Fix this case. `hs-show-block' needs to be called twice to
+           ;;open all folds of the parent block.
+           (save-excursion (hs-show-block))
+           (hs-show-block)
+           (setq this-command 'hs-cycle-subtree))
+          ('hs-cycle-subtree
+           (hs-hide-block))
+          (_
+           (if (not (hs-already-hidden-p))
+                 (hs-hide-block)
+               (hs-hide-level 1)
+               (setq this-command 'hs-cycle-children))))
+      (hs-hide-level level)
+      (setq this-command 'hs-hide-level)))
+
+  (defun hs-global-cycle ()
+    (interactive)
+    (pcase last-command
+      ('hs-global-cycle
+       (save-excursion (hs-show-all))
+       (setq this-command 'hs-global-show))
+      (_ (hs-hide-all))))
+  )
+
+
 (use-package ws-butler
+  :diminish
   :hook ((prog-mode . ws-butler-mode)))
 
 (use-package blacken)
@@ -682,6 +824,43 @@ Switch to the project specific term buffer if it already exists."
   :config
   (setq google-java-format-executable (executable-find "google-java-format"))
   )
+
+(defun my/google-java-format-buffer ()
+  "Use google-java-format to format the current buffer."
+  (interactive)
+  (let ((cursor (point))
+        (temp-buffer (generate-new-buffer " *google-java-format-temp*"))
+        (stderr-file (make-temp-file "google-java-format")))
+    (unwind-protect
+        (let ((status (call-process-region
+                       ;; Note that emacs character positions are 1-indexed,
+                       ;; and google-java-format is 0-indexed, so we have to
+                       ;; subtract 1 from START to line it up correctly.
+                       (point-min) (point-max)
+                       google-java-format-executable
+                       nil (list temp-buffer stderr-file) t
+                       "-"))
+              (stderr
+               (with-temp-buffer
+                 (insert-file-contents stderr-file)
+                 (when (> (point-max) (point-min))
+                   (insert ": "))
+                 (buffer-substring-no-properties
+                  (point-min) (line-end-position)))))
+          (cond
+           ((stringp status)
+            (error "google-java-format killed by signal %s%s" status stderr))
+           ((not (zerop status))
+            (error "google-java-format failed with code %d%s" status stderr))
+           (t (message "google-java-format succeeded%s" stderr)
+	      (replace-buffer-contents temp-buffer)
+              ;(goto-char cursor)
+	      )))
+      (delete-file stderr-file)
+      (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
+
+(add-hook 'java-mode-hook
+	  (lambda () (add-hook 'before-save-hook #'my/google-java-format-buffer nil t)))
 
 ;;; Wrap-up
 
