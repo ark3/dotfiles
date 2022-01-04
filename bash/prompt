@@ -22,6 +22,29 @@ if [ -t 1 ]; then
 fi
 LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
+vterm_printf(){
+    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
+        # Tell tmux to pass the escape sequences through
+        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$1"
+    else
+        printf "\e]%s\e\\" "$1"
+    fi
+}
+
+vterm_cmd() {
+    local vterm_elisp
+    vterm_elisp=""
+    while [ $# -gt 0 ]; do
+        vterm_elisp="$vterm_elisp""$(printf '"%s" ' "$(printf "%s" "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g')")"
+        shift
+    done
+    vterm_printf "51;E$vterm_elisp"
+}
+
+
 # Prompt/directory tracking for vterm in Emacs
 vterm_prompt_end() {
     if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
@@ -35,9 +58,11 @@ vterm_prompt_end() {
 prompt_command() {
     # Exit code
     local EXIT="$?"
-    local exit_prompt=
+    exit_prompt=
+    exit_color=${GREEN}
     if [ ${EXIT} != 0 ]; then
-        exit_prompt="${RED}(${EXIT})${NOCOLOR} "
+        exit_prompt="(${EXIT}) "
+        exit_color=${RED}
     fi
 
     # Maybe newline
@@ -48,18 +73,25 @@ prompt_command() {
 
     # Git
     # Based on: http://stackoverflow.com/a/13003854/170413
-    local git_info=
+    git_info=
+    git_color=
     local branch
     if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
         if [[ "$branch" == "HEAD" ]]; then
-            branch="${RED}detached"'*'"${NOCOLOR}"
-        fi
+	    git_color=${RED}
+	    git_color_num=1
+            branch='detached*'
+        fi  # FIXME do we need an else here?
 
         local status=$(git status --porcelain 2> /dev/null)
         if [[ "$status" != "" ]]; then
-            git_info="${YELLOW}($branch*)${NOCOLOR} "
+            git_info="($branch*) "
+            git_color=${YELLOW}
+	    git_color_num=3
         else
-            git_info="${GREEN}($branch)${NOCOLOR} "
+            git_info="($branch) "
+            git_color=${GREEN}
+	    git_color_num=2
         fi
     fi
 
@@ -70,20 +102,20 @@ prompt_command() {
     else
         kubectl=true
     fi
-    local kctx_prompt=
+    kctx_prompt=
     if [ -n "$KUBECONFIG" ]; then
         kctx_prompt="$(basename $(basename ${KUBECONFIG} .yaml) .knaut)"
     else
         kctx_prompt="$(${kubectl} config view -o=jsonpath='{.current-context}')"
     fi
     if [ -n "$kctx_prompt" ]; then
-        kctx_prompt="${MAGENTA}${kctx_prompt}${NOCOLOR} "
+        kctx_prompt="${kctx_prompt} "
     fi
 
     # Virtualenv
-    local venv_prompt=
+    venv_prompt=
     if [ -n "$VIRTUAL_ENV" ]; then
-        venv_prompt="${BLUE}$(basename ${VIRTUAL_ENV})${NOCOLOR} "
+        venv_prompt="$(basename ${VIRTUAL_ENV}) "
     fi
 
     # Local? SSH?
@@ -93,9 +125,9 @@ prompt_command() {
     # Hostname
     local myhost="${HOSTNAME%%.*}"
     [[ $myhost = ark3-workstation* ]] && myhost="GKE"
-    local host_prompt=
+    host_prompt=
     if [ -n "$remote" ]; then
-        host_prompt="${BOLD}${MAGENTA}[${myhost}]${NOCOLOR} "
+        host_prompt="[${myhost}] "
     fi
     # This is supposed to display the hostname in the window or tab title.
     # However, the test is not quite right. The VSCode terminal (for example)
@@ -104,24 +136,34 @@ prompt_command() {
     #     printf "\033k${myhost}\033\\"
     # fi
 
-    history -a                  # append this shell's history to the file
-    #history -n                 # read history from the file into this shell
-    local line_prompt=${LINE:0:$(tput cols)}
-    local time_prompt="$INVERT$GREEN \A $NOCOLOR "
-    local dir_prompt="\w"
-
-    PS1='\[${GREEN}\]$ \[${NOCOLOR}\]'
-    PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
-    PS4='\[${GREEN}\]+ \[${NOCOLOR}\]'  # Prefix for "set -x"
-
-    local beforePS1=
-    if [ -z "$PROMPT_QUIET" ]; then
-        beforePS1+="${GRAYFG}${line_prompt}${NOCOLOR}\r"
-        beforePS1+="${time_prompt}${host_prompt}${kctx_prompt}${venv_prompt}${git_info}${exit_prompt}${dir_prompt} \n"
+    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+	vterm_cmd set "$host_prompt" "$kctx_prompt" "$venv_prompt" "$git_info" "$git_color_num" "$exit_prompt"
     fi
 
-    PS1="${beforePS1}${PS1}"'\[$(vterm_prompt_end)\]'
+    history -a                  # append this shell's history to the file
+    #history -n                 # read history from the file into this shell
+    line_prompt=${LINE:0:$(tput cols)}
+    time_prompt=" \A "
+    dir_prompt="\w"
 }
+
+CLEAN_PROMPT='\[${exit_color}\]$ \[${NOCOLOR}\]\[$(vterm_prompt_end)\]'
+
+FANCY_PROMPT='${GRAYFG}${line_prompt}${NOCOLOR}\r'
+FANCY_PROMPT+='${INVERT}${GREEN} \A ${NOCOLOR} '
+FANCY_PROMPT+='${BOLD}${MAGENTA}${host_prompt}${NOCOLOR}'
+FANCY_PROMPT+='${MAGENTA}${kctx_prompt}${NOCOLOR}'
+FANCY_PROMPT+='${BLUE}${venv_prompt}${NOCOLOR}'
+FANCY_PROMPT+='${git_color}${git_info}${NOCOLOR}'
+FANCY_PROMPT+='${exit_color}${exit_prompt}${NOCOLOR}'
+FANCY_PROMPT+='\w \n'
+FANCY_PROMPT+="${CLEAN_PROMPT}"
+
+## PS1="$FANCY_PROMPT"
+PS1="$CLEAN_PROMPT"
+PS2='\[${GREEN}\]> \[${NOCOLOR}\]'  # Prompt for subsequent lines
+PS4='\[${GREEN}\]+ \[${NOCOLOR}\]'  # Prefix for "set -x"
+
 
 # Must set this for every shell invocation, not just once in the environment.
 export PROMPT_COMMAND=prompt_command
