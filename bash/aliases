@@ -26,7 +26,7 @@ alias view='vim -R'
 alias where='type'
 alias cb='find . \( -type d -name .git -o -name node_modules \) -prune -o  -type f \( -name "*.pyc" -o -name "*.pyo" -o -name "*~" -o -name ".*~" -o -name ".#*" -o -name "*.class" -o -name "*.qc" -o -name "*.qp" \) -delete'
 
-alias d='dirs'
+alias d='dirs +1 >&/dev/null && dirs -v || dirs'
 alias md='mkdir'
 alias rd='rmdir'
 alias pd='pushd'
@@ -66,6 +66,14 @@ alias gss='git status'
 # macOS has no md5sum or sha1sum; use fallbacks
 command -v md5sum > /dev/null || alias md5sum="md5"
 command -v sha1sum > /dev/null || alias sha1sum="shasum"
+
+# clear screen w/o losing existing output; just scroll it off the top
+printf -v MANYRETS \\n%.0s {1..500}           # this _creates_ MANYRETS
+function myclear {
+    printf "${MANYRETS:0:$(tput lines) - 1}"  # this _uses_ MANYRETS
+    clear
+}
+bind -x '"\C-l": myclear'
 
 function mcd {
     mkdir -p -- "$1" &&
