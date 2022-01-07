@@ -274,7 +274,8 @@
 
 (use-package modus-themes
   :init
-  (setq modus-themes-hl-line '(intense accented))
+  (setq modus-themes-hl-line '(intense accented)
+	modus-themes-mixed-fonts t)
   :config (load-theme 'modus-vivendi))
 
 (use-package avy
