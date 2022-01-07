@@ -22,6 +22,12 @@ if [ -t 1 ]; then
 fi
 LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
+vterm_hostname=$(hostname)
+if [ -f "${root}/.dockerenv" ] || [ -f "${root}/.dockerinit" ] || \
+       grep -qF /docker/ "${root}/proc/self/cgroup" 2>/dev/null; then
+    vterm_hostname=/docker:$vterm_hostname
+fi
+
 vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
         # Tell tmux to pass the escape sequences through
@@ -47,8 +53,17 @@ vterm_cmd() {
 
 # Prompt/directory tracking for vterm in Emacs
 vterm_prompt_end() {
-    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-        printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
+    if [[ "$INSIDE_EMACS" = vterm* ]]; then
+	if [ -f "/.dockerenv" ] || [ -f "/.dockerinit" ] || \
+	       grep -qF /docker/ "/proc/self/cgroup" 2>/dev/null; then
+	    # Running in Docker. Emit a Tramp-compatible path. Make sure not to
+	    # include an at sign "@" to avoid matching the "user@host:pwd"
+	    # pattern, as that will cause vterm.el to prepend Tramp stuff that
+	    # tries the default Tramp method, which is not Docker!
+	    printf '\e]%s\e\\' "51;A/docker:$(hostname):$(pwd)"
+	else
+            printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
+	fi
     fi
 }
 
@@ -136,7 +151,7 @@ prompt_command() {
     #     printf "\033k${myhost}\033\\"
     # fi
 
-    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    if [[ "$INSIDE_EMACS" = vterm* ]]; then
 	vterm_cmd set "$host_prompt" "$kctx_prompt" "$venv_prompt" "$git_info" "$git_color_num" "$exit_prompt"
     fi
 
