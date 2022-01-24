@@ -181,7 +181,7 @@ PS4='\[${GREEN}\]+ \[${NOCOLOR}\]'  # Prefix for "set -x"
 
 
 # Must set this for every shell invocation, not just once in the environment.
-export PROMPT_COMMAND=prompt_command
+PROMPT_COMMAND=prompt_command
 
 command -v direnv >/dev/null 2>&1 && eval "$(direnv hook bash)"
 
