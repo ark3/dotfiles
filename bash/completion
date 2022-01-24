@@ -1,22 +1,22 @@
 #!/hint/bash
 
-[ -f /etc/bash_completion ] && . /etc/bash_completion
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-[ -f /usr/local/share/bash-completion/bash_completion ] && . /usr/local/share/bash-completion/bash_completion
-command -v kubectl >/dev/null 2>&1 && source <(kubectl completion bash)
-command -v minikube >/dev/null 2>&1 && source <(minikube completion bash)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    [ -f /etc/bash_completion ] && . /etc/bash_completion
+    [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+    [ -f /usr/local/share/bash-completion/bash_completion ] && . /usr/local/share/bash-completion/bash_completion
+    command -v kubectl >/dev/null 2>&1 && source <(kubectl completion bash)
+    command -v minikube >/dev/null 2>&1 && source <(minikube completion bash)
+
+    # https://github.com/cykerway/complete-alias/blob/master/completions/bash_completion.sh
+    source ~/dotfiles/bash/complete-alias
+    aliases=(k gco ga gb gc gd)
+    for a in "${aliases[@]}"; do
+	complete -F _complete_alias "$a"
+    done
+    unset a aliases
+fi
 
 if [ -f '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc' ]; then
     source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc'
     source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc'
 fi
-
-[ -f ~/.travis/travis.sh ] && source ~/.travis/travis.sh
-
-# https://github.com/cykerway/complete-alias/blob/master/completions/bash_completion.sh
-source ~/dotfiles/bash/complete-alias
-aliases=(k gco ga gb gc gd)
-for a in "${aliases[@]}"; do
-    complete -F _complete_alias "$a"
-done
-unset a aliases
