@@ -22,8 +22,7 @@ alias sudo='sudo '
 alias c='cat'
 #alias m='less'
 alias m="bat -p"
-alias view='vim -R'
-alias where='type'
+alias where='type -a'
 alias cb='find . \( -type d -name .git -o -name node_modules \) -prune -o  -type f \( -name "*.pyc" -o -name "*.pyo" -o -name "*~" -o -name ".*~" -o -name ".#*" -o -name "*.class" -o -name "*.qc" -o -name "*.qp" \) -delete'
 
 alias d='dirs +1 >&/dev/null && dirs -v || dirs'
@@ -38,8 +37,6 @@ alias diff2diff='fgrep " differ" | sed -e "s/Files/diff -u/" -e "s/and //" -e "s
 alias em='emacsclient -q -n'
 alias gdiff='git diff --no-index'
 alias myip='dig +short myip.opendns.com @resolver1.opendns.com'
-alias path='echo -e ${PATH//:/\\n}'
-alias pspy='ps wwwaxu| egrep "^(USER|$USER.*[pP]ython)"'
 alias py='python3'
 alias k='kubectl'
 
@@ -94,51 +91,3 @@ function fff {
     else find "$1" -type f -print
     fi
 }
-
-function cdf {
-    if command -v fzf > /dev/null; then
-        cd $(find ${1:-.} -type d -print0 | fzf --read0 +m)
-    else
-        echo >&2 "cdf: error: fzf not found"; return 3;
-    fi
-}
-
-function fpy {
-    echo 'Use `rg -t py <pattern>` or `rg -t py --files` '
-}
-
-function fcc {
-    echo 'Use `rg -t cpp <pattern>` or `rg -t cpp --files` '
-}
-
-function fjs {
-    echo 'Use `rg -t js <pattern>` or `rg -t js --files` '
-}
-
-function fq {
-    echo 'WTF? Use `rg -g \"*.q\" <pattern>` or `rg -g \"*.q\" --files`'
-}
-
-function title {
-    echo "$1" | awk '{ printf ("\033k%s\033\\", $NF) }'
-}
-
-function pipgrep {
-    pip freeze | fgrep "==" | egrep "$1" | sed "s/==.*//"
-}
-
-# https://github.com/redbaron/upto
-function upto() {
-  local D="${PWD%"${PWD#*/*([^/])$1*/}"}"
-  [[ -z "$D" ]] || cd "$D"
-}
-
-# complete upto
-_upto () {
-	# necessary locals for _init_completion
-	local cur prev words cword
-	_init_completion || return
-
-	COMPREPLY+=( $( compgen -W "${PWD//\// }" -- $cur ) )
-}
-complete -F _upto upto
