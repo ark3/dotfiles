@@ -1,19 +1,13 @@
 #!/hint/bash
 
-# Avoid recursive invocation
-[ -n "$BASHRC_DISPATCH_PID" ] && [ $$ -eq "$BASHRC_DISPATCH_PID" ] && return
-BASHRC_DISPATCH_PID=$$
-
-# Run everything
 PRF="${HOME}/dotfiles/bash/"
 [ -f "${PRF}environment" ]  && . "${PRF}environment"
-[ -f "${PRF}aliases" ]      && . "${PRF}aliases"
-[ -f "${PRF}prompt" ]       && . "${PRF}prompt"
-[ -f "${PRF}completion" ]   && . "${PRF}completion"
 [ -f "${PRF}path" ]         && . "${PRF}path"
+unset PRF
 
 [ -f "${HOME}/.local/bash" ] && . "${HOME}/.local/bash"
 
-# Unset local variables
-unset PRF
-unset BASHRC_DISPATCH_PID
+MY_BASH_ENV_IS_SET=true
+
+# Source rc file for interactive login shells
+[[ $- == *i* && -n CALLING_FROM_RC ]] && . ~/.bashrc
