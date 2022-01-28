@@ -199,7 +199,8 @@
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   ;;; Don't create .tramp_history
   (setq tramp-histfile-override nil)
-
+  ;;; Assume ControlPersist is set in ~/.ssh/config
+  (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
   ;; Avoid "ls does not support --dired" message on MacOS
   (when (string= system-type "darwin")
     (require 'ls-lisp)
@@ -261,7 +262,7 @@
   :init
   (setq modus-themes-hl-line '(intense accented)
 	modus-themes-mixed-fonts t)
-  :config (load-theme 'modus-vivendi))
+  :config (load-theme 'modus-vivendi t))
 
 (use-package avy
   :bind
@@ -359,14 +360,12 @@
                  args)))
   )
 
-(use-package corfu
-  :disabled
-  :config
-  (corfu-global-mode)
-  (setq-default tab-always-indent 'complete
-                tab-first-completion 'word-or-paren-or-punct
-  )
-)
+(use-package consult-dir
+  :after consult
+  :bind (("C-x C-d" . consult-dir)
+         :map vertico-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package dabbrev
   :bind (("M-/" . dabbrev-completion)
@@ -432,7 +431,8 @@
   :if (memq window-system '(mac ns))
   :init
   (setq exec-path-from-shell-variables '("PATH" "MANPATH" "JAVA_HOME")
-        exec-path-from-shell-warn-duration-millis 1500)
+	exec-path-from-shell-arguments '("-l")
+        exec-path-from-shell-warn-duration-millis 300)
   :config
   (exec-path-from-shell-initialize))
 
