@@ -173,8 +173,14 @@
 	    (set-window-buffer (next-window) next-win-buffer)
 	    (select-window first-win)
 	    (if this-win-2nd (other-window 1))))))
+  (defun reposition-buffer ()
+    (interactive)
+    (let ((this-win-buffer (window-buffer)))
+      (winner-undo)
+      (set-window-buffer (next-window) this-win-buffer)))
   (global-set-key (kbd "C-x -") #'toggle-window-split)
-  (global-set-key (kbd "C-x C--") #'windmove-swap-states-left)
+  (global-set-key (kbd "C-x C--") #'reposition-buffer)
+  (global-set-key (kbd "C-x C-=") #'windmove-swap-states-left)
 
   (customize-set-variable 'mouse-wheel-scroll-amount
 			  '(1 ((shift) . hscroll) ((meta) . nil))
