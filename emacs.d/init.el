@@ -147,21 +147,6 @@
   (setq vc-follow-symlinks t
 	find-file-visit-truename t)
 
-  ;; don't show any extra window chrome
-  (when (window-system)
-    (setq-default line-spacing 1)
-    ;;(setq my/fixed-face "Source Code Pro")
-    (setq my/fixed-face "Iosevka Term SS09")
-    ;;(setq my/fixed-face "JetBrainsMono Nerd Font")
-    (set-face-attribute 'default nil :font my/fixed-face :height 120 :width 'expanded :weight 'light)
-    (set-face-attribute 'fixed-pitch nil :font my/fixed-face :height 120 :width 'expanded :weight 'light)
-    ;;(set-face-attribute 'fixed-pitch nil :font my/fixed-face :height 130)
-    ;;(set-face-attribute 'variable-pitch nil :font "ia Writer Duospace" :height 130)
-    ;;(set-face-attribute 'variable-pitch nil :font "PT Sans Caption" :height 130)
-    (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 130 :weight 'light)
-    (tool-bar-mode -1)
-    (toggle-scroll-bar -1))
-
   ;; Buffer/window stuff
   (winner-mode t)   ;; enable winner mode globally for undo/redo window layout changes
   (defun toggle-window-split ()
