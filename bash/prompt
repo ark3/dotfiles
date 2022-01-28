@@ -22,11 +22,17 @@ if [ -t 1 ]; then
 fi
 LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
-vterm_hostname=$(hostname)
-if [ -f "${root}/.dockerenv" ] || [ -f "${root}/.dockerinit" ] || \
+in_ssh=
+in_docker_exec=
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    in_ssh=1
+elif [ -f "${root}/.dockerenv" ] || [ -f "${root}/.dockerinit" ] || \
        grep -qF /docker/ "${root}/proc/self/cgroup" 2>/dev/null; then
-    vterm_hostname=/docker:$vterm_hostname
+    in_docker_exec=1
 fi
+
+vterm_hostname=$(hostname)
+[ -n "$in_docker_exec" ] && vterm_hostname=/docker:$vterm_hostname
 
 vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
@@ -54,8 +60,7 @@ vterm_cmd() {
 # Prompt/directory tracking for vterm in Emacs
 vterm_prompt_end() {
     if [[ "$INSIDE_EMACS" = vterm* ]]; then
-	if [ -f "/.dockerenv" ] || [ -f "/.dockerinit" ] || \
-	       grep -qF /docker/ "/proc/self/cgroup" 2>/dev/null; then
+	if [ -n "$in_docker_exec" ]; then
 	    # Running in Docker. Emit a Tramp-compatible path. Make sure not to
 	    # include an at sign "@" to avoid matching the "user@host:pwd"
 	    # pattern, as that will cause vterm.el to prepend Tramp stuff that
