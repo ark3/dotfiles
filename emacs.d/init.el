@@ -581,20 +581,19 @@ Switch to the project specific term buffer if it already exists."
 	    " "
 	    ;; "host:"
 	    (:eval (propertize my/vterm-header-host 'face
-			       (list :foreground (face-foreground 'ansi-color-yellow)
+			       (list :foreground (face-foreground 'term-color-yellow)
 				     :weight 'bold)))
 	    ;; "/kctx:"
 	    (:eval (propertize my/vterm-header-kctx 'face
-			       (list :foreground (face-foreground 'ansi-color-magenta))))
+			       (list :foreground (face-foreground 'term-color-magenta))))
 	    ;; "/venv:"
 	    (:eval (propertize my/vterm-header-venv 'face
-			       (list :foreground (face-foreground 'ansi-color-blue))))
+			       (list :foreground (face-foreground 'term-color-blue))))
 	    ;; "/git:"
 	    (:eval (propertize my/vterm-header-git  'face
 			       (list :foreground
-				     (face-foreground
-				      (aref ansi-color-normal-colors-vector
-					    my/vterm-header-gitc)))))
+				     (aref ansi-color-names-vector
+					   my/vterm-header-gitc))))
 	    ;; "/exit:"
 	    (:eval (propertize my/vterm-header-exit 'face
 			       (list :foreground (face-foreground 'ansi-color-red))))
