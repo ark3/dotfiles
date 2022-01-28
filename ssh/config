@@ -5,6 +5,7 @@ Host strife
 # Opportunistically multiplex connections; use `ssh -S none` to avoid
 # this, e.g., for transferring large data volumes.
 Host *
+  ForwardX11Timeout 0
   ControlMaster auto
   ControlPath ~/.ssh/conn-%n
   ControlPersist 120s
