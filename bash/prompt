@@ -30,9 +30,10 @@ elif [ -f "${root}/.dockerenv" ] || [ -f "${root}/.dockerinit" ] || \
        grep -qF /docker/ "${root}/proc/self/cgroup" 2>/dev/null; then
     in_docker_exec=1
 fi
+in_docker_exec=  # FIXME
 
 vterm_hostname=$(hostname)
-[ -n "$in_docker_exec" ] && vterm_hostname=/docker:$vterm_hostname
+[ -n "$in_docker_exec" ] && vterm_hostname=/docker:${user}@$vterm_hostname
 
 vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
@@ -60,15 +61,16 @@ vterm_cmd() {
 # Prompt/directory tracking for vterm in Emacs
 vterm_prompt_end() {
     if [[ "$INSIDE_EMACS" = vterm* ]]; then
-	if [ -n "$in_docker_exec" ]; then
-	    # Running in Docker. Emit a Tramp-compatible path. Make sure not to
-	    # include an at sign "@" to avoid matching the "user@host:pwd"
-	    # pattern, as that will cause vterm.el to prepend Tramp stuff that
-	    # tries the default Tramp method, which is not Docker!
-	    printf '\e]%s\e\\' "51;A/docker:$(hostname):$(pwd)"
-	else
+	# if [ -n "$in_docker_exec" ]; then
+	#     # Running in Docker. Emit a Tramp-compatible path. Make sure not to
+	#     # include an at sign "@" to avoid matching the "user@host:pwd"
+	#     # pattern, as that will cause vterm.el to prepend Tramp stuff that
+	#     # tries the default Tramp method, which is not Docker!
+	#     #printf '\e]%s\e\\' "51;A/docker:$(hostname):$(pwd)"
+	#     printf '\e]%s\e\\' "51;A/docker:$(whoami)@$(hostname):$(pwd)"
+	# else
             printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
-	fi
+	# fi
     fi
 }
 
@@ -138,15 +140,12 @@ prompt_command() {
         venv_prompt="$(basename ${VIRTUAL_ENV}) "
     fi
 
-    # Local? SSH?
-    local remote=
-    [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ] && remote=1
-
     # Hostname
     local myhost="${HOSTNAME%%.*}"
-    [[ $myhost = ark3-workstation* ]] && myhost="GKE"
+    # Add hostname overrides here, e.g.,
+    # [[ $myhost = ark3-workstation* ]] && myhost="GKE"
     host_prompt=
-    if [ -n "$remote" ]; then
+    if [ -n "$in_ssh" ] || [ -n "$in_docker_exec" ]; then
         host_prompt="[${myhost}] "
     fi
     # This is supposed to display the hostname in the window or tab title.
