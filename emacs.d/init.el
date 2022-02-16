@@ -190,8 +190,11 @@
   (global-auto-revert-mode 1)
   (transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
-  (add-hook 'after-save-hook
-            'executable-make-buffer-file-executable-if-script-p)
+
+  ;; Automatically set executable bit (chmod) for files with a shebang (#!)
+  ;; In practice, this is really annoying for things with #!/hint/bash etc.
+  ;;(add-hook 'after-save-hook
+  ;;          'executable-make-buffer-file-executable-if-script-p)
 
   ;; less noise when compiling elisp
   (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local)
@@ -668,6 +671,9 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package yasnippet
   :hook (prog-mode . yas-minor-mode))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 
 (use-package lsp-mode
   :init
