@@ -28,24 +28,38 @@ until there's an actual GUI to be set up."
   ;; twice should take care of that.
   ;;
   ;; See also: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=45920
-  (setq my/fixed-font "Iosevka Term SS09")
+  ;; (setq my/fixed-font )
+  ;; (setq my/fixed-font "JetBrainsMono Nerd Font")
+  (setq my/fixed-font
+	;; "Iosevka Term SS09"
+	;; "IBM Plex Mono"
+	;; "JetBrainsMono Nerd Font"
+	;; "Source Code Pro"
+	"Fira Code"
+	)
   (dotimes (_ 2)
     (set-face-attribute 'default nil
-			;; :font "JetBrainsMono Nerd Font"
-			;; :font "Source Code Pro"
-			:font my/fixed-font :width 'expanded :weight 'medium
-			:height 120)
-    (copy-face `default `fixed-pitch)
+			;; :font my/fixed-font :width 'expanded :weight 'medium
+			:font my/fixed-font
+			:height 130)
+    ;; (copy-face `default `fixed-pitch) ; this copies unwanted things, like foreground color
+    (set-face-attribute 'fixed-pitch nil
+			;; :font my/fixed-font :width 'expanded :weight 'medium
+			:font my/fixed-font
+			:height 130)
     (set-face-attribute 'variable-pitch nil
+			:font "FiraGo"
 			;; :font "ia Writer Duospace"
 			;; :font "PT Sans Caption"
-			:font "Iosevka Aile" :weight 'medium
-			:height 130)
+			;; :font "IBM Plex Sans"
+			;; :font "IBM Plex Serif"
+			;; :font "Iosevka Aile" :weight 'medium
+			:height 150)
     )
   (setq default-frame-alist
 	(list
 	 `(font . ,my/fixed-font)
-	 '(menu-bar-lines . 0)
+	 '(menu-bar-lines . 1)
 	 '(tool-bar-lines . 0)
 	 '(vertical-scroll-bars . nil)
 	 ;; pixels
