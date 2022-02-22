@@ -283,7 +283,8 @@
   :config
   (setq which-key-idle-delay 1
         which-key-idle-secondary-delay 0.05
-        which-key-show-early-on-C-h t)
+        which-key-show-early-on-C-h nil	     ; Use embark-prefix-help-command
+	)
   )
 
 (use-package marginalia
@@ -677,6 +678,7 @@ Switch to the project specific term buffer if it already exists."
   :after (consult flycheck))
 
 (use-package yasnippet
+  :diminish yas-minor-mode
   :hook (prog-mode . yas-minor-mode))
 
 (use-package yasnippet-snippets
@@ -697,7 +699,16 @@ Switch to the project specific term buffer if it already exists."
 	 (lsp-mode . lsp-ui-mode))
 )
 
-(use-package lsp-ui :commands lsp-ui-mode)
+(use-package lsp-ui
+  :config
+  (setq	lsp-ui-doc-enable t
+	lsp-ui-doc-position 'top
+	lsp-ui-doc-delay 0.2
+	lsp-ui-doc-show-with-cursor t
+	lsp-ui-doc-show-with-mouse nil
+	lsp-ui-sideline-diagnostic-max-lines 10
+	)
+)
 
 (use-package lsp-java
   :bind	(
@@ -719,11 +730,33 @@ Switch to the project specific term buffer if it already exists."
 	lsp-java-content-provider-preferred "fernflower")
   )
 
+(use-package protobuf-mode)
 (use-package go-mode)
-(use-package lsp-pyright)
-;  :hook (python-mode . (lambda ()
-;                          (require 'lsp-pyright)
-;                          (lsp))))
+(use-package lsp-pyright
+  :config
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-tramp-connection (lambda ()
+					    (cons "pyright-langserver"
+						  lsp-pyright-langserver-command-args)))
+    :major-modes '(python-mode)
+    :remote? t
+    :server-id 'pyright-remote
+    :multi-root t
+    :priority 3
+    :initialization-options (lambda () (ht-merge (lsp-configuration-section "pyright")
+                                                 (lsp-configuration-section "python")))
+    :initialized-fn (lambda (workspace)
+                      (with-lsp-workspace workspace
+                        (lsp--set-configuration
+                         (ht-merge (lsp-configuration-section "pyright")
+                                   (lsp-configuration-section "python")))))
+    :download-server-fn (lambda (_client callback error-callback _update?)
+                          (lsp-package-ensure 'pyright callback error-callback))
+    :notification-handlers (lsp-ht ("pyright/beginProgress" 'lsp-pyright--begin-progress-callback)
+                                   ("pyright/reportProgress" 'lsp-pyright--report-progress-callback)
+                                   ("pyright/endProgress" 'lsp-pyright--end-progress-callback))))
+)
 
 (use-package tree-sitter-langs
   :hook
