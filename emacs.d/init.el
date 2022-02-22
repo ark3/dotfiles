@@ -774,6 +774,11 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package yaml-mode)
 
+(use-package dumb-jump
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  (setq dumb-jump-prefer-searcher 'rg))
+
 (use-package hideshow ; built-in
   ;; https://karthinks.com/software/simple-folding-with-hideshow/
   :diminish
@@ -872,9 +877,6 @@ Switch to the project specific term buffer if it already exists."
         (stderr-file (make-temp-file "google-java-format")))
     (unwind-protect
         (let ((status (call-process-region
-                       ;; Note that emacs character positions are 1-indexed,
-                       ;; and google-java-format is 0-indexed, so we have to
-                       ;; subtract 1 from START to line it up correctly.
                        (point-min) (point-max)
                        google-java-format-executable
                        nil (list temp-buffer stderr-file) t
@@ -899,7 +901,52 @@ Switch to the project specific term buffer if it already exists."
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
 (add-hook 'java-mode-hook
-	  (lambda () (add-hook 'before-save-hook #'my/google-java-format-buffer nil t)))
+	  (lambda ()
+	    (setq fill-column 100)
+	    (add-hook 'before-save-hook #'my/google-java-format-buffer nil t)))
+
+;; C++
+
+(setq clang-format-executable (executable-find "clang-format"))
+
+(defun my/clang-format-buffer ()
+  "Use clang-format to format the current buffer."
+  (interactive)
+  (let ((cursor (point))
+        (temp-buffer (generate-new-buffer " *clang-format-temp*"))
+        (stderr-file (make-temp-file "clang-format")))
+    (unwind-protect
+        (let ((status (call-process-region
+                       (point-min) (point-max)
+                       clang-format-executable
+                       nil (list temp-buffer stderr-file) t
+                       "--style=google"))
+              (stderr
+               (with-temp-buffer
+                 (insert-file-contents stderr-file)
+                 (when (> (point-max) (point-min))
+                   (insert ": "))
+                 (buffer-substring-no-properties
+                  (point-min) (line-end-position)))))
+          (cond
+           ((stringp status)
+            (error "clang-format killed by signal %s%s" status stderr))
+           ((not (zerop status))
+            (error "clang-format failed with code %d%s" status stderr))
+           (t (message "clang-format succeeded%s" stderr)
+	      (replace-buffer-contents temp-buffer)
+              ;(goto-char cursor)
+	      )))
+      (delete-file stderr-file)
+      (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
+
+(add-hook 'c++-mode-hook
+	  (lambda ()
+	    (setq fill-column 100)
+	    (add-hook 'before-save-hook #'my/clang-format-buffer nil t)))
+
+;; Local
+
 
 ;;; Wrap-up
 
