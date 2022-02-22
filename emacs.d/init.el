@@ -51,7 +51,6 @@
 (setq use-package-always-demand t)
 
 ;; Prevent Emacs-provided Org from being loaded
-
 (straight-register-package 'org)
 (straight-register-package 'org-contrib)
 
@@ -294,12 +293,10 @@
 
 (use-package embark
   :ensure t
-
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("s-." . embark-dwim)
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
@@ -357,7 +354,7 @@
 (use-package vertico
   :config
   (vertico-mode)
-  (setq vertico-resize nil) ; Don't grow and shrink the Vertico minibuffer
+  (setq vertico-resize 'grow-only)
 
   ;; Use `consult-completion-in-region' if Vertico is enabled.
   ;; Otherwise use the default `completion--in-region' function.
@@ -421,8 +418,8 @@
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
   ;; Vertico commands are hidden in normal buffers.
-  ;; (setq read-extended-command-predicate
-  ;;       #'command-completion-default-include-p)
+  (setq read-extended-command-predicate
+        #'command-completion-default-include-p)
 
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
@@ -571,7 +568,7 @@ Switch to the project specific term buffer if it already exists."
 	    ;;  (propertize
 	    ;;   (format-time-string " %H:%M ")
 	    ;;   'face 'modus-themes-pseudo-header))
-	    (:eval (propertize ">>" 'face '(:weight 'bold)))
+	    (:eval (propertize ">>" 'face '(:weight bold)))
 	    " "
 	    ;; "host:"
 	    (:eval (propertize my/vterm-header-host 'face
@@ -813,6 +810,8 @@ Switch to the project specific term buffer if it already exists."
   (add-hook 'c-mode-common-hook 'google-set-c-style)
   (add-hook 'c-mode-common-hook 'google-make-newline-indent)
   )
+
+;; Java
 
 (use-package google-java-format
   :straight (google-java-format
