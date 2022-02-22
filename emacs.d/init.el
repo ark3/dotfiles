@@ -399,7 +399,8 @@
   )
 
 (use-package fancy-dabbrev
-  :disabled
+  :diminish fancy-dabbrev-mode
+  :bind (("TAB" . fancy-dabbrev-expand-or-indent))
   :config
   (global-fancy-dabbrev-mode)
   (setq fancy-dabbrev-preview-delay 0.3
@@ -632,7 +633,15 @@ Switch to the project specific term buffer if it already exists."
   :bind (("C-c g t" . git-timemachine))
   )
 
+(use-package diff-hl
+  :config
+  (global-diff-hl-mode)
+  (diff-hl-margin-mode)
+  (diff-hl-flydiff-mode)  ; do I want this?
+  )
+
 (use-package git-gutter
+  :disabled
   :init
   :config
   (setq git-gutter:disabled-modes '(org-mode asm-mode image-mode)
@@ -643,6 +652,7 @@ Switch to the project specific term buffer if it already exists."
   )
 
 (use-package git-gutter-fringe
+  :disabled
   :diminish git-gutter-mode
   :after git-gutter
   :demand fringe-helper
