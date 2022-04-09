@@ -13,3 +13,8 @@ export PAGER=less
 export PYTHONSTARTUP=~/.pythonrc
 export SUDO_PROMPT="[sudo %u@%h] Password: "
 export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
+
+# Set up for Nix
+if [ -e /home/ark3/.nix-profile/etc/profile.d/nix.sh ]; then
+    . /home/ark3/.nix-profile/etc/profile.d/nix.sh
+fi
