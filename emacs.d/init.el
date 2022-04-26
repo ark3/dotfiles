@@ -399,10 +399,16 @@
         dabbrev-case-replace nil)
 )
 
-(use-package bufler
-  :bind (;;("C-x b" . bufler-switch-buffer) ;; didn't really enjoy this
-         ("C-x C-b" . bufler-list))
-  )
+
+(use-package ibuffer-project
+  :bind ("C-x C-b" . ibuffer)
+  :config
+  (add-hook 'ibuffer-hook
+	    (lambda ()
+	      (setq ibuffer-filter-groups
+		    (ibuffer-project-generate-filter-groups))))
+  (setq ibuffer-show-empty-filter-groups nil
+	ibuffer-project-use-cache t))
 
 
 ;; Use the `orderless' completion style.
