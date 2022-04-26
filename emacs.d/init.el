@@ -560,16 +560,21 @@ Switch to the project specific term buffer if it already exists."
          :map vterm-copy-mode-map
          ("C-c C-c" . vterm-copy-mode)
          )
+  :init
+  (setq vterm-always-compile-module t)
   :config
-  (setq vterm-max-scrollback 99000)
+  (setq vterm-max-scrollback 99000
+	vterm-tramp-shells '(("docker" "/bin/bash")
+			     ("scpx" "/bin/bash")
+			     ("sshx" "/bin/bash")))
   (defun my/vterm-set-header-message (host &optional kctx venv git gitc exit)
     (let ((git-color-number (string-to-number (or gitc "0"))))
-      (setq-local my/vterm-header-host host)
-      (setq-local my/vterm-header-kctx kctx)
-      (setq-local my/vterm-header-venv venv)
-      (setq-local my/vterm-header-git git)
-      (setq-local my/vterm-header-gitc git-color-number)
-      (setq-local my/vterm-header-exit exit)))
+      (setq-local my/vterm-header-host (or host ""))
+      (setq-local my/vterm-header-kctx (or kctx ""))
+      (setq-local my/vterm-header-venv (or venv ""))
+      (setq-local my/vterm-header-git  (or git ""))
+      (setq-local my/vterm-header-gitc (or git-color-number ""))
+      (setq-local my/vterm-header-exit (or exit ""))))
   (add-to-list 'vterm-eval-cmds '("set" my/vterm-set-header-message))
   (defun my/vterm-setup ()
     (my/vterm-set-header-message "Starting up...")
@@ -600,7 +605,7 @@ Switch to the project specific term buffer if it already exists."
 	    (:eval (propertize my/vterm-header-exit 'face
 			       (list :foreground (face-foreground 'ansi-color-red))))
 	    ;; "// "
-	    (:eval (string-trim (abbreviate-file-name (vterm--get-pwd)) "" "/"))
+	    (:eval (string-trim (abbreviate-file-name (or (vterm--get-pwd) "")) "" "/"))
 	    ))
       )
   :hook (vterm-mode . my/vterm-setup))
