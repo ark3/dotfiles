@@ -94,7 +94,6 @@
   (delete-selection-mode t)
 
   ;; Save state between sessions
-  (recentf-mode 1)
   (setq recentf-exclude `(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"
 			  ,(expand-file-name "straight/build/" user-emacs-directory)
 			  ,(expand-file-name "eln-cache/" user-emacs-directory)
@@ -110,8 +109,9 @@
 	savehist-save-minibuffer-history t
 	)
   (desktop-save-mode 1)
-  (savehist-mode 1)
-  (save-place-mode 1)
+  (savehist-mode 1)			; minibuffer history
+  (recentf-mode 1)			; recently-edited files
+  (save-place-mode 1)			; cursor location in visited files
   (dolist (symbol '(kill-ring log-edit-comment-ring))
     (add-to-list 'desktop-globals-to-save symbol))
 
@@ -187,6 +187,7 @@
 
   (show-paren-mode t)
   (global-auto-revert-mode 1)
+  (setq global-auto-revert-non-file-buffers t)
   (transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
 
@@ -205,8 +206,8 @@
   (require 'tramp)
   ;;; include the remote PATH in tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  ;;; Don't create .tramp_history
-  (setq tramp-histfile-override nil)
+  (setq tramp-histfile-override nil	; Don't create .tramp_history
+	tramp-default-method "scpx")
   ;;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
   ;; Avoid "ls does not support --dired" message on MacOS
@@ -216,6 +217,9 @@
 
   (setq dired-dwim-target t)
   (setq windmove-wrap-around t)
+  (setq use-dialog-box nil)
+  (setq read-process-output-max (* 1024 1024)) ; 1mb
+  (setq window-min-width 40)
 
   ;; Scrolling
   (setq scroll-conservatively 10000
@@ -240,8 +244,11 @@
 (use-package super-save
   :diminish super-save-mode
   :config
-  (setq super-save-remote-files nil
-        super-save-auto-save-when-idle nil)
+  (setq super-save-remote-files t
+        super-save-auto-save-when-idle t
+	super-save-idle-duration 30
+	super-save-max-buffer-size 100000
+	)
   (super-save-mode +1))
 
 ;; https://github.com/emacscollective/no-littering
@@ -451,6 +458,7 @@
 	exec-path-from-shell-arguments '("-l")
         exec-path-from-shell-warn-duration-millis 300)
   :config
+  (setq ns-function-modifier 'control)
   (exec-path-from-shell-initialize))
 
 (use-package helpful
@@ -501,6 +509,8 @@
   (org-startup-folded 'content)
   (org-export-with-toc nil)
   (org-export-with-section-numbers nil)
+  :config
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
 )
 
 (use-package markdown-mode
@@ -857,7 +867,7 @@ Switch to the project specific term buffer if it already exists."
                        (point-min) (point-max)
                        clang-format-executable
                        nil (list temp-buffer stderr-file) t
-                       "--style=google"))
+                       "--style=file"))
               (stderr
                (with-temp-buffer
                  (insert-file-contents stderr-file)
