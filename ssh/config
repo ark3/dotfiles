@@ -8,7 +8,7 @@ Host *
   ForwardX11Timeout 0
   ControlMaster auto
   ControlPath ~/.ssh/conn-%n
-  ControlPersist 120s
+  ControlPersist 300s
 
 # -- github-keygen - begin --
 # Version: 1.305
