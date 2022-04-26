@@ -663,79 +663,32 @@ Switch to the project specific term buffer if it already exists."
 (use-package yasnippet-snippets
   :after yasnippet)
 
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-c l"	; prefix for lsp-command-map
-	read-process-output-max (* 1024 1024) ; 1mb
-	lsp-idle-delay 0.5		      ; default 0.5
-	lsp-file-watch-threshold 20000
-	lsp-completion-provider :none
-	)
-  :hook ((python-mode . lsp-deferred)
-	 (java-mode . lsp-deferred)
-	 (go-mode . lsp-deferred)
-	 (lsp-mode . lsp-enable-which-key-integration)
-	 (lsp-mode . lsp-ui-mode))
-)
+(use-package eglot
+  :bind (("C-c l a" . eglot-code-actions)
+	 ("C-c l r" . eglot-rename)
+	 ("C-c l =" . eglot-format-buffer)
+	 )
+  :hook ((python-mode . eglot-ensure)
+	 (c++-mode . eglot-ensure)
+	 (go-mode . eglot-ensure)
+	 )
+  )
 
-(use-package lsp-ui
-  :config
-  (setq	lsp-ui-doc-enable t
-	lsp-ui-doc-position 'top
-	lsp-ui-doc-delay 0.2
-	lsp-ui-doc-show-with-cursor t
-	lsp-ui-doc-show-with-mouse nil
-	lsp-ui-sideline-diagnostic-max-lines 10
-	)
-)
+(defun my-eglot-java-contact (_interactive)
+  "Call my substitute for the Java command"
+  (seq-let (tag _command &rest args) (eglot-java--eclipse-contact nil)
+    (apply #'list tag (substitute-in-file-name "$HOME/.local/bin/java-for-jdt.sh") args)))
 
-(use-package lsp-java
-  :bind	(
-	 :map lsp-command-map
-	      ("=j" . google-java-format-buffer))
+(use-package eglot-java
+  :after eglot
   :config
-  (setq lsp-java-maven-download-sources t
-        lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
-	lsp-java-vmargs	(list
-			 "-XX:+UseParallelGC"
-			 "-XX:GCTimeRatio=4"
-			 "-XX:AdaptiveSizePolicyWeight=90"
-			 "-Dsun.zip.disableMemoryMapping=true"
-			 "-noverify"
-			 (substitute-in-file-name
-			  "--class-path=$HOME/.m2/repository/javax/annotation/javax.annotation-api/1.3.2")
-			 (substitute-in-file-name
-			  "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.16/lombok-1.18.16.jar"))
-	lsp-java-content-provider-preferred "fernflower")
+  (eglot-java-init)
+  (setcdr (assq 'java-mode eglot-server-programs) #'my-eglot-java-contact)
   )
 
 (use-package protobuf-mode)
 (use-package go-mode)
-(use-package lsp-pyright
-  :config
-  (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-tramp-connection (lambda ()
-					    (cons "pyright-langserver"
-						  lsp-pyright-langserver-command-args)))
-    :major-modes '(python-mode)
-    :remote? t
-    :server-id 'pyright-remote
-    :multi-root t
-    :priority 3
-    :initialization-options (lambda () (ht-merge (lsp-configuration-section "pyright")
-                                                 (lsp-configuration-section "python")))
-    :initialized-fn (lambda (workspace)
-                      (with-lsp-workspace workspace
-                        (lsp--set-configuration
-                         (ht-merge (lsp-configuration-section "pyright")
-                                   (lsp-configuration-section "python")))))
-    :download-server-fn (lambda (_client callback error-callback _update?)
-                          (lsp-package-ensure 'pyright callback error-callback))
-    :notification-handlers (lsp-ht ("pyright/beginProgress" 'lsp-pyright--begin-progress-callback)
-                                   ("pyright/reportProgress" 'lsp-pyright--report-progress-callback)
-                                   ("pyright/endProgress" 'lsp-pyright--end-progress-callback))))
-)
+(use-package graphql-mode)
 
 (use-package tree-sitter-langs
   :hook
