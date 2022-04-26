@@ -311,7 +311,7 @@
          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
          ("<help> a" . consult-apropos)            ;; orig. apropos-comman
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flycheck)
+         ("M-g f" . consult-flymake)
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
          ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
@@ -351,6 +351,15 @@
   :after (embark consult))
 
 (use-package wgrep)
+
+(use-package flymake
+  :bind (:map flymake-mode-map
+	 ("C-c f n" . flymake-goto-next-error)
+	 ("C-c f p" . flymake-goto-prev-error)
+	 ("C-c f b" . flymake-show-buffer-diagnostics)
+	 ("C-c f B" . flymake-show-project-diagnostics)
+	 )
+)
 
 (use-package vertico
   :config
@@ -646,12 +655,6 @@ Switch to the project specific term buffer if it already exists."
 	  (unknown . "?")
 	  (ignored . "i")))
   )
-
-
-(use-package flycheck)
-
-(use-package consult-flycheck
-  :after (consult flycheck))
 
 (use-package yasnippet
   :diminish yas-minor-mode
