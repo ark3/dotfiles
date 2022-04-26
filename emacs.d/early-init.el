@@ -32,29 +32,37 @@ until there's an actual GUI to be set up."
   ;; (setq my/fixed-font "JetBrainsMono Nerd Font")
   (setq my/fixed-font
 	;; "Iosevka Term SS09"
-	;; "IBM Plex Mono"
+	"IBM Plex Mono"
 	;; "JetBrainsMono Nerd Font"
+	;; "Recursive Mono Casual"
+	;; "Recursive Mono Linear"
+	;; "Recursive Sans Casual"
+	;; "Recursive Sans Linear"
 	;; "Source Code Pro"
-	"Fira Code"
+	;; "Fira Code"
 	)
   (dotimes (_ 2)
     (set-face-attribute 'default nil
 			;; :font my/fixed-font :width 'expanded :weight 'medium
-			:font my/fixed-font
+		        :font my/fixed-font
+			:weight 'medium
 			:height 130)
     ;; (copy-face `default `fixed-pitch) ; this copies unwanted things, like foreground color
     (set-face-attribute 'fixed-pitch nil
 			;; :font my/fixed-font :width 'expanded :weight 'medium
 			:font my/fixed-font
+			:weight 'medium
 			:height 130)
     (set-face-attribute 'variable-pitch nil
-			:font "FiraGo"
-			;; :font "ia Writer Duospace"
+			;; :font "Source Sans Pro"
+			;; :font "FiraGo"
+			:font "ia Writer Duospace"
 			;; :font "PT Sans Caption"
 			;; :font "IBM Plex Sans"
 			;; :font "IBM Plex Serif"
 			;; :font "Iosevka Aile" :weight 'medium
-			:height 150)
+			:weight 'medium
+			:height 140)
     )
   (setq default-frame-alist
 	(list
