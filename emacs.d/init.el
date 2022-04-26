@@ -427,9 +427,10 @@
   :config
   (global-fancy-dabbrev-mode)
   (setq fancy-dabbrev-preview-delay 0.3
-        dabbrev-case-distinction nil
-        dabbrev-case-fold-search t
-        dabbrev-case-replace nil)
+	fancy-dabbrev-expansion-on-preview-only t
+	dabbrev-case-distinction nil	; different case as different expansions
+        dabbrev-case-fold-search t	; ignore case on search
+        dabbrev-case-replace nil)	; use expansion's case, not abbrev's
   )
 
 ;; A few more useful configurations...
