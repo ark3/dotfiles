@@ -12,9 +12,9 @@
 ;; Switch off garbage collection during startup.
 (setq gc-cons-threshold most-positive-fixnum)
 (add-hook 'emacs-startup-hook
-	  (lambda ()
-	    (setq gc-cons-threshold 16777216 ; 16mb
-		  gc-cons-percentage 0.1)))
+          (lambda ()
+            (setq gc-cons-threshold 16777216 ; 16mb
+                  gc-cons-percentage 0.1)))
 
 ;; Set these settings before the GUI frame is created.
 
@@ -33,49 +33,49 @@ until there's an actual GUI to be set up."
   ;; (setq my/fixed-font )
   ;; (setq my/fixed-font "JetBrainsMono Nerd Font")
   (setq my/fixed-font
-	;; "Cascadia Code"
-	;; "Menlo"
-	;; "Iosevka Term SS09"
-	"IBM Plex Mono"
-	;; "JetBrainsMono Nerd Font"
-	;; "Source Code Pro"
-	;; "Fira Code"
-	)
+        ;; "Cascadia Code"
+        ;; "Menlo"
+        ;; "Iosevka Term SS09"
+        "IBM Plex Mono"
+        ;; "JetBrainsMono Nerd Font"
+        ;; "Source Code Pro"
+        ;; "Fira Code"
+        )
   (dotimes (_ 2)
     (set-face-attribute 'default nil
-			;; :font my/fixed-font :width 'expanded  ;;; for Iosevka
-		        :font my/fixed-font
-			:weight 'medium
-			:height 140)
+                        ;; :font my/fixed-font :width 'expanded  ;;; for Iosevka
+                        :font my/fixed-font
+                        :weight 'medium
+                        :height 140)
     ;; (copy-face `default `fixed-pitch) ; this copies unwanted things, like foreground color
     (set-face-attribute 'fixed-pitch nil
-			;; :font my/fixed-font :width 'expanded
-			:font my/fixed-font
-			:weight 'medium
-			:height 1.0)
+                        ;; :font my/fixed-font :width 'expanded
+                        :font my/fixed-font
+                        :weight 'medium
+                        :height 1.0)
     (set-face-attribute 'variable-pitch nil
-			;; :font "Source Sans Pro"
-			;; :font "FiraGo"
-			;; :font "ia Writer Duospace"
-			;; :font "PT Sans Caption"
-			:font "IBM Plex Sans"
-			;; :font "IBM Plex Serif"
-			;; :font "Iosevka Aile" :weight 'medium
-			:weight 'medium
-			:height 1.15)
+                        ;; :font "Source Sans Pro"
+                        ;; :font "FiraGo"
+                        ;; :font "ia Writer Duospace"
+                        ;; :font "PT Sans Caption"
+                        :font "IBM Plex Sans"
+                        ;; :font "IBM Plex Serif"
+                        ;; :font "Iosevka Aile" :weight 'medium
+                        :weight 'medium
+                        :height 1.15)
     )
   (setq default-frame-alist
-	(list
-	 `(font . ,my/fixed-font)
-	 '(menu-bar-lines . 1)
-	 '(tool-bar-lines . 0)
-	 '(vertical-scroll-bars . nil)
-	 ;; pixels
-	 '(internal-border-width . 1) ; pixels
-	 '(line-spacing . 1)
-	 ;; characters
-	 '(width . 120)
-	 '(height . 50)))
+        (list
+         `(font . ,my/fixed-font)
+         '(menu-bar-lines . 1)
+         '(tool-bar-lines . 0)
+         '(vertical-scroll-bars . nil)
+         ;; pixels
+         '(internal-border-width . 1) ; pixels
+         '(line-spacing . 1)
+         ;; characters
+         '(width . 120)
+         '(height . 50)))
   (setq initial-frame-alist default-frame-alist)
   )
 
