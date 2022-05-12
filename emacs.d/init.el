@@ -71,7 +71,9 @@
 	initial-scratch-message nil
 	sentence-end-double-space nil
 	ring-bell-function 'ignore
-	frame-resize-pixelwise t)
+        frame-resize-pixelwise t
+        frame-inhibit-implied-resize t
+        )
 
   (setq user-full-name "Abhay Saxena"
 	user-mail-address "ark3@email.com")
@@ -220,6 +222,7 @@
   (setq use-dialog-box nil)
   (setq read-process-output-max (* 1024 1024)) ; 1mb
   (setq window-min-width 40)
+  (setq describe-bindings-outline t)
 
   ;; Scrolling
   (setq scroll-conservatively 10000
@@ -234,9 +237,12 @@
         shell-cd-regexp "cd")
 
   ;; Mode line
+  (setq mode-line-compact 'long)
   (display-time-mode -1)
   (column-number-mode t)
   )
+
+;; Packages
 
 (use-package diminish)
 
@@ -281,8 +287,14 @@
 
 (use-package avy
   :bind
-  (("C-;" . avy-goto-char-timer)
+  (("C-c SPC" . avy-goto-char-timer)
    ("C-'" . avy-goto-word-1)))
+
+(use-package iedit)  ; Binds C-;
+
+(use-package ace-window
+  :bind
+  (("M-o" . ace-window)))
 
 (use-package which-key
   :init (which-key-mode)
@@ -309,6 +321,19 @@
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
 )
+
+;; Use l/r to go back/forward in dired
+;; https://github.com/karthink/dired-hist
+(use-package dired-hist
+  :straight (dired-hist
+             :type git :host github :repo "karthink/dired-hist")
+  :bind (:map dired-mode-map
+              ("l" . dired-hist-go-back)
+              ("r" . dired-hist-go-forward)
+         )
+  :config
+  (dired-hist-mode 1)
+  )
 
 (use-package consult
   :bind (
@@ -398,7 +423,6 @@
         dabbrev-case-fold-search t
         dabbrev-case-replace nil)
 )
-
 
 (use-package ibuffer-project
   :bind ("C-x C-b" . ibuffer)
@@ -541,7 +565,13 @@
           show-paren-style 'mixed
           show-paren-when-point-inside-paren t
           show-paren-when-point-in-periphery t
+                  indent-tabs-mode nil
           )))
+
+(use-package aggressive-indent
+  :hook ((emacs-lisp-mode . aggressive-indent-mode)
+         )
+  )
 
 (defun my/vterm-copy-mode-cancel ()
   "Exit vterm-copy-mode without copying anything"
