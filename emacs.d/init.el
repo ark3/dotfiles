@@ -904,14 +904,6 @@ Switch to the project specific term buffer if it already exists."
 
 ;;; Wrap-up
 
-;; Restore garbage collection to a reasonable value.
-;; This is step 2, step 1 is in early-init.
-;; In my case this saves about .3 seconds in startup time.
-(add-hook 'emacs-startup-hook
-  (lambda ()
-    (setq gc-cons-threshold 16777216 ; 16mb
-	  gc-cons-percentage 0.1)))
-
 (message "Loading init file...done (%.3fs)"
 	 (float-time (time-subtract (current-time)
 				    before-user-init-time)))

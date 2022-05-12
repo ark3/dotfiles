@@ -9,10 +9,12 @@
 ;; Do not allow loading from the package cache (same reason).
 (setq package-quickstart nil)
 
-;; Switch off garbage collection (will be switched on later).
-;; This is step 1 of 2. Step 2 is in init.
-;; Taken from Doom Emacs.
+;; Switch off garbage collection during startup.
 (setq gc-cons-threshold most-positive-fixnum)
+(add-hook 'emacs-startup-hook
+	  (lambda ()
+	    (setq gc-cons-threshold 16777216 ; 16mb
+		  gc-cons-percentage 0.1)))
 
 ;; Set these settings before the GUI frame is created.
 
