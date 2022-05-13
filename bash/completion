@@ -1,13 +1,16 @@
 #!/hint/bash
 
 if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
-    [ -f /etc/bash_completion ] && . /etc/bash_completion
-    [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-    [ -f /usr/local/share/bash-completion/bash_completion ] && . /usr/local/share/bash-completion/bash_completion
+    # Linux
+    [ -f /etc/profile.d/bash_completion.sh ] && . /etc/profile.d/bash_completion.sh
+
+    # MacOS
+    [ -f /usr/local/etc/profile.d/bash_completion.sh ] && . /usr/local/etc/profile.d/bash_completion.sh
+
     command -v kubectl >/dev/null 2>&1 && source <(kubectl completion bash)
     command -v minikube >/dev/null 2>&1 && source <(minikube completion bash)
 
-    # https://github.com/cykerway/complete-alias/blob/master/completions/bash_completion.sh
+    # https://github.com/cykerway/complete-alias/
     source ~/dotfiles/bash/complete-alias
     aliases=(k gco ga gb gc gd)
     for a in "${aliases[@]}"; do
