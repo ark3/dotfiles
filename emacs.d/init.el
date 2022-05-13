@@ -248,6 +248,50 @@
 
 (use-package diminish)
 
+;; https://protesilaos.com/emacs/fontaine
+(use-package fontaine
+  :straight (fontaine
+	     :type git :host github :repo "protesilaos/fontaine")
+  :config
+  (setq	fontaine-presets '((t ; our shared fallback properties
+			    :default-family nil ; falls back to ... something?
+			    :default-weight medium
+			    :default-height 140
+			    :fixed-pitch-family nil ; falls back to :default-family
+			    :fixed-pitch-weight nil ; falls back to :default-weight
+			    :fixed-pitch-height 1.0
+			    :variable-pitch-family nil
+			    :variable-pitch-weight medium
+			    :variable-pitch-height 1.15
+			    :bold-family nil ; use whatever the underlying face has
+			    :bold-weight bold
+			    :italic-family nil
+			    :italic-slant italic
+			    :line-spacing 1)
+			   (plex
+			    :default-family "IBM Plex Mono"
+			    :variable-pitch-family "IBM Plex Sans")
+			   (fira
+			    :default-family "Fira Code"
+			    :default-height 130
+			    :line-spacing 2
+			    :variable-pitch-family "FiraGo")
+			   (source
+			    :default-family "Source Code Pro"
+			    :variable-pitch-family "Source Sans Pro")
+			   (iosevka ; but how to set :width 'expanded ???
+			    :default-family "Iosevka Term SS09"
+			    :variable-pitch-family "Iosevka Aile")
+			   )
+	)
+  ;; Also consider
+  ;; "Cascadia Code"
+  ;; "Menlo"
+  ;; "JetBrainsMono Nerd Font"
+  ;; "ia Writer Duospace" for variable-pitch
+  (fontaine-set-preset 'plex)
+  )
+
 ;; https://github.com/bbatsov/super-save
 (use-package super-save
   :diminish super-save-mode
