@@ -957,6 +957,28 @@ Switch to the project specific term buffer if it already exists."
             (setq fill-column 100)
             (add-hook 'before-save-hook #'my/clang-format-buffer nil t)))
 
+;; direnv support using https://github.com/purcell/envrc
+;;
+;; It's probably wise to do this late in your startup sequence: you normally
+;; want envrc-mode to be initialized in each buffer before other minor modes
+;; like flycheck-mode which might look for executables. Counter-intuitively,
+;; this means that envrc-global-mode should be enabled after other global minor
+;; modes, since each prepends itself to various hooks.
+(use-package envrc
+  :if (executable-find "direnv")
+  :bind (:map envrc-mode-map
+	      ("C-c E" . envrc-command-map)
+	      )
+  :config
+  (setq envrc-none-lighter
+	'(" env[" (:propertize "-" face envrc-mode-line-none-face) "]")
+	envrc-on-lighter
+	'(" env[" (:propertize "+" face envrc-mode-line-on-face) "]")
+	envrc-error-lighter
+	'(" env[" (:propertize "!" face envrc-mode-line-error-face) "]"))
+  (envrc-global-mode)
+  )
+
 ;; Local
 
 
