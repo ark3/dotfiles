@@ -10,4 +10,4 @@ unset PRF
 MY_BASH_ENV_IS_SET=true
 
 # Source rc file for interactive login shells
-[[ $- == *i* && -n CALLING_FROM_RC ]] && . ~/.bashrc
+[[ $- == *i* && -z $CALLING_FROM_RC ]] && . ~/.bashrc
