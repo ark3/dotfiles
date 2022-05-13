@@ -1,26 +1,8 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;;; Commentary:
-
-;; This file has an outline which can be viewed by looking at comments
-;; starting with three or more semicolons. `outline-minor-mode' supports this
-;; convention by default and helps with navigation. You can also create an
-;; occur buffer with the search /^;;;+/.
-
-
 ;;; Preamble
 
-;; It is useful to know the impact of your init file on Emacs startup time so
-;; you can avoid introducing slowdowns. There are many ways to do it, but this
-;; is very simple and does the trick for me.
-
-(defvar before-user-init-time (current-time)
-  "Value of `current-time' when Emacs begins loading `user-init-file'.")
-
-(message "Loading Emacs, pre-init...done (%.3fs)"
-         (float-time (time-subtract before-user-init-time
-                                    before-init-time)))
-
+(message "Loading Emacs, pre-init...done (%ss)" (emacs-init-time "%.4f"))
 (message "Loading %s..." user-init-file)
 
 
@@ -980,9 +962,6 @@ Switch to the project specific term buffer if it already exists."
 
 ;;; Wrap-up
 
-(message "Loading init file...done (%.3fs)"
-         (float-time (time-subtract (current-time)
-                                    before-user-init-time)))
-
+(message "Loading init file...done (%ss)" (emacs-init-time "%.4f"))
 
 ;;; End of init.el
