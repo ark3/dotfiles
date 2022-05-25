@@ -590,17 +590,19 @@
 
 ;;; Programming stuff
 
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (display-line-numbers-mode t)
-            (display-fill-column-indicator-mode t)
-            (setq fill-column 80
-                  show-paren-delay 0
-                  show-paren-style 'mixed
-                  show-paren-when-point-inside-paren t
-                  show-paren-when-point-in-periphery t
-                  indent-tabs-mode nil
-                  )))
+(defun prog-stuff ()
+  (display-line-numbers-mode t)
+  (display-fill-column-indicator-mode t)
+  (setq fill-column 80
+        show-paren-delay 0
+        show-paren-style 'mixed
+        show-paren-when-point-inside-paren t
+        show-paren-when-point-in-periphery t
+        indent-tabs-mode nil
+        )
+  )
+
+(add-hook 'prog-mode-hook 'prog-stuff)
 
 (use-package aggressive-indent
   :hook ((emacs-lisp-mode . aggressive-indent-mode)
@@ -790,7 +792,9 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package cmake-mode)
 
-(use-package yaml-mode)
+(use-package yaml-mode
+  :hook (yaml-mode . prog-stuff)
+  )
 
 (use-package dumb-jump
   :config
