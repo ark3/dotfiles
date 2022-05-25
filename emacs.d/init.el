@@ -106,6 +106,11 @@
   (global-unset-key (kbd "C-z"))
   (global-unset-key (kbd "C-x C-z"))
 
+  ;; Don't quit w/o warning
+  (add-hook 'kill-emacs-query-functions
+            (lambda () (y-or-n-p "Do you really want to exit Emacs? "))
+            'append)
+
   ;; But don't mess up window layout. Instead, short-circuit the cond
   ;; expression by defining a do-nothing buffer-quit-function.
   (defadvice keyboard-escape-quit
@@ -543,6 +548,12 @@
          ("M-f" . #'helpful-macro)
          ("C" . #'helpful-command)
          )
+  :config
+  (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer)
+  (defun my/helpful-switch-to-buffer (buffer-or-name)
+    (if (eq major-mode 'helpful-mode)
+        (switch-to-buffer buffer-or-name)
+      (pop-to-buffer buffer-or-name)))
   )
 
 ;;; Text stuff
