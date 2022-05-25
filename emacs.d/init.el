@@ -785,10 +785,13 @@ Switch to the project specific term buffer if it already exists."
   :after yasnippet)
 
 (use-package eglot
-  :bind (("C-c l a" . eglot-code-actions)
-         ("C-c l r" . eglot-rename)
-         ("C-c l =" . eglot-format-buffer)
-         )
+  :bind (:map eglot-mode-map
+              ("C-c l a" . eglot-code-actions)
+              ("C-c l r" . eglot-rename)
+              ("C-c l =" . eglot-format-buffer)
+              ("C-c l R" . eglot-reconnect)
+              ("C-c l K" . eglot-shutdown-all)
+              )
   :hook ((python-mode . eglot-ensure)
          (c++-mode . eglot-ensure)
          (go-mode . eglot-ensure)
