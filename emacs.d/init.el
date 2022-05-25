@@ -249,18 +249,17 @@
 			    :fixed-pitch-height 1.0
 			    :variable-pitch-family nil
 			    :variable-pitch-weight medium
-			    :variable-pitch-height 1.15
+			    :variable-pitch-height 1.2
 			    :bold-family nil ; use whatever the underlying face has
 			    :bold-weight bold
 			    :italic-family nil
 			    :italic-slant italic
 			    :line-spacing 1)
 			   (plex
-			    :default-family "IBM Plex Mono"
+ 			    :default-family "IBM Plex Mono"
 			    :variable-pitch-family "IBM Plex Sans")
 			   (fira
 			    :default-family "Fira Code"
-			    :default-height 130
 			    :line-spacing 2
 			    :variable-pitch-family "FiraGo")
 			   (source
@@ -269,14 +268,28 @@
 			   (iosevka ; but how to set :width 'expanded ???
 			    :default-family "Iosevka Term SS09"
 			    :variable-pitch-family "Iosevka Aile")
-			   )
-	)
+                           (comfy
+			    :default-family "Iosevka Comfy"
+                            :default-height 150
+			    :variable-pitch-family "Iosevka Comfy Duo"
+			    :line-spacing 2)
+                           (comfy-wide
+	                    :default-family "Iosevka Comfy Wide"
+	                    :variable-pitch-family "Iosevka Aile"
+	                    :line-spacing 2)
+                           (current
+			    :default-family "IBM Plex Mono"
+                            :variable-pitch-height 1.0
+			    :variable-pitch-family "ia Writer Duospace"
+                            )
+	                   )
+        )
   ;; Also consider
   ;; "Cascadia Code"
   ;; "Menlo"
   ;; "JetBrainsMono Nerd Font"
-  ;; "ia Writer Duospace" for variable-pitch
-  (fontaine-set-preset 'plex)
+  ;; "ia Writer Duospace" for variable-pitch (based heavily on IBM Plex Mono)
+  (fontaine-set-preset 'current)
   )
 
 ;; https://github.com/bbatsov/super-save
