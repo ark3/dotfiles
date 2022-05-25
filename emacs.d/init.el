@@ -170,6 +170,11 @@
                           "Turn off mouse-wheel-text-scale")
 
   (show-paren-mode t)
+  (setq show-paren-delay 0
+        show-paren-style 'mixed         ; show paren if visible, expr otherwise
+        show-paren-when-point-inside-paren t
+        show-paren-when-point-in-periphery t)
+
   (global-auto-revert-mode 1)
   (setq global-auto-revert-non-file-buffers t)
   (transient-mark-mode -1)
@@ -443,14 +448,19 @@
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file)))
 
-(use-package dabbrev
-  :bind (("M-/" . dabbrev-completion)
-         ("C-M-/" . dabbrev-expand))
+
+(use-package fancy-dabbrev
+  :diminish fancy-dabbrev-mode
+  :bind (("TAB" . fancy-dabbrev-expand-or-indent)
+         ("M-/" . dabbrev-completion)
+         ("C-M-/" . hippie-expand)
+         )
   :config
-  (setq dabbrev-case-distinction nil
-        dabbrev-case-fold-search t
-        dabbrev-case-replace nil)
-)
+  (global-fancy-dabbrev-mode)
+  (setq fancy-dabbrev-preview-delay 0.3
+        fancy-dabbrev-expansion-on-preview-only t
+        )
+  )
 
 (use-package ibuffer-project
   :bind ("C-x C-b" . ibuffer)
@@ -471,18 +481,6 @@
   (setq completion-styles '(orderless)
         completion-category-defaults nil
         completion-category-overrides '((file (styles basic partial-completion))))
-  )
-
-(use-package fancy-dabbrev
-  :diminish fancy-dabbrev-mode
-  :bind (("TAB" . fancy-dabbrev-expand-or-indent))
-  :config
-  (global-fancy-dabbrev-mode)
-  (setq fancy-dabbrev-preview-delay 0.3
-        fancy-dabbrev-expansion-on-preview-only t
-        dabbrev-case-distinction nil    ; different case as different expansions
-        dabbrev-case-fold-search t      ; ignore case on search
-        dabbrev-case-replace nil)       ; use expansion's case, not abbrev's
   )
 
 ;; A few more useful configurations...
@@ -539,6 +537,11 @@
 
 (defun text-stuff ()
   (setq fill-column 100)
+  (setq-local
+   dabbrev-case-distinction t     ; treat expansions same if differ in case
+   dabbrev-case-fold-search t     ; ignore case on search
+   dabbrev-case-replace t         ; keep typed case
+   )
   (visual-fill-column-mode 1)
   (org-indent-mode 1)
   (variable-pitch-mode 1))
@@ -564,6 +567,9 @@
   :hook ((org-mode . text-stuff)
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
+  :bind (:map org-mode-map
+	      ("<tab>" . fancy-dabbrev-expand-or-indent)
+              ("<backtab>" . fancy-dabbrev-backward))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
@@ -575,7 +581,10 @@
   (setq org-capture-templates
         '(("e" "Email" entry (file "~/temp/email.org")
            "* %?" :empty-lines 1))
+        org-cycle-emulate-tab nil
         )
+  (add-hook 'org-mode-hook
+            (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle)))
   )
 
 (use-package markdown-mode
@@ -594,12 +603,12 @@
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
   (setq fill-column 80
-        show-paren-delay 0
-        show-paren-style 'mixed
-        show-paren-when-point-inside-paren t
-        show-paren-when-point-in-periphery t
-        indent-tabs-mode nil
-        )
+        indent-tabs-mode nil)
+  (setq-local
+   dabbrev-case-distinction nil    ; different case as different expansions
+   dabbrev-case-fold-search t      ; ignore case on search
+   dabbrev-case-replace nil        ; replaced typed case with existing case
+   )
   )
 
 (add-hook 'prog-mode-hook 'prog-stuff)
@@ -746,7 +755,18 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package yasnippet
   :diminish yas-minor-mode
-  :hook (prog-mode . yas-minor-mode))
+  :bind (:map yas-minor-mode-map
+              ("TAB" . nil)             ; Instead, use hippie-expand
+              ("<tab>" . nil)
+              )
+  :hook (prog-mode . yas-minor-mode)
+  :config
+  (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
+  )
+
+
+(define-key yas-minor-mode-map (kbd "<tab>") nil)
+(define-key yas-minor-mode-map (kbd "TAB") nil)
 
 (use-package yasnippet-snippets
   :after yasnippet)
