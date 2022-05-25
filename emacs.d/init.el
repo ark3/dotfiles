@@ -558,9 +558,11 @@
   )
 
 (use-package org-autolist :diminish)
+(use-package org-appear)
 
 (use-package org
   :hook ((org-mode . text-stuff)
+         (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
@@ -570,7 +572,11 @@
   (org-export-with-section-numbers nil)
   :config
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-)
+  (setq org-capture-templates
+        '(("e" "Email" entry (file "~/temp/email.org")
+           "* %?" :empty-lines 1))
+        )
+  )
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
