@@ -486,12 +486,11 @@
         ibuffer-project-use-cache t))
 
 
-;; Use the `orderless' completion style.
-;; Enable `partial-completion' for file path expansion.
-;; You may prefer to use `initials' instead of `partial-completion'.
 (use-package orderless
   :init
-  (setq completion-styles '(orderless)
+  (setq orderless-matching-styles
+        '(orderless-literal orderless-regexp orderless-prefixes))
+  (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles basic partial-completion))))
   )
