@@ -366,7 +366,7 @@
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
-)
+  )
 
 ;; Use l/r to go back/forward in dired
 ;; https://github.com/karthink/dired-hist
@@ -376,7 +376,7 @@
   :bind (:map dired-mode-map
               ("l" . dired-hist-go-back)
               ("r" . dired-hist-go-forward)
-         )
+              )
   :config
   (dired-hist-mode 1)
   )
@@ -432,12 +432,12 @@
 
 (use-package flymake
   :bind (:map flymake-mode-map
-         ("C-c f n" . flymake-goto-next-error)
-         ("C-c f p" . flymake-goto-prev-error)
-         ("C-c f b" . flymake-show-buffer-diagnostics)
-         ("C-c f B" . flymake-show-project-diagnostics)
-         )
-)
+              ("C-c f n" . flymake-goto-next-error)
+              ("C-c f p" . flymake-goto-prev-error)
+              ("C-c f b" . flymake-show-buffer-diagnostics)
+              ("C-c f B" . flymake-show-project-diagnostics)
+              )
+  )
 
 (use-package vertico
   :config
@@ -512,7 +512,7 @@
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
   (minibuffer-depth-indicate-mode t)
-)
+  )
 
 (use-package edit-server
   :init
@@ -712,7 +712,7 @@ Switch to the project specific term buffer if it already exists."
             ;; "// "
             (:eval (string-trim (abbreviate-file-name (or (vterm--get-pwd) "")) "" "/"))
             ))
-      )
+    )
   :hook (vterm-mode . my/vterm-setup))
 
 (use-package bash-completion
@@ -817,7 +817,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package tree-sitter-langs
   :hook
   (tree-sitter-after-on . tree-sitter-hl-mode)
-)
+  )
 
 (use-package tree-sitter
   :diminish
@@ -839,7 +839,8 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package hideshow ; built-in
   ;; https://karthinks.com/software/simple-folding-with-hideshow/
-  :diminish
+  ;; Roughly https://github.com/karthink/.emacs.d/blob/master/init.el#L3159
+  :diminish hs-minor-mode
   :bind (:map prog-mode-map
               ("C-<tab>" . hs-cycle)
               ("C-S-<tab>" . hs-global-cycle)
@@ -884,9 +885,9 @@ Switch to the project specific term buffer if it already exists."
            (hs-hide-block))
           (_
            (if (not (hs-already-hidden-p))
-                 (hs-hide-block)
-               (hs-hide-level 1)
-               (setq this-command 'hs-cycle-children))))
+               (hs-hide-block)
+             (hs-hide-level 1)
+             (setq this-command 'hs-cycle-children))))
       (hs-hide-level level)
       (setq this-command 'hs-hide-level)))
 
@@ -953,7 +954,7 @@ Switch to the project specific term buffer if it already exists."
             (error "google-java-format failed with code %d%s" status stderr))
            (t (message "google-java-format succeeded%s" stderr)
               (replace-buffer-contents temp-buffer)
-              ;(goto-char cursor)
+              ;;(goto-char cursor)
               )))
       (delete-file stderr-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
@@ -993,7 +994,7 @@ Switch to the project specific term buffer if it already exists."
             (error "clang-format failed with code %d%s" status stderr))
            (t (message "clang-format succeeded%s" stderr)
               (replace-buffer-contents temp-buffer)
-                                        ;(goto-char cursor)
+              ;;(goto-char cursor)
               )))
       (delete-file stderr-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
