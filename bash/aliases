@@ -64,13 +64,15 @@ alias gss='git status'
 command -v md5sum > /dev/null || alias md5sum="md5"
 command -v sha1sum > /dev/null || alias sha1sum="shasum"
 
-# clear screen w/o losing existing output; just scroll it off the top
-printf -v MANYRETS \\n%.0s {1..500}           # this _creates_ MANYRETS
-function myclear {
-    printf "${MANYRETS:0:$(tput lines) - 1}"  # this _uses_ MANYRETS
-    clear
-}
-bind -x '"\C-l": myclear'
+if [[ ${SHELLOPTS} =~ (vi|emacs) ]]; then  # is line editing enabled?
+    # clear screen w/o losing existing output; just scroll it off the top
+    printf -v MANYRETS \\n%.0s {1..500}           # this _creates_ MANYRETS
+    function myclear {
+        printf "${MANYRETS:0:$(tput lines) - 1}"  # this _uses_ MANYRETS
+        clear
+    }
+    bind -x '"\C-l": myclear'
+fi
 
 function mcd {
     mkdir -p -- "$1" &&
