@@ -212,9 +212,16 @@
   (setq dired-dwim-target t)
   (setq windmove-wrap-around t)
   (setq use-dialog-box nil)
-  (setq read-process-output-max (* 1024 1024)) ; 1mb
   (setq window-min-width 40)
   (setq describe-bindings-outline t)
+
+  ;; Performance: Turn off bidirectional text
+  (setq bidi-inhibit-bpa t)
+  (setq-default bidi-paragraph-direction 'left-to-right)
+
+  ;; Performance: I/O-related tuning
+  (setq process-adaptive-read-buffering nil)
+  (setq read-process-output-max (* 1024 1024)) ; 1mb
 
   ;; Scrolling
   (setq scroll-conservatively 10000
@@ -239,6 +246,16 @@
 ;; Packages
 
 (use-package diminish)
+
+(use-package stutter
+  :straight (stutter
+             :type git :host github :repo "ark3/stutter.el")
+  :custom
+  (stutter-minimum-growth 1024 "Smaller chunks useful on MacOS")
+  :hook
+  (shell-mode . stutter-mode)
+  (compilation-mode . stutter-mode)
+  )
 
 ;; https://protesilaos.com/emacs/fontaine
 (use-package fontaine
@@ -731,14 +748,18 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package ansi-color
   :config
-  (defun my-colorize-compilation-buffer ()
-    (when (eq major-mode 'compilation-mode)
-      (ansi-color-apply-on-region compilation-filter-start (point-max))))
+  (if (>= emacs-major-version 28)
+      (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+    (progn
+      (defun colorize-compilation-buffer ()
+        (let ((inhibit-read-only t))
+          (ansi-color-apply-on-region compilation-filter-start (point))))
+      (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)))
   (defun display-ansi-colors ()
     (interactive)
     (let ((inhibit-read-only t))
       (ansi-color-apply-on-region (point-min) (point-max))))
-  :hook (compilation-filter . my-colorize-compilation-buffer))
+  )
 
 (use-package magit
   :init (setq-default git-magit-status-fullscreen t)
