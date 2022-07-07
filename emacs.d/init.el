@@ -236,6 +236,18 @@
         shell-cd-regexp "cd"
         comint-input-ignoredups t
         )
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              (setq-local scroll-margin 0)
+              (define-key shell-mode-map (kbd "C-l")
+                (lambda ()
+                  (interactive)
+                  (recenter 0)))
+              (define-key shell-mode-map (kbd "M-p")
+                'comint-previous-matching-input-from-input)
+              (define-key shell-mode-map (kbd "M-n")
+                'comint-next-matching-input-from-input)
+              ))
 
   ;; Mode line
   (setq mode-line-compact 'long)
@@ -745,6 +757,12 @@ Switch to the project specific term buffer if it already exists."
 (use-package bash-completion
   :config
   (bash-completion-setup))
+
+(use-package native-complete
+  :disabled
+  ;; FIXME: Consider using this instead
+  ;; https://github.com/CeleritasCelery/emacs-native-shell-complete
+  )
 
 (use-package ansi-color
   :config
