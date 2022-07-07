@@ -272,51 +272,51 @@
 ;; https://protesilaos.com/emacs/fontaine
 (use-package fontaine
   :straight (fontaine
-	     :type git :host github :repo "protesilaos/fontaine")
+             :type git :host github :repo "protesilaos/fontaine")
   :config
-  (setq	fontaine-presets '((t ; our shared fallback properties
-			    :default-family nil ; falls back to ... something?
-			    :default-weight medium
-			    :default-height 140
-			    :fixed-pitch-family nil ; falls back to :default-family
-			    :fixed-pitch-weight nil ; falls back to :default-weight
-			    :fixed-pitch-height 1.0
-			    :variable-pitch-family nil
-			    :variable-pitch-weight medium
-			    :variable-pitch-height 1.2
-			    :bold-family nil ; use whatever the underlying face has
-			    :bold-weight bold
-			    :italic-family nil
-			    :italic-slant italic
-			    :line-spacing 1)
-			   (plex
- 			    :default-family "IBM Plex Mono"
-			    :variable-pitch-family "IBM Plex Sans")
-			   (fira
-			    :default-family "Fira Code"
-			    :line-spacing 2
-			    :variable-pitch-family "FiraGo")
-			   (source
-			    :default-family "Source Code Pro"
-			    :variable-pitch-family "Source Sans Pro")
-			   (iosevka ; but how to set :width 'expanded ???
-			    :default-family "Iosevka Term SS09"
-			    :variable-pitch-family "Iosevka Aile")
+  (setq fontaine-presets '((t ; our shared fallback properties
+                            :default-family nil ; falls back to ... something?
+                            :default-weight medium
+                            :default-height 140
+                            :fixed-pitch-family nil ; falls back to :default-family
+                            :fixed-pitch-weight nil ; falls back to :default-weight
+                            :fixed-pitch-height 1.0
+                            :variable-pitch-family nil
+                            :variable-pitch-weight medium
+                            :variable-pitch-height 1.2
+                            :bold-family nil ; use whatever the underlying face has
+                            :bold-weight bold
+                            :italic-family nil
+                            :italic-slant italic
+                            :line-spacing 1)
+                           (plex
+                            :default-family "IBM Plex Mono"
+                            :variable-pitch-family "IBM Plex Sans")
+                           (fira
+                            :default-family "Fira Code"
+                            :line-spacing 2
+                            :variable-pitch-family "FiraGo")
+                           (source
+                            :default-family "Source Code Pro"
+                            :variable-pitch-family "Source Sans Pro")
+                           (iosevka ; but how to set :width 'expanded ???
+                            :default-family "Iosevka Term SS09"
+                            :variable-pitch-family "Iosevka Aile")
                            (comfy
-			    :default-family "Iosevka Comfy"
+                            :default-family "Iosevka Comfy"
                             :default-height 150
-			    :variable-pitch-family "Iosevka Comfy Duo"
-			    :line-spacing 2)
+                            :variable-pitch-family "Iosevka Comfy Duo"
+                            :line-spacing 2)
                            (comfy-wide
-	                    :default-family "Iosevka Comfy Wide"
-	                    :variable-pitch-family "Iosevka Aile"
-	                    :line-spacing 2)
+                            :default-family "Iosevka Comfy Wide"
+                            :variable-pitch-family "Iosevka Aile"
+                            :line-spacing 2)
                            (current
-			    :default-family "IBM Plex Mono"
+                            :default-family "IBM Plex Mono"
                             :variable-pitch-height 1.0
-			    :variable-pitch-family "ia Writer Duospace"
+                            :variable-pitch-family "ia Writer Duospace"
                             )
-	                   )
+                           )
         )
   ;; Also consider
   ;; "Cascadia Code"
@@ -620,7 +620,7 @@
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
   :bind (:map org-mode-map
-	      ("<tab>" . fancy-dabbrev-expand-or-indent)
+              ("<tab>" . fancy-dabbrev-expand-or-indent)
               ("<backtab>" . fancy-dabbrev-backward))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
@@ -1063,15 +1063,15 @@ Switch to the project specific term buffer if it already exists."
 (use-package envrc
   :if (executable-find "direnv")
   :bind (:map envrc-mode-map
-	      ("C-c E" . envrc-command-map)
-	      )
+              ("C-c E" . envrc-command-map)
+              )
   :config
   (setq envrc-none-lighter
-	'(" env[" (:propertize "-" face envrc-mode-line-none-face) "]")
-	envrc-on-lighter
-	'(" env[" (:propertize "+" face envrc-mode-line-on-face) "]")
-	envrc-error-lighter
-	'(" env[" (:propertize "!" face envrc-mode-line-error-face) "]"))
+        '(" env[" (:propertize "-" face envrc-mode-line-none-face) "]")
+        envrc-on-lighter
+        '(" env[" (:propertize "+" face envrc-mode-line-on-face) "]")
+        envrc-error-lighter
+        '(" env[" (:propertize "!" face envrc-mode-line-error-face) "]"))
   (envrc-global-mode)
   )
 
