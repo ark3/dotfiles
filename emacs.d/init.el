@@ -255,6 +255,29 @@
   (column-number-mode t)
   )
 
+;; Tagged buffers
+;; as written by Henrik Lissner (author of Doom Emacs)
+;; https://discord.com/channels/406534637242810369/806409569013858314/967047606326947841
+(defvar my/buffer-tags ())
+
+(defun my/tag-buffer (n)
+  (interactive (list (read-number ">")))
+  (setf (alist-get n my/buffer-tags) (current-buffer)))
+
+(defun my/switch-to-tagged-buffer (n)
+  (interactive (list (read-number ">")))
+  (switch-to-buffer
+   (or (alist-get n my/buffer-tags)
+       (user-error "No buffer with tag %d" n))))
+
+(dotimes (i 9)
+  (global-set-key (kbd (format "C-z C-%d" i))
+                  (lambda () (interactive)
+                    (my/tag-buffer i)))
+  (global-set-key (kbd (format "C-z %d" i))
+                  (lambda () (interactive)
+                    (my/switch-to-tagged-buffer i))))
+
 ;; Packages
 
 (use-package diminish)
@@ -561,7 +584,12 @@
         exec-path-from-shell-arguments '("-l")
         exec-path-from-shell-warn-duration-millis 300)
   :config
-  (setq ns-function-modifier 'control)
+  (setq ns-function-modifier 'control
+        mac-function-modifier 'control
+        mac-option-modifier 'meta
+        mac-command-modifier 'super
+        )
+
   (exec-path-from-shell-initialize))
 
 (use-package helpful
@@ -847,6 +875,12 @@ Switch to the project specific term buffer if it already exists."
          )
   )
 
+(use-package eldoc
+  :diminish "doc"
+  :config
+  (setq eldoc-echo-area-use-multiline-p 5)
+  )
+
 (defun my-eglot-java-contact (_interactive)
   "Call my substitute for the Java command"
   (seq-let (tag _command &rest args) (eglot-java--eclipse-contact nil)
@@ -1077,6 +1111,7 @@ Switch to the project specific term buffer if it already exists."
 
 ;; Local
 
+(load! "config.el" "~/.local/emacs" t)  ; NOERROR if file does not exist
 
 ;;; Wrap-up
 
