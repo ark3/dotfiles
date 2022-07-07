@@ -24,6 +24,7 @@
       path: emacs.d/init.el
     ~/.vimrc:
     ~/bin:
+    ~/.config/doom:
     ~/.config/git/ignore:
       path: config/git/ignore
     ~/.config/fish:
