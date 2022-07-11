@@ -29,6 +29,7 @@
       "C-x C-z" nil)                    ; also suspend-frame
 
 (put 'narrow-to-region 'disabled nil)
+(auto-save-visited-mode +1)
 
 (after! tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
