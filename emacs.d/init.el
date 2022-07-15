@@ -725,45 +725,15 @@ Switch to the project specific term buffer if it already exists."
         vterm-tramp-shells '(("docker" "/bin/bash")
                              ("scpx" "/bin/bash")
                              ("sshx" "/bin/bash")))
-  (defun my/vterm-set-header-message (host &optional kctx venv git gitc exit)
-    (let ((git-color-number (string-to-number (or gitc "0"))))
-      (setq-local my/vterm-header-host (or host ""))
-      (setq-local my/vterm-header-kctx (or kctx ""))
-      (setq-local my/vterm-header-venv (or venv ""))
-      (setq-local my/vterm-header-git  (or git ""))
-      (setq-local my/vterm-header-gitc (or git-color-number ""))
-      (setq-local my/vterm-header-exit (or exit ""))))
+  (defun my/vterm-set-header-message (message)
+    (setq-local my/vterm-header-message (base64-decode-string (or message ""))))
   (add-to-list 'vterm-eval-cmds '("set" my/vterm-set-header-message))
   (defun my/vterm-setup ()
-    (my/vterm-set-header-message "Starting up...")
+    (my/vterm-set-header-message (base64-encode-string "Starting up..."))
     (setq header-line-format
           '(" "
-            ;; (:eval
-            ;;  (propertize
-            ;;   (format-time-string " %H:%M ")
-            ;;   'face 'modus-themes-pseudo-header))
-            (:eval (propertize ">>" 'face '(:weight bold)))
-            " "
-            ;; "host:"
-            (:eval (propertize my/vterm-header-host 'face
-                               (list :foreground (face-foreground 'term-color-yellow)
-                                     :weight 'bold)))
-            ;; "/kctx:"
-            (:eval (propertize my/vterm-header-kctx 'face
-                               (list :foreground (face-foreground 'term-color-magenta))))
-            ;; "/venv:"
-            (:eval (propertize my/vterm-header-venv 'face
-                               (list :foreground (face-foreground 'term-color-blue))))
-            ;; "/git:"
-            (:eval (propertize my/vterm-header-git  'face
-                               (list :foreground
-                                     (aref ansi-color-names-vector
-                                           my/vterm-header-gitc))))
-            ;; "/exit:"
-            (:eval (propertize my/vterm-header-exit 'face
-                               (list :foreground (face-foreground 'ansi-color-red))))
-            ;; "// "
-            (:eval (string-trim (abbreviate-file-name (or (vterm--get-pwd) "")) "" "/"))
+            (:eval (ansi-color-apply my/vterm-header-message))
+            (:eval (string-trim (abbreviate-file-name default-directory) "" "/"))
             ))
     )
   :hook (vterm-mode . my/vterm-setup))

@@ -4,21 +4,25 @@
 # https://github.com/sapegin/dotfiles/blob/bash/tilde/bash_profile.bash
 # https://unix.stackexchange.com/questions/269077/tput-setaf-color-table-how-to-determine-color-codes
 if [ -t 1 ]; then
-    BLACK="$(tput setaf 0)"
-    RED="$(tput setaf 1)"
-    GREEN="$(tput setaf 2)"
-    GREENBG="$(tput setab 2)"
-    YELLOW="$(tput setaf 3)"
-    BLUE="$(tput setaf 4)"
-    MAGENTA="$(tput setaf 5)"
-    CYAN="$(tput setaf 6)"
-    WHITE="$(tput setaf 7)"
-    GRAY="$(tput setaf 8)"
-    BOLD="$(tput bold)"
-    GRAYFG="$(tput setaf 238)"
-    UNDERLINE="$(tput sgr 0 1)"
-    INVERT="$(tput sgr 1 0)"
-    NOCOLOR="$(tput sgr0)"
+    if [ -z "$INSIDE_EMACS" ]; then tterm=$TERM; else tterm=ansi; fi
+
+    BLACK="$(TERM=$tterm tput setaf 0)"
+    RED="$(TERM=$tterm tput setaf 1)"
+    GREEN="$(TERM=$tterm tput setaf 2)"
+    GREENBG="$(TERM=$tterm tput setab 2)"
+    YELLOW="$(TERM=$tterm tput setaf 3)"
+    BLUE="$(TERM=$tterm tput setaf 4)"
+    MAGENTA="$(TERM=$tterm tput setaf 5)"
+    CYAN="$(TERM=$tterm tput setaf 6)"
+    WHITE="$(TERM=$tterm tput setaf 7)"
+    GRAY="$(TERM=$tterm tput setaf 8)"
+    BOLD="$(TERM=$tterm tput bold)"
+    GRAYFG="$(TERM=$tterm tput setaf 238)"
+    UNDERLINE="$(TERM=$tterm tput sgr 0 1)"
+    INVERT="$(TERM=$tterm tput sgr 1 0)"
+    NOCOLOR="$(TERM=$tterm tput sgr0)"
+
+    unset tterm
 fi
 LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
@@ -156,7 +160,13 @@ prompt_command() {
     # fi
 
     if [[ "$INSIDE_EMACS" = vterm* ]]; then
-	vterm_cmd set "$host_prompt" "$kctx_prompt" "$venv_prompt" "$git_info" "$git_color_num" "$exit_prompt"
+        vterm_cmd set "$(printf %s \
+            "${BOLD}>>${NOCOLOR} " \
+            "${BOLD}${MAGENTA}${host_prompt}${NOCOLOR}" \
+            "${MAGENTA}${kctx_prompt}${NOCOLOR}" \
+            "${BLUE}${venv_prompt}${NOCOLOR}" \
+            "${git_color}${git_info}${NOCOLOR}" \
+            "${exit_color}${exit_prompt}${NOCOLOR}" | base64)"
     fi
 
     history -a                  # append this shell's history to the file
