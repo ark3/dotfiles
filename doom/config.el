@@ -1,19 +1,29 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+;; - Improve project stuff
+;;   - Turn off projectile somehow
+;;   - Bind basic project stuff to C-c p
+;; - Better leader stuff
+;;   - Add to or replace leader and local leader (M-m and M-RET)
+;;   - DOOM: Copy-paste evil stuff into default
+;; - Maybe add key chords:
+;;   https://dangirsh.org/projects/doom-config.html#key-chord-config
+
 (setq user-full-name "Abhay Saxena"
       user-mail-address "ark3@email.com")
 
 (setq doom-font (font-spec :family "IBM Plex Mono" :size 14.0 :weight 'medium)
-      ;doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
-      doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
+      doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
+      ;; doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
       doom-theme 'modus-vivendi
       display-line-numbers-type t)
 
 (setq org-directory "~/org/"
-      tab-width 8
       scroll-margin 2
       modus-themes-hl-line '(accented)
       modus-themes-mixed-fonts t)
+
+(setq-default tab-width 8)
 
 (when IS-MAC
   (setq mac-right-option-modifier 'left
@@ -23,8 +33,10 @@
   (when (< (display-pixel-width) 1800)
     (add-to-list 'initial-frame-alist '(fullscreen . maximized))))
 
-(map! "M-o" 'switch-window
+(map! "M-o" 'other-window
       "M-`" 'bury-buffer
+      "<M-up>"    #'scroll-down-command
+      "<M-down>"  #'scroll-up-command
       "C-z" nil                         ; suspend-frame
       "C-x C-z" nil)                    ; also suspend-frame
 
@@ -38,10 +50,41 @@
   ;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil))
 
+(defun my/term-set-header-message (host &optional kctx venv git gitc exit)
+  (let ((git-color-number (string-to-number (or gitc "0"))))
+    (setq-local my/term-header-host (or host ""))
+    (setq-local my/term-header-kctx (or kctx ""))
+    (setq-local my/term-header-venv (or venv ""))
+    (setq-local my/term-header-git  (or git ""))
+    (setq-local my/term-header-gitc (or git-color-number ""))
+    (setq-local my/term-header-exit (or exit ""))))
+
+(defun my/term-setup ()
+    (my/term-set-header-message "Starting up...")
+    (setq header-line-format
+          '(" "
+            (:eval (propertize ">>" 'face '(:weight bold)))
+            " "
+            (:eval (propertize my/term-header-host 'face
+                               (list :foreground (face-foreground 'term-color-yellow)
+                                     :weight 'bold)))
+            (:eval (propertize my/term-header-kctx 'face
+                               (list :foreground (face-foreground 'term-color-magenta))))
+            (:eval (propertize my/term-header-venv 'face
+                               (list :foreground (face-foreground 'term-color-blue))))
+            (:eval (propertize my/term-header-git  'face
+                               (list :foreground
+                                     (aref ansi-color-names-vector
+                                           my/term-header-gitc))))
+            (:eval (propertize my/term-header-exit 'face
+                               (list :foreground (face-foreground 'ansi-color-red))))
+            (:eval (string-trim (abbreviate-file-name (or (vterm--get-pwd) "")) "" "/")))))
+
 (after! shell
   (setq shell-pushd-regexp (rx (or "pushd" "pd"))
         shell-popd-regexp (rx (or "popd" "od"))
         shell-cd-regexp "cd"
+        comint-scroll-show-maximum-output nil
         comint-input-ignoredups t)
   (map! :map shell-mode-map
         "C-l" (lambda () (interactive) (recenter 0))
@@ -49,7 +92,15 @@
         "M-n" #'comint-next-matching-input-from-input)
   (setq-hook! 'shell-mode-hook scroll-margin 0))
 
+(use-package! bash-completion
+  :config
+  (bash-completion-setup))
+
 (after! vterm
+  (map! :map vterm-copy-mode-map
+        "C-c C-c" #'vterm-copy-mode)
+  (add-hook! 'vterm-mode-hook #'my/term-setup)
+  (add-to-list 'vterm-eval-cmds '("set" my/term-set-header-message))
   (setq vterm-max-scrollback 99000
         vterm-tramp-shells '(("docker" "/bin/bash")
                              ("scpx" "/bin/bash")
@@ -100,15 +151,14 @@
 
 ;;; Programming
 
-(use-package! eglot-java
-  :after eglot
-  :config
-  (eglot-java-init)
-  (defun my/eglot-java-contact (_interactive)
-    "Call my substitute for the Java command"
-    (seq-let (tag _command &rest args) (eglot-java--eclipse-contact nil)
-      (apply #'list tag (substitute-in-file-name "$HOME/.local/bin/java-for-jdt.sh") args)))
-  (setcdr (assq 'java-mode eglot-server-programs) #'my/eglot-java-contact))
+(after! flymake
+  (map! :leader
+        (:prefix-map ("!" . "checkers")
+         "n" #'flymake-goto-next-error
+         "p" #'flymake-goto-prev-error
+         "l" #'consult-flymake
+         "b" #'flymake-show-buffer-diagnostics
+         "B" #'flymake-show-project-diagnostics)))
 
 (after! format
   (setq-hook! 'html-mode-hook +format-with :none) ; Avoid warnings in Markdown live preview
@@ -116,14 +166,25 @@
 
 (add-hook! 'prog-mode-hook
   (display-fill-column-indicator-mode +1)
-  (setq show-paren-style 'mixed))       ; show paren if visible, expr otherwise
+  (format-all-mode)
+  (setq tab-width 8
+        show-paren-style 'mixed))       ; show paren if visible, expr otherwise
 
 (setq-hook! '(java-mode-hook c++-mode-hook)
   +format-with-lsp nil             ; use google-java-format/clang-format instead
+  tab-width 8
   fill-column 100)
+
+(after! lsp-java
+  (add-to-list 'lsp-java-vmargs (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar")))
 
 (after! vc-gutter
   (setq +vc-gutter-in-remote-files t))
+
+(after! compile
+  (setq comint-buffer-maximum-size 99000)
+  (add-hook! 'compilation-mode-hook :append #'turn-off-hide-mode-line-mode)
+  (set-popup-rule! "^\\*compilation" :size 0.5 :side 'right :quit nil))
 
 ;;; Local
 
