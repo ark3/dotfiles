@@ -34,6 +34,7 @@
 (straight-register-package 'flymake)
 (straight-register-package 'org)
 (straight-register-package 'org-contrib)
+(straight-register-package 'tramp)
 
 
 ;;; General stuff
@@ -75,28 +76,6 @@
 
   ;; write over selected text on input... like all modern editors do
   (delete-selection-mode t)
-
-  ;; Save state between sessions
-  (setq recentf-exclude `(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"
-                          ,(expand-file-name "straight/build/" user-emacs-directory)
-                          ,(expand-file-name "eln-cache/" user-emacs-directory)
-                          ,(expand-file-name "etc/" user-emacs-directory)
-                          ,(expand-file-name "var/" user-emacs-directory))
-        recentf-max-saved-items 250
-
-        desktop-restore-frames nil
-        desktop-restore-eager t
-
-        history-length 10000
-        history-delete-duplicates t
-        savehist-save-minibuffer-history t
-        )
-  (desktop-save-mode 1)
-  (savehist-mode 1)                     ; minibuffer history
-  (recentf-mode 1)                      ; recently-edited files
-  (save-place-mode 1)                   ; cursor location in visited files
-  (dolist (symbol '(kill-ring log-edit-comment-ring))
-    (add-to-list 'desktop-globals-to-save symbol))
 
   ;; don't want ESC as a modifier
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -195,14 +174,6 @@
         load-prefer-newer t
         )
 
-  ;; Tramp
-  (require 'tramp)
-  ;;; include the remote PATH in tramp
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  (setq tramp-histfile-override nil     ; Don't create .tramp_history
-        tramp-default-method "scpx")
-  ;;; Assume ControlPersist is set in ~/.ssh/config
-  (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
   ;; Avoid "ls does not support --dired" message on MacOS
   (when (string= system-type "darwin")
     (require 'ls-lisp)
@@ -254,28 +225,28 @@
   (column-number-mode t)
   )
 
-;; Tagged buffers
-;; as written by Henrik Lissner (author of Doom Emacs)
-;; https://discord.com/channels/406534637242810369/806409569013858314/967047606326947841
-(defvar my/buffer-tags ())
+;; ;; Tagged buffers
+;; ;; as written by Henrik Lissner (author of Doom Emacs)
+;; ;; https://discord.com/channels/406534637242810369/806409569013858314/967047606326947841
+;; (defvar my/buffer-tags ())
 
-(defun my/tag-buffer (n)
-  (interactive (list (read-number ">")))
-  (setf (alist-get n my/buffer-tags) (current-buffer)))
+;; (defun my/tag-buffer (n)
+;;   (interactive (list (read-number ">")))
+;;   (setf (alist-get n my/buffer-tags) (current-buffer)))
 
-(defun my/switch-to-tagged-buffer (n)
-  (interactive (list (read-number ">")))
-  (switch-to-buffer
-   (or (alist-get n my/buffer-tags)
-       (user-error "No buffer with tag %d" n))))
+;; (defun my/switch-to-tagged-buffer (n)
+;;   (interactive (list (read-number ">")))
+;;   (switch-to-buffer
+;;    (or (alist-get n my/buffer-tags)
+;;        (user-error "No buffer with tag %d" n))))
 
-(dotimes (i 9)
-  (global-set-key (kbd (format "C-z C-%d" i))
-                  (lambda () (interactive)
-                    (my/tag-buffer i)))
-  (global-set-key (kbd (format "C-z %d" i))
-                  (lambda () (interactive)
-                    (my/switch-to-tagged-buffer i))))
+;; (dotimes (i 9)
+;;   (global-set-key (kbd (format "C-z C-%d" i))
+;;                   (lambda () (interactive)
+;;                     (my/tag-buffer i)))
+;;   (global-set-key (kbd (format "C-z %d" i))
+;;                   (lambda () (interactive)
+;;                     (my/switch-to-tagged-buffer i))))
 
 ;; Packages
 
@@ -346,15 +317,6 @@
   ;; "JetBrainsMono Nerd Font"
   ;; "ia Writer Duospace" for variable-pitch (based heavily on IBM Plex Mono)
   (fontaine-set-preset 'current)
-  )
-
-;; https://github.com/emacscollective/no-littering
-(use-package no-littering
-  :demand
-  :config
-  (with-eval-after-load 'recentf
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory))
   )
 
 (use-package hl-line+
@@ -566,8 +528,8 @@
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
   :init
-  (setq exec-path-from-shell-variables '("PATH" "MANPATH" "JAVA_HOME")
-        exec-path-from-shell-arguments '("-l")
+  (setq exec-path-from-shell-variables '("PATH" "JAVA_HOME")
+        exec-path-from-shell-arguments nil
         exec-path-from-shell-warn-duration-millis 300)
   :config
   (setq ns-function-modifier 'control
@@ -575,8 +537,17 @@
         mac-option-modifier 'meta
         mac-command-modifier 'super
         )
-
   (exec-path-from-shell-initialize))
+
+(use-package tramp
+  :config
+  ;;; include the remote PATH in tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  (setq tramp-histfile-override nil     ; Don't create .tramp_history
+        tramp-default-method "scpx")
+  ;;; Assume ControlPersist is set in ~/.ssh/config
+  (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
+  )
 
 (use-package helpful
   :bind (;; Remap standard commands.
@@ -790,29 +761,23 @@ Switch to the project specific term buffer if it already exists."
   :config
   (global-diff-hl-mode)
   (diff-hl-margin-mode)
-  (diff-hl-flydiff-mode)  ; do I want this?
-  (setq diff-hl-margin-symbols-alist
-        '((insert . "┃")
-          (delete . "┃")
-          (change . "┃")
-          (unknown . "?")
-          (ignored . "i")))
+  (diff-hl-flydiff-mode)  ; do I want this? -- yes!
+  ;; (setq diff-hl-margin-symbols-alist
+  ;;       '((insert . "┃")
+  ;;         (delete . "┃")
+  ;;         (change . "┃")
+  ;;         (unknown . "?")
+  ;;         (ignored . "i")))
   )
 
 (use-package yasnippet
   :diminish yas-minor-mode
-  :bind (:map yas-minor-mode-map
-              ("TAB" . nil)             ; Instead, use hippie-expand
-              ("<tab>" . nil)
-              )
   :hook (prog-mode . yas-minor-mode)
   :config
   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
+  (unbind-key "<tab>" yas-minor-mode-map)
+  (unbind-key "TAB" yas-minor-mode-map)
   )
-
-
-(define-key yas-minor-mode-map (kbd "<tab>") nil)
-(define-key yas-minor-mode-map (kbd "TAB") nil)
 
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -834,7 +799,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package eldoc
   :diminish "doc"
   :config
-  (setq eldoc-echo-area-use-multiline-p 5)
+  (setq eldoc-echo-area-use-multiline-p 0.5)
   )
 
 (defun my-eglot-java-contact (_interactive)
@@ -949,23 +914,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package dockerfile-mode)
 (use-package docker-tramp)
 
-(use-package google-c-style
-  :straight (google-c-style
-             :type git :host github :repo "google/styleguide")
-  :config
-  (add-hook 'c-mode-common-hook 'google-set-c-style)
-  (add-hook 'c-mode-common-hook 'google-make-newline-indent)
-  )
-
 ;; Java
-
-(use-package google-java-format
-  :straight (google-java-format
-             :type git :host github :repo "google/google-java-format"
-             :files ("core/src/main/scripts/google-java-format.el"))
-  :config
-  (setq google-java-format-executable (executable-find "google-java-format"))
-  )
 
 (defun my/google-java-format-buffer ()
   "Use google-java-format to format the current buffer."
@@ -976,7 +925,7 @@ Switch to the project specific term buffer if it already exists."
     (unwind-protect
         (let ((status (call-process-region
                        (point-min) (point-max)
-                       google-java-format-executable
+                       (executable-find "google-java-format")
                        nil (list temp-buffer stderr-file) t
                        "-"))
               (stderr
@@ -1005,8 +954,6 @@ Switch to the project specific term buffer if it already exists."
 
 ;; C++
 
-(setq clang-format-executable (executable-find "clang-format"))
-
 (defun my/clang-format-buffer ()
   "Use clang-format to format the current buffer."
   (interactive)
@@ -1016,7 +963,7 @@ Switch to the project specific term buffer if it already exists."
     (unwind-protect
         (let ((status (call-process-region
                        (point-min) (point-max)
-                       clang-format-executable
+                       (executable-find "clang-format")
                        nil (list temp-buffer stderr-file) t
                        "--style=file"))
               (stderr
@@ -1070,6 +1017,28 @@ Switch to the project specific term buffer if it already exists."
 (load "~/.local/emacs/config" t)  ; NOERROR if file does not exist
 
 ;;; Wrap-up
+
+;; Save state between sessions
+(setq recentf-exclude `(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"
+                        ,(expand-file-name "straight/build/" user-emacs-directory)
+                        ,(expand-file-name "eln-cache/" user-emacs-directory)
+                        ,(expand-file-name "etc/" user-emacs-directory)
+                        ,(expand-file-name "var/" user-emacs-directory))
+      recentf-max-saved-items 250
+
+      desktop-restore-frames nil
+      desktop-restore-eager t
+
+      history-length 10000
+      history-delete-duplicates t
+      savehist-save-minibuffer-history t
+      )
+(desktop-save-mode 1)
+(savehist-mode 1)                       ; minibuffer history
+(recentf-mode 1)                        ; recently-edited files
+(save-place-mode 1)                     ; cursor location in visited files
+(dolist (symbol '(kill-ring log-edit-comment-ring))
+  (add-to-list 'desktop-globals-to-save symbol))
 
 (message "Loading init file...done (%ss)" (emacs-init-time "%.4f"))
 

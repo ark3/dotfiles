@@ -18,7 +18,7 @@
       default-frame-alist '((menu-bar-lines . 1)
                             (tool-bar-lines . 0)
                             (vertical-scroll-bars . nil)
-                            (background-color . "black") ; avoid blast of white
+                            (background-color . "#444") ; avoid blast of white
                             (width . 120)  ; characters
                             (height . 50)) ; characters
       initial-frame-alist default-frame-alist)
