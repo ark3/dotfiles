@@ -25,14 +25,13 @@
 
 ;; Use straight.el for use-package expressions
 (straight-use-package 'use-package)
+(setq straight-use-package-by-default t     ; Always use straight to install
+      use-package-always-demand t           ; Don't defer loading by default
+      straight-vc-git-default-clone-depth 1 ; Shallow clone
+      )
 
-;; Always use straight to install
-(setq straight-use-package-by-default t)
-
-;; Don't defer loading by default
-(setq use-package-always-demand t)
-
-;; Prevent Emacs-provided Org from being loaded
+;; Prevent Emacs-provided packages from being loaded
+(straight-register-package 'flymake)
 (straight-register-package 'org)
 (straight-register-package 'org-contrib)
 
@@ -129,7 +128,7 @@
         create-lockfiles nil)
 
   ;; autosave files in-place regularly
-  ;;; (auto-save-visited-mode t) ;; trying super-save-mode instead
+  (auto-save-visited-mode t)
 
   ;; follow symlinks
   (setq vc-follow-symlinks t
@@ -349,17 +348,6 @@
   (fontaine-set-preset 'current)
   )
 
-;; https://github.com/bbatsov/super-save
-(use-package super-save
-  :diminish super-save-mode
-  :config
-  (setq super-save-remote-files t
-        super-save-auto-save-when-idle t
-        super-save-idle-duration 30
-        super-save-max-buffer-size 100000
-        )
-  (super-save-mode +1))
-
 ;; https://github.com/emacscollective/no-littering
 (use-package no-littering
   :demand
@@ -471,8 +459,6 @@
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi)           ;; needed by consult-line to detect isearch
          )
-  :init
-  (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
   :config
   (setq consult-project-root-function (lambda ()
                                         (when-let (project (project-current))
@@ -1111,7 +1097,7 @@ Switch to the project specific term buffer if it already exists."
 
 ;; Local
 
-(load! "config.el" "~/.local/emacs" t)  ; NOERROR if file does not exist
+(load "~/.local/emacs/config" t)  ; NOERROR if file does not exist
 
 ;;; Wrap-up
 
