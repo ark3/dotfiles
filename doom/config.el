@@ -16,14 +16,12 @@
       doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
       ;; doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
       doom-theme 'modus-vivendi
-      display-line-numbers-type t)
-
-(setq org-directory "~/org/"
-      scroll-margin 2
+      display-line-numbers-type t
       modus-themes-hl-line '(accented)
       modus-themes-mixed-fonts t)
 
-(setq-default tab-width 8)
+(setq scroll-margin 2
+      tab-width 8)
 
 (when IS-MAC
   (setq mac-right-option-modifier 'left
@@ -49,6 +47,14 @@
         tramp-default-method "scpx")
   ;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil))
+
+(after! helpful
+  ;; Because I'm not using Doom's popup managements...
+  (defun my/helpful-switch-to-buffer (buffer-or-name)
+    (if (eq major-mode 'helpful-mode)
+        (switch-to-buffer buffer-or-name)
+      (pop-to-buffer buffer-or-name)))
+  (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer))
 
 (defun my/term-set-header-message (message)
   (setq-local my/term-header-message (base64-decode-string (or message ""))))
@@ -168,13 +174,11 @@
 (after! lsp-java
   (add-to-list 'lsp-java-vmargs (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar")))
 
-(after! vc-gutter
+(after! git-gutter
   (setq +vc-gutter-in-remote-files t))
 
 (after! compile
-  (setq comint-buffer-maximum-size 99000)
-  (add-hook! 'compilation-mode-hook :append #'turn-off-hide-mode-line-mode)
-  (set-popup-rule! "^\\*compilation" :size 0.5 :side 'right :quit nil))
+  (setq comint-buffer-maximum-size 99000))
 
 ;;; Local
 
