@@ -50,40 +50,23 @@
   ;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil))
 
-(defun my/term-set-header-message (host &optional kctx venv git gitc exit)
-  (let ((git-color-number (string-to-number (or gitc "0"))))
-    (setq-local my/term-header-host (or host ""))
-    (setq-local my/term-header-kctx (or kctx ""))
-    (setq-local my/term-header-venv (or venv ""))
-    (setq-local my/term-header-git  (or git ""))
-    (setq-local my/term-header-gitc (or git-color-number ""))
-    (setq-local my/term-header-exit (or exit ""))))
+(defun my/term-set-header-message (message)
+  (setq-local my/term-header-message (base64-decode-string (or message ""))))
 
 (defun my/term-setup ()
-    (my/term-set-header-message "Starting up...")
-    (setq header-line-format
-          '(" "
-            (:eval (propertize ">>" 'face '(:weight bold)))
-            " "
-            (:eval (propertize my/term-header-host 'face
-                               (list :foreground (face-foreground 'term-color-yellow)
-                                     :weight 'bold)))
-            (:eval (propertize my/term-header-kctx 'face
-                               (list :foreground (face-foreground 'term-color-magenta))))
-            (:eval (propertize my/term-header-venv 'face
-                               (list :foreground (face-foreground 'term-color-blue))))
-            (:eval (propertize my/term-header-git  'face
-                               (list :foreground
-                                     (aref ansi-color-names-vector
-                                           my/term-header-gitc))))
-            (:eval (propertize my/term-header-exit 'face
-                               (list :foreground (face-foreground 'ansi-color-red))))
-            (:eval (string-trim (abbreviate-file-name (or (vterm--get-pwd) "")) "" "/")))))
+  (my/term-set-header-message (base64-encode-string "Starting up..."))
+  (setq header-line-format
+        '(" "
+          (:eval (ansi-color-apply my/term-header-message))
+          (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
 (after! shell
+  ;; See also: https://www.emacswiki.org/emacs/ShellDirtrackByPrompt
+  ;; http://trey-jackson.blogspot.com/2008/08/emacs-tip-25-shell-dirtrack-by-prompt.html
   (setq shell-pushd-regexp (rx (or "pushd" "pd"))
         shell-popd-regexp (rx (or "popd" "od"))
         shell-cd-regexp "cd"
+        comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil
         comint-input-ignoredups t)
   (map! :map shell-mode-map
@@ -105,6 +88,13 @@
         vterm-tramp-shells '(("docker" "/bin/bash")
                              ("scpx" "/bin/bash")
                              ("sshx" "/bin/bash"))))
+
+;; Stop hiding the mode line in useful places
+;; TODO: Maybe just turn off this package entirely?
+(remove-hook!
+  ('shell-mode-hook 'vterm-mode-hook 'completion-list-mode-hook)
+  #'hide-mode-line-mode)
+
 
 ;;; Text
 
