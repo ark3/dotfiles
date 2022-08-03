@@ -3,6 +3,7 @@
 
 (package! org-appear)
 (package! bash-completion)
+(package! coterm)
 
 ;; Disable (cool-looking) black title bar that's indistinguishable from the window background
 (package! ns-auto-titlebar :disable t)

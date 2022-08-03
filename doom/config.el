@@ -9,6 +9,16 @@
 ;; - Maybe add key chords:
 ;;   https://dangirsh.org/projects/doom-config.html#key-chord-config
 
+;; (setq +workspaces-on-switch-project-behavior nil) will make project changes never create a new workspace.
+;; (global-set-key (kbd (format "C-c C-%d" num))
+;;                 (intern (format "winum-select-window-%d" num))
+;; ;; load use-package configs
+;; (dolist-with-progress-reporter
+;;     (config
+;;      (directory-files "~/.doom.d/use/" t ".*el"))
+;;     "Loading local use configs..."
+;;   (load-file config))
+
 (setq user-full-name "Abhay Saxena"
       user-mail-address "ark3@email.com")
 
@@ -84,6 +94,10 @@
 (use-package! bash-completion
   :config
   (bash-completion-setup))
+
+(use-package! coterm
+  :config
+  (coterm-mode))
 
 (after! vterm
   (map! :map vterm-copy-mode-map
@@ -176,6 +190,9 @@
 
 (after! git-gutter
   (setq +vc-gutter-in-remote-files t))
+
+(after! magit-gitflow
+  (setq magit-gitflow-popup-key "C-F")) ; this defaults to C-f for some reason
 
 (after! compile
   (setq comint-buffer-maximum-size 99000))
