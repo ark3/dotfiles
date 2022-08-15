@@ -191,8 +191,10 @@
 (after! git-gutter
   (setq +vc-gutter-in-remote-files t))
 
-(after! magit-gitflow
-  (setq magit-gitflow-popup-key "C-F")) ; this defaults to C-f for some reason
+(after! magit  ;; should this be git-commit?
+  ;; Change these back to their defaults. Doom's settings are dumb.
+  (setq git-commit-summary-max-length 68
+        git-commit-style-convention-checks '(non-empty-second-line)))
 
 (after! compile
   (setq comint-buffer-maximum-size 99000))

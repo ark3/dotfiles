@@ -8,6 +8,9 @@
 ;; Disable (cool-looking) black title bar that's indistinguishable from the window background
 (package! ns-auto-titlebar :disable t)
 
+;; Disable magit-gitflow because it has stupid bindings for C-f
+(package! magit-gitflow :disable t)
+
 ;;; Original documentation follows
 
 ;; To install a package with Doom you must declare them here and run 'doom sync'
