@@ -6,6 +6,9 @@
 ;;(package! bash-completion) ; not using shell-mode for now...
 ;;(package! coterm)
 
+(package! visual-fill-column)           ; in lieu of :ui zen
+(package! iedit)                        ; in lieu of :editor multiple-cursors
+
 ;; Disable (cool-looking) black title bar that's indistinguishable from the window background
 (package! ns-auto-titlebar :disable t)
 

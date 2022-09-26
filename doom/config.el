@@ -111,6 +111,11 @@
                              ("scpx" "/bin/bash")
                              ("sshx" "/bin/bash"))))
 
+(use-package! iedit
+  :init
+  ;; Allow iedit to bind C-;
+  (map! "C-;" . nil))
+
 ;; Stop hiding the mode line in useful places
 ;; TODO: Maybe just turn off this package entirely?
 (remove-hook!
@@ -119,6 +124,10 @@
 
 
 ;;; Text
+
+(use-package! visual-fill-column
+  :defer t
+  :hook (visual-fill-column-mode . visual-line-mode))
 
 (defun my/text-stuff ()
   "Set things up for text-related modes"
@@ -190,8 +199,8 @@
 (after! lsp-java
   (add-to-list 'lsp-java-vmargs (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar")))
 
-(after! git-gutter
-  (setq +vc-gutter-in-remote-files t))
+(after! diff-hl
+  (setq diff-hl-disable-on-remote nil))
 
 (after! magit  ;; should this be git-commit?
   ;; Change these back to their defaults. Doom's settings are dumb.
