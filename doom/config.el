@@ -76,28 +76,30 @@
           (:eval (ansi-color-apply my/term-header-message))
           (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
-(after! shell
-  ;; See also: https://www.emacswiki.org/emacs/ShellDirtrackByPrompt
-  ;; http://trey-jackson.blogspot.com/2008/08/emacs-tip-25-shell-dirtrack-by-prompt.html
-  (setq shell-pushd-regexp (rx (or "pushd" "pd"))
-        shell-popd-regexp (rx (or "popd" "od"))
-        shell-cd-regexp "cd"
-        comint-terminfo-terminal "ansi"
-        comint-scroll-show-maximum-output nil
-        comint-input-ignoredups t)
-  (map! :map shell-mode-map
-        "C-l" (lambda () (interactive) (recenter 0))
-        "M-p" #'comint-previous-matching-input-from-input
-        "M-n" #'comint-next-matching-input-from-input)
-  (setq-hook! 'shell-mode-hook scroll-margin 0))
+;; (after! shell
+;;   ;; See also: https://www.emacswiki.org/emacs/ShellDirtrackByPrompt
+;;   ;; http://trey-jackson.blogspot.com/2008/08/emacs-tip-25-shell-dirtrack-by-prompt.html
+;;   (setq shell-pushd-regexp (rx (or "pushd" "pd"))
+;;         shell-popd-regexp (rx (or "popd" "od"))
+;;         shell-cd-regexp "cd"
+;;         comint-terminfo-terminal "ansi"
+;;         comint-scroll-show-maximum-output nil
+;;         comint-input-ignoredups t)
+;;   (map! :map shell-mode-map
+;;         "C-l" (lambda () (interactive) (recenter 0))
+;;         "M-p" #'comint-previous-matching-input-from-input
+;;         "M-n" #'comint-next-matching-input-from-input)
+;;   (setq-hook! 'shell-mode-hook scroll-margin 0))
 
-(use-package! bash-completion
-  :config
-  (bash-completion-setup))
+;; (use-package! bash-completion
+;;   :disabled
+;;   :config
+;;   (bash-completion-setup))
 
-(use-package! coterm
-  :config
-  (coterm-mode))
+;; (use-package! coterm
+;;   :disabled
+;;   :config
+;;   (coterm-mode))
 
 (after! vterm
   (map! :map vterm-copy-mode-map

@@ -2,8 +2,9 @@
 ;;; $DOOMDIR/packages.el
 
 (package! org-appear)
-(package! bash-completion)
-(package! coterm)
+
+;;(package! bash-completion) ; not using shell-mode for now...
+;;(package! coterm)
 
 ;; Disable (cool-looking) black title bar that's indistinguishable from the window background
 (package! ns-auto-titlebar :disable t)
