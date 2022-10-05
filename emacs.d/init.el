@@ -27,8 +27,7 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t     ; Always use straight to install
       use-package-always-demand t           ; Don't defer loading by default
-      straight-vc-git-default-clone-depth 1 ; Shallow clone
-      )
+      straight-vc-git-default-clone-depth 1) ; Shallow clone
 
 ;; Prevent Emacs-provided packages from being loaded
 (straight-register-package 'flymake)
@@ -54,8 +53,7 @@
         sentence-end-double-space nil
         ring-bell-function 'ignore
         frame-resize-pixelwise t
-        frame-inhibit-implied-resize t
-        )
+        frame-inhibit-implied-resize t)
 
   (setq user-full-name "Abhay Saxena"
         user-mail-address "ark3@email.com")
@@ -171,8 +169,7 @@
   ;; less noise when compiling elisp
   (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local)
         native-comp-async-report-warnings-errors nil
-        load-prefer-newer t
-        )
+        load-prefer-newer t)
 
   ;; Avoid "ls does not support --dired" message on MacOS
   (when (string= system-type "darwin")
@@ -204,8 +201,7 @@
   (setq shell-pushd-regexp (rx (or "pushd" "pd"))
         shell-popd-regexp (rx (or "popd" "od"))
         shell-cd-regexp "cd"
-        comint-input-ignoredups t
-        )
+        comint-input-ignoredups t)
   (add-hook 'shell-mode-hook
             (lambda ()
               (setq-local scroll-margin 0)
@@ -216,14 +212,12 @@
               (define-key shell-mode-map (kbd "M-p")
                 'comint-previous-matching-input-from-input)
               (define-key shell-mode-map (kbd "M-n")
-                'comint-next-matching-input-from-input)
-              ))
+                'comint-next-matching-input-from-input)))
 
   ;; Mode line
   (setq mode-line-compact 'long)
   (display-time-mode -1)
-  (column-number-mode t)
-  )
+  (column-number-mode t))
 
 ;; ;; Tagged buffers
 ;; ;; as written by Henrik Lissner (author of Doom Emacs)
@@ -248,6 +242,7 @@
 ;;                   (lambda () (interactive)
 ;;                     (my/switch-to-tagged-buffer i))))
 
+
 ;; Packages
 
 (use-package diminish)
@@ -259,8 +254,7 @@
   (stutter-minimum-growth 1024 "Smaller chunks useful on MacOS")
   :hook
   (shell-mode . stutter-mode)
-  (compilation-mode . stutter-mode)
-  )
+  (compilation-mode . stutter-mode))
 
 ;; https://protesilaos.com/emacs/fontaine
 (use-package fontaine
@@ -307,17 +301,13 @@
                            (current
                             :default-family "IBM Plex Mono"
                             :variable-pitch-height 1.0
-                            :variable-pitch-family "ia Writer Duospace"
-                            )
-                           )
-        )
+                            :variable-pitch-family "ia Writer Duospace")))
   ;; Also consider
   ;; "Cascadia Code"
   ;; "Menlo"
   ;; "JetBrainsMono Nerd Font"
   ;; "ia Writer Duospace" for variable-pitch (based heavily on IBM Plex Mono)
-  (fontaine-set-preset 'current)
-  )
+  (fontaine-set-preset 'current))
 
 (use-package hl-line+
   :hook
@@ -329,8 +319,7 @@
   (global-hl-line-mode nil)
   (hl-line-flash-show-period 0.4)
   (hl-line-inhibit-highlighting-for-modes '(dired-mode vterm-mode))
-  (hl-line-overlay-priority -100) ;; sadly, seems not observed by diredfl
-  )
+  (hl-line-overlay-priority -100)) ;; sadly, seems not observed by diredfl
 
 (use-package modus-themes
   :init
@@ -355,9 +344,7 @@
   :config
   (setq which-key-idle-delay 1
         which-key-idle-secondary-delay 0.05
-        which-key-show-early-on-C-h nil      ; Use embark-prefix-help-command
-        )
-  )
+        which-key-show-early-on-C-h nil))      ; Use embark-prefix-help-command
 
 (use-package marginalia
   :ensure t
@@ -372,8 +359,7 @@
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
   :init
   ;; Optionally replace the key help with a completing-read interface
-  (setq prefix-help-command #'embark-prefix-help-command)
-  )
+  (setq prefix-help-command #'embark-prefix-help-command))
 
 ;; Use l/r to go back/forward in dired
 ;; https://github.com/karthink/dired-hist
@@ -382,11 +368,9 @@
              :type git :host github :repo "karthink/dired-hist")
   :bind (:map dired-mode-map
               ("l" . dired-hist-go-back)
-              ("r" . dired-hist-go-forward)
-              )
+              ("r" . dired-hist-go-forward))
   :config
-  (dired-hist-mode 1)
-  )
+  (dired-hist-mode 1))
 
 (use-package consult
   :bind (
@@ -419,16 +403,13 @@
          ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
          ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)           ;; needed by consult-line to detect isearch
-         )
+         ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
   :config
   (setq consult-project-root-function (lambda ()
                                         (when-let (project (project-current))
                                           (car (project-roots project))))
         consult-preview-key (kbd "M-.")
-        consult-narrow-key "<"
-        )
-  )
+        consult-narrow-key "<"))
 
 (use-package embark-consult
   :after (embark consult))
@@ -440,9 +421,7 @@
               ("C-c f n" . flymake-goto-next-error)
               ("C-c f p" . flymake-goto-prev-error)
               ("C-c f b" . flymake-show-buffer-diagnostics)
-              ("C-c f B" . flymake-show-project-diagnostics)
-              )
-  )
+              ("C-c f B" . flymake-show-project-diagnostics)))
 
 (use-package vertico
   :config
@@ -456,8 +435,7 @@
           (apply (if vertico-mode
                      #'consult-completion-in-region
                    #'completion--in-region)
-                 args)))
-  )
+                 args))))
 
 (use-package consult-dir
   :after consult
@@ -466,19 +444,15 @@
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file)))
 
-
 (use-package fancy-dabbrev
   :diminish fancy-dabbrev-mode
   :bind (("TAB" . fancy-dabbrev-expand-or-indent)
          ("M-/" . dabbrev-completion)
-         ("C-M-/" . hippie-expand)
-         )
+         ("C-M-/" . hippie-expand))
   :config
   (global-fancy-dabbrev-mode)
   (setq fancy-dabbrev-preview-delay 0.3
-        fancy-dabbrev-expansion-on-preview-only t
-        )
-  )
+        fancy-dabbrev-expansion-on-preview-only t))
 
 (use-package ibuffer-project
   :bind ("C-x C-b" . ibuffer)
@@ -515,15 +489,13 @@
 
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
-  (minibuffer-depth-indicate-mode t)
-  )
+  (minibuffer-depth-indicate-mode t))
 
 (use-package edit-server
   :init
   (add-hook 'after-init-hook 'server-start t)
   (add-hook 'after-init-hook 'edit-server-start t)
-  :config (setq edit-server-new-frame nil)
-  )
+  :config (setq edit-server-new-frame nil))
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
@@ -535,8 +507,7 @@
   (setq ns-function-modifier 'control
         mac-function-modifier 'control
         mac-option-modifier 'meta
-        mac-command-modifier 'super
-        )
+        mac-command-modifier 'super)
   (exec-path-from-shell-initialize))
 
 (use-package tramp
@@ -560,15 +531,14 @@
          :map help-map
          ("F" . #'helpful-function)
          ("M-f" . #'helpful-macro)
-         ("C" . #'helpful-command)
-         )
+         ("C" . #'helpful-command))
   :config
   (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer)
   (defun my/helpful-switch-to-buffer (buffer-or-name)
     (if (eq major-mode 'helpful-mode)
         (switch-to-buffer buffer-or-name)
-      (pop-to-buffer buffer-or-name)))
-  )
+      (pop-to-buffer buffer-or-name))))
+
 
 ;;; Text stuff
 
@@ -577,25 +547,20 @@
   (setq-local
    dabbrev-case-distinction t     ; treat expansions same if differ in case
    dabbrev-case-fold-search t     ; ignore case on search
-   dabbrev-case-replace t         ; keep typed case
-   )
+   dabbrev-case-replace t)        ; keep typed case
   (visual-fill-column-mode 1)
   (org-indent-mode 1)
   (variable-pitch-mode 1))
 
 (use-package flyspell
   :custom
-  (ispell-program-name "aspell")
-  )
+  (ispell-program-name "aspell"))
 
 (use-package visual-fill-column
   :init
   (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
   (setq visual-fill-column-center-text t
-        visual-fill-column-enable-sensible-window-split t
-        )
-  :config
-  )
+        visual-fill-column-enable-sensible-window-split t))
 
 (use-package org-autolist :diminish)
 (use-package org-appear)
@@ -618,11 +583,9 @@
   (setq org-capture-templates
         '(("e" "Email" entry (file "~/temp/email.org")
            "* %?" :empty-lines 1))
-        org-cycle-emulate-tab nil
-        )
+        org-cycle-emulate-tab nil)
   (add-hook 'org-mode-hook
-            (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle)))
-  )
+            (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle))))
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
@@ -644,16 +607,12 @@
   (setq-local
    dabbrev-case-distinction nil    ; different case as different expansions
    dabbrev-case-fold-search t      ; ignore case on search
-   dabbrev-case-replace nil        ; replaced typed case with existing case
-   )
-  )
+   dabbrev-case-replace nil))      ; replaced typed case with existing case
 
 (add-hook 'prog-mode-hook 'prog-stuff)
 
 (use-package aggressive-indent
-  :hook ((emacs-lisp-mode . aggressive-indent-mode)
-         )
-  )
+  :hook ((emacs-lisp-mode . aggressive-indent-mode)))
 
 (defun my/vterm-copy-mode-cancel ()
   "Exit vterm-copy-mode without copying anything"
@@ -687,8 +646,7 @@ Switch to the project specific term buffer if it already exists."
          ("M-p" . vterm-send-M-p)
          ("C-y" . vterm-send-C-y)
          :map vterm-copy-mode-map
-         ("C-c C-c" . vterm-copy-mode)
-         )
+         ("C-c C-c" . vterm-copy-mode))
   :init
   (setq vterm-always-compile-module t)
   :config
@@ -704,20 +662,16 @@ Switch to the project specific term buffer if it already exists."
     (setq header-line-format
           '(" "
             (:eval (ansi-color-apply my/vterm-header-message))
-            (:eval (string-trim (abbreviate-file-name default-directory) "" "/"))
-            ))
-    )
+            (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
   :hook (vterm-mode . my/vterm-setup))
 
 (use-package bash-completion
   :config
   (bash-completion-setup))
 
-(use-package native-complete
-  :disabled
-  ;; FIXME: Consider using this instead
-  ;; https://github.com/CeleritasCelery/emacs-native-shell-complete
-  )
+;; FIXME: Consider using this instead
+;; https://github.com/CeleritasCelery/emacs-native-shell-complete
+(use-package native-complete :disabled)
 
 (use-package ansi-color
   :config
@@ -731,15 +685,13 @@ Switch to the project specific term buffer if it already exists."
   (defun display-ansi-colors ()
     (interactive)
     (let ((inhibit-read-only t))
-      (ansi-color-apply-on-region (point-min) (point-max))))
-  )
+      (ansi-color-apply-on-region (point-min) (point-max)))))
 
 (use-package magit
   :init (setq-default git-magit-status-fullscreen t)
   :bind (("C-c g s" . magit-status)
          ("C-c g g" . magit-file-dispatch)
-         ("C-x p m" . magit-project-status)
-         )
+         ("C-x p m" . magit-project-status))
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
@@ -749,26 +701,22 @@ Switch to the project specific term buffer if it already exists."
                                   (project-eshell "Eshell")
                                   (project-shell "Shell")
                                   (project-vterm "Vterm")
-                                  (magit-project-status "Magit"))
-        )
-  )
+                                  (magit-project-status "Magit"))))
 
 (use-package git-timemachine
-  :bind (("C-c g t" . git-timemachine))
-  )
+  :bind (("C-c g t" . git-timemachine)))
 
 (use-package diff-hl
   :config
   (global-diff-hl-mode)
   (diff-hl-margin-mode)
-  (diff-hl-flydiff-mode)  ; do I want this? -- yes!
-  ;; (setq diff-hl-margin-symbols-alist
-  ;;       '((insert . "┃")
-  ;;         (delete . "┃")
-  ;;         (change . "┃")
-  ;;         (unknown . "?")
-  ;;         (ignored . "i")))
-  )
+  (diff-hl-flydiff-mode))  ; do I want this? -- yes!
+;; (setq diff-hl-margin-symbols-alist
+;;       '((insert . "┃")
+;;         (delete . "┃")
+;;         (change . "┃")
+;;         (unknown . "?")
+;;         (ignored . "i")))
 
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -776,8 +724,7 @@ Switch to the project specific term buffer if it already exists."
   :config
   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
   (unbind-key "<tab>" yas-minor-mode-map)
-  (unbind-key "TAB" yas-minor-mode-map)
-  )
+  (unbind-key "TAB" yas-minor-mode-map))
 
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -788,8 +735,7 @@ Switch to the project specific term buffer if it already exists."
               ("C-c l r" . eglot-rename)
               ("C-c l =" . eglot-format-buffer)
               ("C-c l R" . eglot-reconnect)
-              ("C-c l K" . eglot-shutdown-all)
-              )
+              ("C-c l K" . eglot-shutdown-all))
   :hook ((python-mode . eglot-ensure)
          (c++-mode . eglot-ensure)
          (go-mode . eglot-ensure)
@@ -799,8 +745,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package eldoc
   :diminish "doc"
   :config
-  (setq eldoc-echo-area-use-multiline-p 0.5)
-  )
+  (setq eldoc-echo-area-use-multiline-p 0.5))
 
 (defun my-eglot-java-contact (_interactive)
   "Call my substitute for the Java command"
@@ -811,8 +756,7 @@ Switch to the project specific term buffer if it already exists."
   :after eglot
   :config
   (eglot-java-init)
-  (setcdr (assq 'java-mode eglot-server-programs) #'my-eglot-java-contact)
-  )
+  (setcdr (assq 'java-mode eglot-server-programs) #'my-eglot-java-contact))
 
 (use-package protobuf-mode)
 (use-package go-mode)
@@ -820,21 +764,18 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package tree-sitter-langs
   :hook
-  (tree-sitter-after-on . tree-sitter-hl-mode)
-  )
+  (tree-sitter-after-on . tree-sitter-hl-mode))
 
 (use-package tree-sitter
   :diminish
   :config
   (global-tree-sitter-mode)
-  :after (tree-sitter-langs)
-  )
+  :after (tree-sitter-langs))
 
 (use-package cmake-mode)
 
 (use-package yaml-mode
-  :hook (yaml-mode . prog-stuff)
-  )
+  :hook (yaml-mode . prog-stuff))
 
 (use-package dumb-jump
   :config
@@ -901,9 +842,7 @@ Switch to the project specific term buffer if it already exists."
       ('hs-global-cycle
        (save-excursion (hs-show-all))
        (setq this-command 'hs-global-show))
-      (_ (hs-hide-all))))
-  )
-
+      (_ (hs-hide-all)))))
 
 (use-package ws-butler
   :diminish
@@ -941,9 +880,8 @@ Switch to the project specific term buffer if it already exists."
            ((not (zerop status))
             (error "google-java-format failed with code %d%s" status stderr))
            (t (message "google-java-format succeeded%s" stderr)
-              (replace-buffer-contents temp-buffer)
-              ;;(goto-char cursor)
-              )))
+              (replace-buffer-contents temp-buffer))))
+      ;;(goto-char cursor)
       (delete-file stderr-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
@@ -979,9 +917,8 @@ Switch to the project specific term buffer if it already exists."
            ((not (zerop status))
             (error "clang-format failed with code %d%s" status stderr))
            (t (message "clang-format succeeded%s" stderr)
-              (replace-buffer-contents temp-buffer)
-              ;;(goto-char cursor)
-              )))
+              (replace-buffer-contents temp-buffer))))
+      ;;(goto-char cursor)
       (delete-file stderr-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
@@ -1000,8 +937,7 @@ Switch to the project specific term buffer if it already exists."
 (use-package envrc
   :if (executable-find "direnv")
   :bind (:map envrc-mode-map
-              ("C-c E" . envrc-command-map)
-              )
+              ("C-c E" . envrc-command-map))
   :config
   (setq envrc-none-lighter
         '(" env[" (:propertize "-" face envrc-mode-line-none-face) "]")
@@ -1009,8 +945,7 @@ Switch to the project specific term buffer if it already exists."
         '(" env[" (:propertize "+" face envrc-mode-line-on-face) "]")
         envrc-error-lighter
         '(" env[" (:propertize "!" face envrc-mode-line-error-face) "]"))
-  (envrc-global-mode)
-  )
+  (envrc-global-mode))
 
 ;; Local
 
@@ -1031,8 +966,8 @@ Switch to the project specific term buffer if it already exists."
 
       history-length 10000
       history-delete-duplicates t
-      savehist-save-minibuffer-history t
-      )
+      savehist-save-minibuffer-history t)
+
 (desktop-save-mode 1)
 (savehist-mode 1)                       ; minibuffer history
 (recentf-mode 1)                        ; recently-edited files
