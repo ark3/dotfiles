@@ -23,17 +23,24 @@
       user-mail-address "ark3@email.com")
 
 (setq doom-font (font-spec :family "IBM Plex Mono" :size 14.0 :weight 'medium)
-      doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
-      ;; doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
+      ;; doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
+      doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
       doom-theme 'modus-vivendi
       display-line-numbers-type t
       modus-themes-hl-line '(accented)
-      modus-themes-mixed-fonts t)
+      modus-themes-completions '((t . (accented)))
+      modus-themes-mixed-fonts t
+      ;;modus-themes-variable-pitch-ui t
+      indicate-buffer-boundaries t
+      indicate-unused-lines t)
+
+;; (after! (modus-themes doom-modeline)
+;;   (set-face-attribute 'modus-themes-ui-variable-pitch nil :height 0.9))
 
 (setq scroll-margin 2
       tab-width 8)
 
-(when IS-MAC
+(when (eq system-type 'darwin)
   (setq mac-right-option-modifier 'left
         ns-right-option-modifier  'left)
   (map! [s-up] #'beginning-of-buffer
@@ -50,11 +57,15 @@
 
 (put 'narrow-to-region 'disabled nil)
 (auto-save-visited-mode +1)
+(add-function :after after-focus-change-function (cmd! (save-some-buffers t)))
 
 (after! tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (setq tramp-histfile-override nil     ; Don't create .tramp_history
         tramp-default-method "scpx")
+  ;; temporary override of Doom's optimization
+  (setq vc-ignore-dir-regexp
+        "\\`\\(?:[\\/][\\/][^\\/]+[\\/]\\|/\\(?:net\\|afs\\|\\.\\.\\.\\)/\\)\\'")
   ;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil))
 
@@ -125,15 +136,14 @@
 
 ;;; Text
 
-(use-package! visual-fill-column
-  :defer t
-  :hook (visual-fill-column-mode . visual-line-mode))
+(use-package! visual-fill-column :defer t)
 
 (defun my/text-stuff ()
   "Set things up for text-related modes"
   (setq-local fill-column 100
               visual-fill-column-center-text t
               visual-fill-column-enable-sensible-window-split t)
+  (visual-line-mode 1)
   (visual-fill-column-mode 1)
   (org-indent-mode 1)
   (display-line-numbers-mode -1)
@@ -144,16 +154,16 @@
 
 (use-package! org-appear
   :defer t
+  :after org
   :hook (org-mode . org-appear-mode)
   :config
-  (setq org-appear-autolinks t
+  (setq org-hide-emphasis-markers t
+        org-appear-autolinks t
         org-appear-autosubmarkers t
         org-appear-delay 0.1))
 
 (after! org
-  (setq org-hide-emphasis-markers t
-        org-startup-folded 'content
-        org-export-with-section-numbers nil
+  (setq org-export-with-section-numbers nil
         org-export-with-toc nil)
   (add-hook! 'org-mode-hook :append #'my/text-stuff)
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
@@ -181,7 +191,7 @@
          "b" #'flymake-show-buffer-diagnostics
          "B" #'flymake-show-project-diagnostics)))
 
-(after! format
+(after! format-all
   (setq-hook! 'html-mode-hook +format-with :none) ; Avoid warnings in Markdown live preview
   (set-formatter! 'google-java-format "google-java-format -" :modes 'java-mode))
 
@@ -189,6 +199,7 @@
   (display-fill-column-indicator-mode +1)
   (format-all-mode)
   (setq tab-width 8
+        tab-always-indent 'complete     ; I don't ever want a "real" TAB char
         show-paren-style 'mixed))       ; show paren if visible, expr otherwise
 
 (setq-hook! '(java-mode-hook c++-mode-hook)
@@ -205,9 +216,6 @@
     "Eclipse JDT breaks spec and replies with edits as arguments."
     (mapc #'eglot--apply-workspace-edit arguments))
   (set-face-attribute 'eglot-highlight-symbol-face nil :inherit 'match))
-
-(after! lsp-java
-  (add-to-list 'lsp-java-vmargs (substitute-in-file-name "-javaagent:$HOME/.m2/repository/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar")))
 
 (after! diff-hl
   (setq diff-hl-disable-on-remote nil))
