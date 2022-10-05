@@ -33,7 +33,7 @@
 (straight-register-package 'flymake)
 (straight-register-package 'org)
 (straight-register-package 'org-contrib)
-(straight-register-package 'tramp)
+;;(straight-register-package 'tramp)
 
 
 ;;; General stuff
@@ -46,6 +46,7 @@
          ("C-<next>" . View-scroll-line-forward)
          ("C-<prior>" . View-scroll-line-backward)
          ("M-SPC" . cycle-spacing)
+         ("M-o" . other-window)
          ("M-`" . bury-buffer))
   :init
   (setq inhibit-startup-screen t
@@ -158,7 +159,7 @@
 
   (global-auto-revert-mode 1)
   (setq global-auto-revert-non-file-buffers t)
-  (transient-mark-mode -1)
+  ;;(transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
 
   ;; Automatically set executable bit (chmod) for files with a shebang (#!)
@@ -335,6 +336,7 @@
 (use-package iedit)  ; Binds C-;
 
 (use-package ace-window
+  :disabled
   :bind
   (("M-o" . ace-window)))
 
@@ -424,6 +426,8 @@
               ("C-c f B" . flymake-show-project-diagnostics)))
 
 (use-package vertico
+  :bind (:map vertico-map
+              ("TAB" . nil))
   :config
   (vertico-mode)
   (setq vertico-resize 'grow-only)
@@ -438,7 +442,7 @@
                  args))))
 
 (use-package consult-dir
-  :after consult
+  :after (consult vertico)
   :bind (("C-x C-d" . consult-dir)
          :map vertico-map
          ("C-x C-d" . consult-dir)
@@ -460,19 +464,34 @@
   (add-hook 'ibuffer-hook
             (lambda ()
               (setq ibuffer-filter-groups
-                    (ibuffer-project-generate-filter-groups))))
+                    (ibuffer-project-generate-filter-groups))
+              (unless (eq ibuffer-sorting-mode 'project-file-relative)
+                (ibuffer-do-sort-by-project-file-relative))))
   (setq ibuffer-show-empty-filter-groups nil
         ibuffer-project-use-cache t))
 
+(use-package orderless)
+;; :init
+;; (setq orderless-matching-styles
+;;       '(orderless-literal orderless-regexp orderless-prefixes))
+;; (setq completion-styles '(orderless basic)
+;;       completion-category-defaults nil
+;;       completion-category-overrides '((file (styles basic partial-completion))))
 
-(use-package orderless
-  :init
-  (setq orderless-matching-styles
-        '(orderless-literal orderless-regexp orderless-prefixes))
-  (setq completion-styles '(orderless basic)
+;; https://github.com/jojojames/fussy
+(use-package liquidmetal)
+(use-package fussy
+  :after
+  liquidmetal
+  :config
+  (push 'fussy completion-styles)
+  (setq fussy-score-fn 'fussy-liquidmetal-score
+        fussy-filter-fn 'fussy-filter-orderless
         completion-category-defaults nil
-        completion-category-overrides '((file (styles basic partial-completion))))
-  )
+        completion-category-overrides nil)
+  (with-eval-after-load 'eglot
+    (add-to-list 'completion-category-overrides
+                 '(eglot (styles fussy basic)))))
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -518,7 +537,16 @@
         tramp-default-method "scpx")
   ;;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
-  )
+
+  (defun tramp-ensure-dissected-file-name (vec-or-filename)
+    "Return a `tramp-file-name' structure for VEC-OR-FILENAME.
+
+VEC-OR-FILENAME may be either a string or a `tramp-file-name'.
+If it's not a Tramp filename, return nil."
+    (cond
+     ((tramp-file-name-p vec-or-filename) vec-or-filename)
+     ((tramp-tramp-file-p vec-or-filename)
+      (tramp-dissect-file-name vec-or-filename)))))
 
 (use-package helpful
   :bind (;; Remap standard commands.
@@ -738,9 +766,11 @@ Switch to the project specific term buffer if it already exists."
               ("C-c l K" . eglot-shutdown-all))
   :hook ((python-mode . eglot-ensure)
          (c++-mode . eglot-ensure)
-         (go-mode . eglot-ensure)
-         )
-  )
+         (java-mode . eglot-ensure)
+         (go-mode . eglot-ensure))
+  :config
+  (set-face-attribute 'eglot-highlight-symbol-face nil
+                      :inherit 'match))
 
 (use-package eldoc
   :diminish "doc"
