@@ -19,6 +19,10 @@
 ;;     "Loading local use configs..."
 ;;   (load-file config))
 
+;; These work well together; maybe try them?
+;; :ui indent-guides
+;; :editor word-wrap
+
 (setq user-full-name "Abhay Saxena"
       user-mail-address "ark3@email.com")
 
@@ -28,8 +32,9 @@
       doom-theme 'modus-vivendi
       display-line-numbers-type t
       modus-themes-hl-line '(accented)
-      modus-themes-completions '((t . (accented)))
-      modus-themes-mixed-fonts t
+      modus-themes-completions 'opinionated ;; '((t . (accented))) ;; for newer Modus
+      modus-themes-fringes 'subtle
+      ;;modus-themes-mixed-fonts t ;; for newer Modus
       ;;modus-themes-variable-pitch-ui t
       indicate-buffer-boundaries t
       indicate-unused-lines t)
@@ -168,6 +173,11 @@
   (add-hook! 'org-mode-hook :append #'my/text-stuff)
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
+(add-hook! 'doom-docs-mode-hook
+  (outline-show-all)
+  (visual-fill-column-mode -1)
+  (flyspell-mode -1))
+
 (after! markdown-mode
   ;; https://gist.github.com/jhacksworth/1aaccec3bf645f835f010eceee68bd92
   (defun my/markdown-live-preview-window-xwidget-webkit (file)
@@ -227,6 +237,10 @@
 
 (after! compile
   (setq comint-buffer-maximum-size 99000))
+
+(after! lsp-mode
+  (setq lsp-headerline-breadcrumb-enable t
+        lsp-headerline-breadcrumb-segments '(project file symbols)))
 
 ;;; Local
 
