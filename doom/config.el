@@ -27,8 +27,8 @@
       user-mail-address "ark3@email.com")
 
 (setq doom-font (font-spec :family "IBM Plex Mono" :size 14.0 :weight 'medium)
-      ;; doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
-      doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
+      doom-variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
+      ;; doom-variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
       doom-theme 'modus-vivendi
       display-line-numbers-type t
       modus-themes-hl-line '(accented)
@@ -38,6 +38,9 @@
       ;;modus-themes-variable-pitch-ui t
       indicate-buffer-boundaries t
       indicate-unused-lines t)
+
+;; project changes don't create a new workspace.
+(setq +workspaces-on-switch-project-behavior nil)
 
 ;; (after! (modus-themes doom-modeline)
 ;;   (set-face-attribute 'modus-themes-ui-variable-pitch nil :height 0.9))
@@ -86,26 +89,24 @@
   (setq-local my/term-header-message (base64-decode-string (or message ""))))
 
 (defun my/term-setup ()
-  (my/term-set-header-message (base64-encode-string "Starting up..."))
+  (my/term-set-header-message (base64-encode-string ""))
   (setq header-line-format
         '(" "
           (:eval (ansi-color-apply my/term-header-message))
           (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
-;; (after! shell
-;;   ;; See also: https://www.emacswiki.org/emacs/ShellDirtrackByPrompt
-;;   ;; http://trey-jackson.blogspot.com/2008/08/emacs-tip-25-shell-dirtrack-by-prompt.html
-;;   (setq shell-pushd-regexp (rx (or "pushd" "pd"))
-;;         shell-popd-regexp (rx (or "popd" "od"))
-;;         shell-cd-regexp "cd"
-;;         comint-terminfo-terminal "ansi"
-;;         comint-scroll-show-maximum-output nil
-;;         comint-input-ignoredups t)
-;;   (map! :map shell-mode-map
-;;         "C-l" (lambda () (interactive) (recenter 0))
-;;         "M-p" #'comint-previous-matching-input-from-input
-;;         "M-n" #'comint-next-matching-input-from-input)
-;;   (setq-hook! 'shell-mode-hook scroll-margin 0))
+(after! shell
+  (add-hook! 'comint-output-filter-functions 'comint-osc-process-output)
+  (add-hook! 'shell-mode-hook #'my/term-setup)
+  (setq comint-terminfo-terminal "ansi"
+        comint-scroll-show-maximum-output nil
+        comint-input-ignoredups t)
+  ;; (map! :map shell-mode-map
+  ;;       "M-p" #'comint-previous-matching-input-from-input
+  ;;       "M-n" #'comint-next-matching-input-from-input)
+  (setq-hook! 'shell-mode-hook
+    scroll-margin 0
+    recenter-positions '(top bottom middle)))
 
 ;; (use-package! bash-completion
 ;;   :disabled
