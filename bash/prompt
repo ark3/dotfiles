@@ -62,19 +62,12 @@ vterm_cmd() {
 }
 
 
-# Prompt/directory tracking for vterm in Emacs
-vterm_prompt_end() {
+# Prompt/directory tracking in Emacs
+emacs_prompt_end() {
     if [[ "$INSIDE_EMACS" = vterm* ]]; then
-	# if [ -n "$in_docker_exec" ]; then
-	#     # Running in Docker. Emit a Tramp-compatible path. Make sure not to
-	#     # include an at sign "@" to avoid matching the "user@host:pwd"
-	#     # pattern, as that will cause vterm.el to prepend Tramp stuff that
-	#     # tries the default Tramp method, which is not Docker!
-	#     #printf '\e]%s\e\\' "51;A/docker:$(hostname):$(pwd)"
-	#     printf '\e]%s\e\\' "51;A/docker:$(whoami)@$(hostname):$(pwd)"
-	# else
-            printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
-	# fi
+        printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
+    elif [[ "$INSIDE_EMACS" = *comint* ]]; then
+        printf "\e]7;file://%s%s\e\\" "$HOSTNAME" "$PWD"
     fi
 }
 
@@ -176,7 +169,7 @@ prompt_command() {
     dir_prompt="\w"
 }
 
-CLEAN_PROMPT='\[${exit_color}\]$ \[${NOCOLOR}\]\[$(vterm_prompt_end)\]'
+CLEAN_PROMPT='\[${exit_color}\]$ \[${NOCOLOR}\]\[$(emacs_prompt_end)\]'
 
 FANCY_PROMPT='${GRAYFG}${line_prompt}${NOCOLOR}\r'
 FANCY_PROMPT+='${INVERT}${GREEN} \A ${NOCOLOR} '

@@ -16,7 +16,7 @@ HISTIGNORE='&:[ ]*:[bf]g:exit'  # Ignore duplicate entries and anything preceded
 HISTTIMEFORMAT='%F %T '	       # ISO date and time
 HISTSIZE=-1		       # No limit
 HISTFILESIZE=1000000
-HISTCONTROL=erasedups
+HISTCONTROL=erasedups:ignorespace
 
 command -v emacsclient > /dev/null && export EDITOR=emacsclient
 
