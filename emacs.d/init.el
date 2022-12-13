@@ -13,11 +13,11 @@
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
+      (bootstrap-version 6))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
@@ -33,6 +33,7 @@
 (straight-register-package 'flymake)
 (straight-register-package 'org)
 (straight-register-package 'org-contrib)
+(straight-register-package 'modus-themes)
 ;;(straight-register-package 'tramp)
 
 
@@ -47,7 +48,9 @@
          ("C-<prior>" . View-scroll-line-backward)
          ("M-SPC" . cycle-spacing)
          ("M-o" . other-window)
-         ("M-`" . bury-buffer))
+         ("M-`" . bury-buffer)
+         ("C-z" . nil)
+         ("C-x C-z" . nil))
   :init
   (setq inhibit-startup-screen t
         initial-scratch-message nil
@@ -77,11 +80,7 @@
   (delete-selection-mode t)
 
   ;; don't want ESC as a modifier
-  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
-  ;; Hardly ever want suspend-frame
-  (global-unset-key (kbd "C-z"))
-  (global-unset-key (kbd "C-x C-z"))
+  ;;(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
   ;; Don't quit w/o warning
   (add-hook 'kill-emacs-query-functions
@@ -107,6 +106,7 @@
 
   ;; autosave files in-place regularly
   (auto-save-visited-mode t)
+  (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 
   ;; follow symlinks
   (setq vc-follow-symlinks t
@@ -193,27 +193,10 @@
 
   ;; Scrolling
   (setq scroll-conservatively 10000
-        scroll-margin 3
+        scroll-margin 2
         scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
         comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil)
-
-  ;; Shell
-  (setq shell-pushd-regexp (rx (or "pushd" "pd"))
-        shell-popd-regexp (rx (or "popd" "od"))
-        shell-cd-regexp "cd"
-        comint-input-ignoredups t)
-  (add-hook 'shell-mode-hook
-            (lambda ()
-              (setq-local scroll-margin 0)
-              (define-key shell-mode-map (kbd "C-l")
-                (lambda ()
-                  (interactive)
-                  (recenter 0)))
-              (define-key shell-mode-map (kbd "M-p")
-                'comint-previous-matching-input-from-input)
-              (define-key shell-mode-map (kbd "M-n")
-                'comint-next-matching-input-from-input)))
 
   ;; Mode line
   (setq mode-line-compact 'long)
@@ -259,6 +242,7 @@
 
 ;; https://protesilaos.com/emacs/fontaine
 (use-package fontaine
+  :disabled
   :straight (fontaine
              :type git :host github :repo "protesilaos/fontaine")
   :config
@@ -302,7 +286,7 @@
                            (current
                             :default-family "IBM Plex Mono"
                             :variable-pitch-height 1.0
-                            :variable-pitch-family "ia Writer Duospace")))
+                            :variable-pitch-family "iA Writer Duospace")))
   ;; Also consider
   ;; "Cascadia Code"
   ;; "Menlo"
@@ -324,9 +308,13 @@
 
 (use-package modus-themes
   :init
-  (setq modus-themes-hl-line '(intense accented)
-        modus-themes-mixed-fonts t)
-  :config (load-theme 'modus-vivendi t))
+  (setq modus-themes-hl-line '(accented)
+        modus-themes-completions '((t . (accented intense)))
+        modus-themes-mixed-fonts t
+        modus-themes-variable-pitch-ui t)
+  (modus-themes-load-themes)
+  :config
+  (modus-themes-load-vivendi))
 
 (use-package avy
   :bind
@@ -348,21 +336,6 @@
         which-key-idle-secondary-delay 0.05
         which-key-show-early-on-C-h nil))      ; Use embark-prefix-help-command
 
-(use-package marginalia
-  :ensure t
-  :config
-  (marginalia-mode))
-
-(use-package embark
-  :ensure t
-  :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("s-." . embark-dwim)
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-  :init
-  ;; Optionally replace the key help with a completing-read interface
-  (setq prefix-help-command #'embark-prefix-help-command))
-
 ;; Use l/r to go back/forward in dired
 ;; https://github.com/karthink/dired-hist
 (use-package dired-hist
@@ -373,6 +346,23 @@
               ("r" . dired-hist-go-forward))
   :config
   (dired-hist-mode 1))
+
+(use-package marginalia
+  :config
+  (marginalia-mode))
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)
+   ("s-." . embark-dwim)
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+  :init
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package consult
   :bind (
@@ -406,15 +396,28 @@
          ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
+  :init
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register', `consult-register-load',
+  ;; `consult-register-store' and the Emacs built-ins.
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
   :config
-  (setq consult-project-root-function (lambda ()
-                                        (when-let (project (project-current))
-                                          (car (project-roots project))))
-        consult-preview-key (kbd "M-.")
+  (setq consult-preview-key (kbd "M-.")
         consult-narrow-key "<"))
 
-(use-package embark-consult
-  :after (embark consult))
+(use-package consult-dir
+  :after (consult vertico)
+  :bind (("C-x C-d" . consult-dir)
+         :map vertico-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package wgrep)
 
@@ -427,26 +430,20 @@
 
 (use-package vertico
   :bind (:map vertico-map
-              ("TAB" . nil))
+              ("TAB" . minibuffer-complete)
+              ("M-TAB" . vertico-insert))
   :config
   (vertico-mode)
   (setq vertico-resize 'grow-only)
 
-  ;; Use `consult-completion-in-region' if Vertico is enabled.
-  ;; Otherwise use the default `completion--in-region' function.
+  ;; Use `consult-completion-in-region' if Vertico is enabled, but not in the
+  ;; minibuffer. Otherwise use the default `completion--in-region' function.
   (setq completion-in-region-function
         (lambda (&rest args)
-          (apply (if vertico-mode
+          (apply (if (and vertico-mode (not vertico--input))
                      #'consult-completion-in-region
                    #'completion--in-region)
                  args))))
-
-(use-package consult-dir
-  :after (consult vertico)
-  :bind (("C-x C-d" . consult-dir)
-         :map vertico-map
-         ("C-x C-d" . consult-dir)
-         ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package fancy-dabbrev
   :diminish fancy-dabbrev-mode
@@ -470,28 +467,27 @@
   (setq ibuffer-show-empty-filter-groups nil
         ibuffer-project-use-cache t))
 
-(use-package orderless)
-;; :init
-;; (setq orderless-matching-styles
-;;       '(orderless-literal orderless-regexp orderless-prefixes))
-;; (setq completion-styles '(orderless basic)
-;;       completion-category-defaults nil
-;;       completion-category-overrides '((file (styles basic partial-completion))))
-
-;; https://github.com/jojojames/fussy
-(use-package liquidmetal)
+(use-package liquidmetal :disabled)
+(use-package orderless
+  :init
+  (setq orderless-matching-styles
+        '(orderless-literal orderless-regexp orderless-prefixes))
+  (setq completion-styles (append completion-styles '(orderless))
+        ;;completion-category-overrides '((file (styles basic partial-completion)))
+        completion-category-defaults nil))
 (use-package fussy
-  :after
-  liquidmetal
+  ;; https://github.com/jojojames/fussy
+  :disabled
+  :after (liquidmetal orderless)
   :config
-  (push 'fussy completion-styles)
-  (setq fussy-score-fn 'fussy-liquidmetal-score
-        fussy-filter-fn 'fussy-filter-orderless
-        completion-category-defaults nil
-        completion-category-overrides nil)
   (with-eval-after-load 'eglot
     (add-to-list 'completion-category-overrides
-                 '(eglot (styles fussy basic)))))
+                 '(eglot (styles fussy basic orderless))))
+  (setq completion-styles (cons 'fussy completion-styles) ; beginning
+        fussy-score-fn 'fussy-liquidmetal-score
+        fussy-filter-fn 'fussy-filter-orderless
+        completion-category-defaults nil
+        completion-category-overrides nil))
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -520,7 +516,7 @@
   :if (memq window-system '(mac ns))
   :init
   (setq exec-path-from-shell-variables '("PATH" "JAVA_HOME")
-        exec-path-from-shell-arguments nil
+        ;; exec-path-from-shell-arguments nil
         exec-path-from-shell-warn-duration-millis 300)
   :config
   (setq ns-function-modifier 'control
@@ -561,6 +557,7 @@ If it's not a Tramp filename, return nil."
          ("M-f" . #'helpful-macro)
          ("C" . #'helpful-command))
   :config
+  ;; FIXME: Use display-buffer-alist to do this somehow?
   (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer)
   (defun my/helpful-switch-to-buffer (buffer-or-name)
     (if (eq major-mode 'helpful-mode)
@@ -590,16 +587,22 @@ If it's not a Tramp filename, return nil."
   (setq visual-fill-column-center-text t
         visual-fill-column-enable-sensible-window-split t))
 
-(use-package org-autolist :diminish)
-(use-package org-appear)
+(use-package org-autolist
+  :after org
+  :diminish
+  :config
+  (setq org-autolist-enable-delete nil))
+
+(use-package org-appear :after org)
 
 (use-package org
   :hook ((org-mode . text-stuff)
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
-  :bind (:map org-mode-map
-              ("<tab>" . fancy-dabbrev-expand-or-indent)
-              ("<backtab>" . fancy-dabbrev-backward))
+  :bind (("C-c x" . org-capture)
+         :map org-mode-map
+         ("<tab>" . fancy-dabbrev-expand-or-indent)
+         ("<backtab>" . fancy-dabbrev-backward))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
@@ -609,8 +612,13 @@ If it's not a Tramp filename, return nil."
   :config
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
   (setq org-capture-templates
-        '(("e" "Email" entry (file "~/temp/email.org")
-           "* %?" :empty-lines 1))
+        '(("t" "Task" entry (file+headline "" "Tasks") ; built-in template
+           "* TODO %?\n  %u\n  %a")
+          ("e" "Email" entry (file "~/temp/email.org")
+           "* %?\n")
+          ("n" "Note" entry (file+headline "" "Notes")
+           "* %?\n\nEntered on %U\n  %i\n  %a"))
+        org-default-notes-file (expand-file-name "~/notes.org")
         org-cycle-emulate-tab nil)
   (add-hook 'org-mode-hook
             (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle))))
@@ -642,10 +650,15 @@ If it's not a Tramp filename, return nil."
 (use-package aggressive-indent
   :hook ((emacs-lisp-mode . aggressive-indent-mode)))
 
-(defun my/vterm-copy-mode-cancel ()
-  "Exit vterm-copy-mode without copying anything"
-  (interactive)
-  (vterm-copy-mode -1))
+(defun my/term-set-header-message (message)
+  (setq-local my/term-header-message (base64-decode-string (or message ""))))
+
+(defun my/term-setup ()
+  (my/term-set-header-message (base64-encode-string ""))
+  (setq header-line-format
+        '(" "
+          (:eval (ansi-color-apply my/term-header-message))
+          (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
 (defun project-vterm ()
   "Invoke `vterm' in the project's root.
@@ -669,10 +682,6 @@ Switch to the project specific term buffer if it already exists."
 (use-package vterm
   :bind (("C-c v" . vterm)
          ("C-x p v" . project-vterm)
-         :map vterm-mode-map
-         ("M-n" . vterm-send-M-n)
-         ("M-p" . vterm-send-M-p)
-         ("C-y" . vterm-send-C-y)
          :map vterm-copy-mode-map
          ("C-c C-c" . vterm-copy-mode))
   :init
@@ -682,24 +691,43 @@ Switch to the project specific term buffer if it already exists."
         vterm-tramp-shells '(("docker" "/bin/bash")
                              ("scpx" "/bin/bash")
                              ("sshx" "/bin/bash")))
-  (defun my/vterm-set-header-message (message)
-    (setq-local my/vterm-header-message (base64-decode-string (or message ""))))
-  (add-to-list 'vterm-eval-cmds '("set" my/vterm-set-header-message))
-  (defun my/vterm-setup ()
-    (my/vterm-set-header-message (base64-encode-string "Starting up..."))
-    (setq header-line-format
-          '(" "
-            (:eval (ansi-color-apply my/vterm-header-message))
-            (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
-  :hook (vterm-mode . my/vterm-setup))
+  (add-to-list 'vterm-eval-cmds '("set" my/term-set-header-message))
+  :hook (vterm-mode . my/term-setup))
+
+;; See also other terminal emulators:
+;; - https://codeberg.org/akib/emacs-eat (works with eshell)
+;; - https://repo.or.cz/emacs-coterm.git (works with shell mode)
+
+(use-package shell
+  :config
+  (add-hook 'comint-output-filter-functions 'comint-osc-process-output)
+  ;;(add-hook 'shell-mode-hook #'my/term-setup)
+  (setq comint-terminfo-terminal "ansi"
+        comint-scroll-show-maximum-output nil
+        comint-input-ignoredups t)
+  ;; (map! :map shell-mode-map
+  ;;       "M-p" #'comint-previous-matching-input-from-input
+  ;;       "M-n" #'comint-next-matching-input-from-input)
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              (my/term-setup)
+              (setq-local scroll-margin 0
+                          recenter-positions '(top bottom middle)))))
 
 (use-package bash-completion
+  :disabled
   :config
   (bash-completion-setup))
 
 ;; FIXME: Consider using this instead
 ;; https://github.com/CeleritasCelery/emacs-native-shell-complete
-(use-package native-complete :disabled)
+(use-package native-complete
+  :config
+  (with-eval-after-load 'shell
+    (native-complete-setup-bash))
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              (add-to-list 'completion-at-point-functions #'native-complete-at-point))))
 
 (use-package ansi-color
   :config
@@ -732,19 +760,16 @@ Switch to the project specific term buffer if it already exists."
                                   (magit-project-status "Magit"))))
 
 (use-package git-timemachine
+  :disabled ;; not loading for some reason
   :bind (("C-c g t" . git-timemachine)))
 
 (use-package diff-hl
   :config
   (global-diff-hl-mode)
-  (diff-hl-margin-mode)
-  (diff-hl-flydiff-mode))  ; do I want this? -- yes!
-;; (setq diff-hl-margin-symbols-alist
-;;       '((insert . "┃")
-;;         (delete . "┃")
-;;         (change . "┃")
-;;         (unknown . "?")
-;;         (ignored . "i")))
+  (unless (window-system) (diff-hl-margin-mode))
+  (diff-hl-flydiff-mode)
+  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
 
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -758,6 +783,7 @@ Switch to the project specific term buffer if it already exists."
   :after yasnippet)
 
 (use-package eglot
+  :disabled
   :bind (:map eglot-mode-map
               ("C-c l a" . eglot-code-actions)
               ("C-c l r" . eglot-rename)
@@ -772,21 +798,46 @@ Switch to the project specific term buffer if it already exists."
   (set-face-attribute 'eglot-highlight-symbol-face nil
                       :inherit 'match))
 
+(use-package eglot-java :after eglot)
+
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l"       ; prefix for lsp-command-map
+        lsp-idle-delay 0.3              ; default 0.5
+        lsp-completion-provider :none   ; don't fuss with company?
+        lsp-file-watch-threshold 20000)
+  :hook ((python-mode . lsp-deferred)
+         (java-mode . lsp-deferred)
+         (go-mode . lsp-deferred)
+         (lsp-mode . lsp-enable-which-key-integration)
+         (lsp-mode . lsp-ui-mode)))
+
+(use-package lsp-ui
+  :config
+  (setq lsp-ui-doc-enable t
+        lsp-ui-doc-position 'top
+        lsp-ui-doc-delay 0.2
+        lsp-ui-doc-show-with-cursor t
+        lsp-ui-doc-show-with-mouse nil
+        lsp-ui-sideline-diagnostic-max-lines 10))
+
+(use-package lsp-java
+  :bind (:map lsp-command-map
+              ("=j" . my/google-java-format-buffer))
+  :config
+  (defun my/lsp-java-delete-workspace-cache ()
+    "Delete the workspace cache so JDTLS has a chance to start successfully."
+    (interactive)
+    (delete-directory lsp-java-workspace-cache-dir t))
+  (setq lsp-java-maven-download-sources t
+        lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
+        lsp-java-java-path "java-for-jdt.sh"
+        lsp-java-content-provider-preferred "fernflower"))
+
 (use-package eldoc
   :diminish "doc"
   :config
   (setq eldoc-echo-area-use-multiline-p 0.5))
-
-(defun my-eglot-java-contact (_interactive)
-  "Call my substitute for the Java command"
-  (seq-let (tag _command &rest args) (eglot-java--eclipse-contact nil)
-    (apply #'list tag (substitute-in-file-name "$HOME/.local/bin/java-for-jdt.sh") args)))
-
-(use-package eglot-java
-  :after eglot
-  :config
-  (eglot-java-init)
-  (setcdr (assq 'java-mode eglot-server-programs) #'my-eglot-java-contact))
 
 (use-package protobuf-mode)
 (use-package go-mode)
@@ -991,8 +1042,8 @@ Switch to the project specific term buffer if it already exists."
                         ,(expand-file-name "var/" user-emacs-directory))
       recentf-max-saved-items 250
 
-      desktop-restore-frames nil
-      desktop-restore-eager t
+      desktop-restore-frames nil        ; don't restore frame configuration
+      desktop-restore-eager t           ; restore all buffers immediately
 
       history-length 10000
       history-delete-duplicates t
