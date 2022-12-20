@@ -269,11 +269,6 @@
 
 (use-package iedit)  ; Binds C-;
 
-(use-package ace-window
-  :disabled
-  :bind
-  (("M-o" . ace-window)))
-
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
@@ -567,6 +562,14 @@ If it's not a Tramp filename, return nil."
 
 ;;; Programming stuff
 
+(use-package puni
+  :hook ((prog-mode sgml-mode nxml-mode tex-mode eval-expression-minibuffer-setup) . puni-mode)
+  :config
+  (add-hook 'prog-mode-hook 'electric-pair-mode)
+  :bind (:map puni-mode-map
+              ("C-," . puni-expand-region)))
+
+
 (defun prog-stuff ()
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
@@ -760,7 +763,9 @@ Switch to the project specific term buffer if it already exists."
   (defun my/lsp-java-delete-workspace-cache ()
     "Delete the workspace cache so JDTLS has a chance to start successfully."
     (interactive)
-    (delete-directory lsp-java-workspace-cache-dir t))
+    (message "Deleting %s..." lsp-java-workspace-cache-dir)
+    (delete-directory lsp-java-workspace-cache-dir t)
+    (message "Deleted %s" lsp-java-workspace-cache-dir))
   (setq lsp-java-maven-download-sources t
         lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
         lsp-java-java-path "java-for-jdt.sh"
@@ -862,7 +867,7 @@ Switch to the project specific term buffer if it already exists."
   :hook ((prog-mode . ws-butler-mode)))
 
 (use-package dockerfile-mode)
-(use-package docker-tramp)
+(use-package docker-tramp :disabled)
 
 (use-package apheleia
   :config
