@@ -413,7 +413,6 @@
   (setq ibuffer-show-empty-filter-groups nil
         ibuffer-project-use-cache t))
 
-(use-package liquidmetal :disabled)
 (use-package orderless
   :init
   (setq orderless-matching-styles
@@ -421,19 +420,6 @@
   (setq completion-styles (append completion-styles '(orderless))
         ;;completion-category-overrides '((file (styles basic partial-completion)))
         completion-category-defaults nil))
-(use-package fussy
-  ;; https://github.com/jojojames/fussy
-  :disabled
-  :after (liquidmetal orderless)
-  :config
-  (with-eval-after-load 'eglot
-    (add-to-list 'completion-category-overrides
-                 '(eglot (styles fussy basic orderless))))
-  (setq completion-styles (cons 'fussy completion-styles) ; beginning
-        fussy-score-fn 'fussy-liquidmetal-score
-        fussy-filter-fn 'fussy-filter-orderless
-        completion-category-defaults nil
-        completion-category-overrides nil))
 
 ;; A few more useful configurations...
 (use-package emacs
