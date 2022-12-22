@@ -566,6 +566,12 @@ If it's not a Tramp filename, return nil."
   :hook ((prog-mode sgml-mode nxml-mode tex-mode eval-expression-minibuffer-setup) . puni-mode)
   :config
   (add-hook 'prog-mode-hook 'electric-pair-mode)
+  (define-advice puni-kill-line (:before (&rest _))
+    "Go back to indentation before killing the line if it makes sense to."
+    (when (looking-back "^[[:space:]]*")
+      (if (bound-and-true-p indent-line-function)
+          (funcall indent-line-function)
+        (back-to-indentation))))
   :bind (:map puni-mode-map
               ("C-," . puni-expand-region)))
 
@@ -871,14 +877,17 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package apheleia
   :config
-  (setq apheleia-mode-lighter " fmt")
+  (setq apheleia-mode-lighter " fmt"
+        apheleia-remote-algorithm 'remote)
   (push '(elisp-mode . lisp-indent) apheleia-mode-alist)
   :hook
   (prog-mode . apheleia-mode))
 
-(add-hook 'java-mode-hook
-          (lambda () (setq fill-column 100
-                           c-basic-offset 2)))
+(use-package google-c-style
+  :hook
+  (java-mode . google-set-c-style))
+
+(add-hook 'java-mode-hook (lambda () (setq fill-column 100)))
 (add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
 
 ;; direnv support using https://github.com/purcell/envrc
