@@ -18,3 +18,8 @@ export VIRTUAL_ENV_DISABLE_PROMPT=1  # so activate script doesn't modify prompt
 if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
+
+# Set up for Homebrew Linux
+if [ -e "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
