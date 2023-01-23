@@ -253,14 +253,12 @@
   (hl-line-overlay-priority -100)) ;; sadly, seems not observed by diredfl
 
 (use-package modus-themes
-  :init
+  :config
   (setq modus-themes-hl-line '(accented)
         modus-themes-completions '((t . (accented intense)))
         modus-themes-mixed-fonts t
         modus-themes-variable-pitch-ui t)
-  (modus-themes-load-themes)
-  :config
-  (modus-themes-load-vivendi))
+  (load-theme 'modus-vivendi :no-confirm))
 
 (use-package avy
   :bind
