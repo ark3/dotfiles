@@ -441,7 +441,7 @@
   :if (memq window-system '(mac ns))
   :init
   (setq exec-path-from-shell-variables '("PATH" "JAVA_HOME")
-        exec-path-from-shell-arguments nil
+        exec-path-from-shell-arguments '("-l")
         ;; exec-path-from-shell-debug t
         exec-path-from-shell-warn-duration-millis 100)
   :config
