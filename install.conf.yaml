@@ -11,10 +11,9 @@
       force: false
 
 - link:
+    ~/.profile:
     ~/.bash_profile:
-      path: dispatch_bash
     ~/.bashrc:
-      path: interactive
     ~/.gitconfig:
     ~/.ssh/config:
       path: ssh/config
@@ -32,7 +31,6 @@
       path: config/fish
     ~/.editorconfig:
     ~/.inputrc:
-    ~/.pythonrc:
     ~/.spacemacs:
     ~/.tmux.conf:
 

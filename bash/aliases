@@ -3,19 +3,20 @@
 # Aliases and functions
 
 case "$(uname -s)" in
-    Darwin)
+Darwin)
     alias ls='ls -sFG'
     ;;
 
-    Linux)
+Linux)
     alias ls='ls -sF --color'
     ;;
 
-    *)
+*)
     alias ls='ls -sF'
+    ;;
 esac
 
-# Enable aliases to be sudo’ed
+# Enable aliases to be sudo’ed by performing alias expansion on the first arg
 # https://askubuntu.com/questions/22037/aliases-not-available-when-using-sudo/22043#22043
 alias sudo='sudo '
 
@@ -61,22 +62,21 @@ alias gss='git status'
 # See also git help shortlog for .mailmap stuff
 
 # macOS has no md5sum or sha1sum; use fallbacks
-command -v md5sum > /dev/null || alias md5sum="md5"
-command -v sha1sum > /dev/null || alias sha1sum="shasum"
+command -v md5sum >/dev/null || alias md5sum="md5"
+command -v sha1sum >/dev/null || alias sha1sum="shasum"
 
-if [[ ${SHELLOPTS} =~ (vi|emacs) ]]; then  # is line editing enabled?
+if [[ ${SHELLOPTS} =~ (vi|emacs) ]]; then # is line editing enabled?
     # clear screen w/o losing existing output; just scroll it off the top
-    printf -v MANYRETS \\n%.0s {1..500}           # this _creates_ MANYRETS
+    printf -v MANYRETS \\n%.0s {1..500} # this _creates_ MANYRETS
     function myclear {
-        printf "${MANYRETS:0:$(tput lines) - 1}"  # this _uses_ MANYRETS
+        printf "${MANYRETS:0:$(tput lines)-1}" # this _uses_ MANYRETS
         clear
     }
     bind -x '"\C-l": myclear'
 fi
 
 function mcd {
-    mkdir -p -- "$1" &&
-    cd -P -- "$1"
+    mkdir -p -- "$1" && cd -P -- "$1"
 }
 
 function ff {
@@ -88,8 +88,9 @@ function ff0 {
 }
 
 function fff {
-    if [ x"$1" == x ]
-    then find . -type f -print
-    else find "$1" -type f -print
+    if [ x"$1" == x ]; then
+        find . -type f -print
+    else
+        find "$1" -type f -print
     fi
 }

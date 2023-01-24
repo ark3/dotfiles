@@ -1,25 +1,18 @@
 #!/hint/bash
 
-if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
-    # Linux
-    [ -f /etc/profile.d/bash_completion.sh ] && . /etc/profile.d/bash_completion.sh
+# Linux
+[ -f /etc/profile.d/bash_completion.sh ] && . /etc/profile.d/bash_completion.sh
 
-    # MacOS
-    [ -f /usr/local/etc/profile.d/bash_completion.sh ] && . /usr/local/etc/profile.d/bash_completion.sh
+# MacOS
+[ -f /usr/local/etc/profile.d/bash_completion.sh ] && . /usr/local/etc/profile.d/bash_completion.sh
 
-    command -v kubectl >/dev/null 2>&1 && source <(kubectl completion bash)
-    command -v minikube >/dev/null 2>&1 && source <(minikube completion bash)
+command -v kubectl >/dev/null 2>&1 && source <(kubectl completion bash)
+command -v minikube >/dev/null 2>&1 && source <(minikube completion bash)
 
-    # https://github.com/cykerway/complete-alias/
-    source ~/dotfiles/bash/complete-alias
-    aliases=(k gco ga gb gc gd)
-    for a in "${aliases[@]}"; do
-        complete -F _complete_alias "$a"
-    done
-    unset a aliases
-fi
-
-if [ -f '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc' ]; then
-    source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc'
-    source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc'
-fi
+# https://github.com/cykerway/complete-alias/
+# source ~/dotfiles/bash/complete-alias
+# aliases=(k gco ga gb gc gd)
+# for a in "${aliases[@]}"; do
+#     complete -F _complete_alias "$a"
+# done
+# unset a aliases
