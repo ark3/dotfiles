@@ -1,0 +1,12 @@
+#!/bin/bash
+
+function listening_on() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 <port>"
+        return 1
+    fi
+
+    lsof -nP -i :"$1" | egrep '^COMMAND|LISTEN'
+}
+
+listening_on "$@"
