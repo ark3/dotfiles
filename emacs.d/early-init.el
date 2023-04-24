@@ -33,9 +33,9 @@
 
 (when (find-font my/font)
   (add-to-list 'default-frame-alist
-               `(font . (format "%s %s"
-                                (font-get my/font :family)
-                                (truncate (font-get my/font :size))))))
+               `(font . ,(format "%s %s"
+                                 (font-get my/font :family)
+                                 (truncate (font-get my/font :size))))))
 
 (add-hook 'after-init-hook
           (lambda ()
