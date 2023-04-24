@@ -55,6 +55,7 @@
   (setq inhibit-startup-screen t
         initial-scratch-message nil
         sentence-end-double-space nil
+        require-final-newline t
         ring-bell-function 'ignore
         frame-resize-pixelwise t
         frame-inhibit-implied-resize t)
@@ -97,7 +98,7 @@
   ;; Don't persist a custom file, this bites me more than it helps
   (setq custom-file (make-temp-file "")) ; use a temp file as a placeholder
   (setq custom-safe-themes t)            ; mark all themes as safe, since we can't persist now
-  (setq enable-local-variables :all)     ; fix =defvar= warnings
+  (setq enable-local-variables t)        ; was :all (fix =defvar= warnings)
 
   ;; stop emacs from littering the file system with backup files
   (setq make-backup-files nil
@@ -177,7 +178,8 @@
     (require 'ls-lisp)
     (setq ls-lisp-use-insert-directory-program nil))
 
-  (setq dired-dwim-target t)
+  (setq dired-dwim-target t
+        dired-kill-when-opening-new-dired-buffer t)
   (setq windmove-wrap-around t)
   (setq use-dialog-box nil)
   (setq window-min-width 40)
@@ -240,6 +242,8 @@
   (shell-mode . stutter-mode)
   (compilation-mode . stutter-mode))
 
+;; See also pulse-momentary-highlight-one-line, possibly as used by
+;; https://github.com/protesilaos/pulsar/blob/main/pulsar.el
 (use-package hl-line+
   :hook
   (window-scroll-functions . hl-line-flash)
@@ -263,7 +267,7 @@
 (use-package avy
   :bind
   (("C-c SPC" . avy-goto-char-timer)
-   ("C-'" . avy-goto-word-1)))
+   ("C-'" . avy-goto-char-timer))
 
 (use-package iedit)  ; Binds C-;
 
@@ -348,7 +352,7 @@
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
   :config
-  (setq consult-preview-key (kbd "M-.")
+  (setq consult-preview-key "M-."
         consult-narrow-key "<"))
 
 (use-package consult-dir
@@ -387,7 +391,8 @@
 (use-package fancy-dabbrev
   :diminish fancy-dabbrev-mode
   :bind (("TAB" . fancy-dabbrev-expand-or-indent)
-         ("M-/" . dabbrev-completion)
+         ;;("M-/" . dabbrev-completion)
+         ("M-/" . hippie-expand)
          ("C-M-/" . hippie-expand))
   :config
   (global-fancy-dabbrev-mode)
@@ -403,6 +408,8 @@
                     (ibuffer-project-generate-filter-groups))
               (unless (eq ibuffer-sorting-mode 'project-file-relative)
                 (ibuffer-do-sort-by-project-file-relative))))
+  (add-to-list 'ibuffer-project-root-functions
+               '(tramp-handle-file-remote-p . "Remote"))
   (setq ibuffer-show-empty-filter-groups nil
         ibuffer-project-use-cache t))
 
@@ -452,11 +459,13 @@
   (exec-path-from-shell-initialize))
 
 (use-package tramp
+  :straight nil
   :config
   ;;; include the remote PATH in tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (setq tramp-histfile-override nil     ; Don't create .tramp_history
-        tramp-default-method "scpx")
+        tramp-default-method "scpx"
+        vc-handled-backends '(Git))
   ;;; Assume ControlPersist is set in ~/.ssh/config
   (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
 
@@ -535,12 +544,13 @@ If it's not a Tramp filename, return nil."
   (org-startup-folded 'content)
   (org-export-with-toc nil)
   (org-export-with-section-numbers nil)
+  (org-export-initial-scope 'subtree)
   :config
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
   (setq org-capture-templates
         '(("t" "Task" entry (file+headline "" "Tasks") ; built-in template
            "* TODO %?\n  %u\n  %a")
-          ("e" "Email" entry (file "~/temp/email.org")
+          ("e" "Email" entry (file+headline "" "Emails")
            "* %?\n")
           ("n" "Note" entry (file+headline "" "Notes")
            "* %?\n\nEntered on %U\n  %i\n  %a"))
@@ -738,7 +748,9 @@ Switch to the project specific term buffer if it already exists."
   (set-face-attribute 'eglot-highlight-symbol-face nil
                       :inherit 'match))
 
-(use-package eglot-java :after eglot)
+(use-package eglot-java
+  :disabled
+  :after eglot)
 
 (use-package lsp-mode
   :init
@@ -762,8 +774,6 @@ Switch to the project specific term buffer if it already exists."
         lsp-ui-sideline-diagnostic-max-lines 10))
 
 (use-package lsp-java
-  :bind (:map lsp-command-map
-              ("=j" . my/google-java-format-buffer))
   :config
   (defun my/lsp-java-delete-workspace-cache ()
     "Delete the workspace cache so JDTLS has a chance to start successfully."
