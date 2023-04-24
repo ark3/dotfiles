@@ -66,16 +66,16 @@
   ;; always allow 'y' instead of 'yes'.
   (defalias 'yes-or-no-p 'y-or-n-p)
 
-  ;; default to utf-8 for all the things
-  (set-charset-priority 'unicode)
-  (setq locale-coding-system 'utf-8
-        coding-system-for-read 'utf-8
-        coding-system-for-write 'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-  (set-selection-coding-system 'utf-8)
-  (prefer-coding-system 'utf-8)
-  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+  ;; default to utf-8 for all the things FIXME this breaks coterm :frown:
+  ;; (set-charset-priority 'unicode)
+  ;; (setq locale-coding-system 'utf-8
+  ;;       coding-system-for-read 'utf-8
+  ;;       coding-system-for-write 'utf-8)
+  ;; (set-terminal-coding-system 'utf-8)
+  ;; (set-keyboard-coding-system 'utf-8)
+  ;; (set-selection-coding-system 'utf-8)
+  ;; (prefer-coding-system 'utf-8)
+  ;; (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
 
   ;; write over selected text on input... like all modern editors do
   (delete-selection-mode t)
@@ -648,19 +648,41 @@ Switch to the project specific term buffer if it already exists."
 ;; - https://codeberg.org/akib/emacs-eat (works with eshell)
 ;; - https://repo.or.cz/emacs-coterm.git (works with shell mode)
 
-(use-package shell
+(use-package coterm
   :config
-  (add-hook 'comint-output-filter-functions 'comint-osc-process-output)
-  ;;(add-hook 'shell-mode-hook #'my/term-setup)
+  (coterm-mode))
+
+(use-package shell
+  :bind (:map shell-mode-map
+              ("M-P" . comint-previous-matching-input-from-input)
+              ("M-N" . comint-next-matching-input-from-input))
+  :config
+  (defun my/make-shell-in-dir (dir &optional buffer-base shell-file-name)
+    (let* ((name (or buffer-base (file-name-nondirectory dir)))
+           (function-name (intern (concat "shell-in-" name))))
+      (fset function-name
+            (lambda ()
+              (:documentation
+               (format "Create a shell in %s.\n\nRun the shell %s in the directory %s"
+                       name shell-file-name dir))
+              (interactive)
+              (let* ((default-directory dir)
+                     (buffer-name (format "*shell-%s*"
+                                          name))
+                     (buffer (get-buffer-create buffer-name)))
+                (shell buffer shell-file-name))))
+      function-name))
+  (global-set-key (kbd "C-c s h") (my/make-shell-in-dir (getenv "HOME")))
+  (global-set-key (kbd "C-c s s")
+                  (my/make-shell-in-dir "/scpx:strife:" "strife" "/bin/bash"))
   (setq comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil
         comint-input-ignoredups t)
-  ;; (map! :map shell-mode-map
-  ;;       "M-p" #'comint-previous-matching-input-from-input
-  ;;       "M-n" #'comint-next-matching-input-from-input)
+  (add-hook 'comint-output-filter-functions 'comint-osc-process-output)
   (add-hook 'shell-mode-hook
             (lambda ()
               (my/term-setup)
+              (abbrev-mode 1)
               (setq-local scroll-margin 0
                           recenter-positions '(top bottom middle)))))
 
