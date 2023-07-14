@@ -28,8 +28,14 @@
       indicate-unused-lines t)
 
 (setq my/font (font-spec :family "IBM Plex Mono" :size 14.0 :weight 'medium)
-      ;; my/variable-pitch-font (font-spec :family "IBM Plex Serif" :size 16.0)
-      my/variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0))
+      ;; my/font (font-spec :family "Iosevka Comfy Wide" :size 13.0 :weight 'regular)
+      ;; my/variable-pitch-font (font-spec :family "IBM Plex Serif" :size 15.0)
+      ;; my/variable-pitch-font (font-spec :family "PT Serif" :size 15.0)
+      ;; my/variable-pitch-font (font-spec :family "Charter" :size 16.0)
+      ;; my/variable-pitch-font (font-spec :family "Cambria" :size 16.0)
+      ;; my/variable-pitch-font (font-spec :family "Iosevka Comfy Wide Duo" :size 14.0)
+      my/variable-pitch-font (font-spec :family "ia Writer Duospace" :size 14.0)
+      )
 
 (when (find-font my/font)
   (add-to-list 'default-frame-alist

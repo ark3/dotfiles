@@ -84,9 +84,7 @@
   ;;(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
   ;; Don't quit w/o warning
-  (add-hook 'kill-emacs-query-functions
-            (lambda () (y-or-n-p "Do you really want to exit Emacs? "))
-            'append)
+  (setq confirm-kill-emacs 'y-or-n-p)
 
   ;; But don't mess up window layout. Instead, short-circuit the cond
   ;; expression by defining a do-nothing buffer-quit-function.
@@ -160,6 +158,7 @@
 
   (global-auto-revert-mode 1)
   (setq global-auto-revert-non-file-buffers t)
+  (add-to-list 'global-auto-revert-ignore-modes 'Buffer-menu-mode)
   ;;(transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
 
@@ -199,6 +198,10 @@
         scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
         comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil)
+
+  ;; Interactive search
+  (setq isearch-lazy-count t
+        isearch-lazy-highlight t)
 
   ;; Mode line
   (setq mode-line-compact 'long)
@@ -242,6 +245,10 @@
   (shell-mode . stutter-mode)
   (compilation-mode . stutter-mode))
 
+(use-package mood-line
+  :config
+  (mood-line-mode))
+
 ;; See also pulse-momentary-highlight-one-line, possibly as used by
 ;; https://github.com/protesilaos/pulsar/blob/main/pulsar.el
 (use-package hl-line+
@@ -268,6 +275,17 @@
   :bind
   (("C-c SPC" . avy-goto-char-timer)
    ("C-'" . avy-goto-char-timer))
+  :config
+  ;; https://karthinks.com/software/avy-can-do-anything/#avy-plus-embark-any-action-anywhere
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
 (use-package iedit)  ; Binds C-;
 
@@ -369,7 +387,9 @@
               ("C-c f n" . flymake-goto-next-error)
               ("C-c f p" . flymake-goto-prev-error)
               ("C-c f b" . flymake-show-buffer-diagnostics)
-              ("C-c f B" . flymake-show-project-diagnostics)))
+              ("C-c f B" . flymake-show-project-diagnostics))
+  :config
+  (setq flymake-show-diagnostics-at-end-of-line t))
 
 (use-package vertico
   :bind (:map vertico-map
@@ -400,6 +420,7 @@
         fancy-dabbrev-expansion-on-preview-only t))
 
 (use-package ibuffer-project
+  :disabled
   :bind ("C-x C-b" . ibuffer)
   :config
   (add-hook 'ibuffer-hook
@@ -511,6 +532,9 @@ If it's not a Tramp filename, return nil."
   (visual-fill-column-mode 1)
   (org-indent-mode 1)
   (variable-pitch-mode 1))
+
+(use-package qrencode
+  :bind (("C-c q" . qrencode-region)))
 
 (use-package flyspell
   :custom
@@ -646,11 +670,25 @@ Switch to the project specific term buffer if it already exists."
 
 ;; See also other terminal emulators:
 ;; - https://codeberg.org/akib/emacs-eat (works with eshell)
-;; - https://repo.or.cz/emacs-coterm.git (works with shell mode)
-
-(use-package coterm
+(use-package coterm                     ; https://repo.or.cz/emacs-coterm.git
   :config
   (coterm-mode))
+
+;; async-shell-command: when the process is done
+;; - switch to view-mode (for q to quit)
+;; - set things up so revert re-runs the command
+;; - bind g to revert-buffer
+;; see
+;; - https://emacs.stackexchange.com/a/41418 (sentinel for done, view mode)
+;; - https://emacs.stackexchange.com/a/35638 (set up revert)
+(use-package shell-command-x
+  :straight (shell-command-x
+             :type git :host github :repo "elizagamedev/shell-command-x.el")
+  :custom
+  (shell-command-x-buffer-name-format "*cmd:%n*" "not really shell-related")
+  (shell-command-x-buffer-name-async-format "*cmd:%n*" "not really shell-related")
+  :config
+  (shell-command-x-mode 1))
 
 (use-package shell
   :bind (:map shell-mode-map
@@ -694,6 +732,7 @@ Switch to the project specific term buffer if it already exists."
 ;; FIXME: Consider using this instead
 ;; https://github.com/CeleritasCelery/emacs-native-shell-complete
 (use-package native-complete
+  :disabled
   :config
   (with-eval-after-load 'shell
     (native-complete-setup-bash))
@@ -807,6 +846,8 @@ Switch to the project specific term buffer if it already exists."
         lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
         lsp-java-java-path "java-for-jdt.sh"
         lsp-java-content-provider-preferred "fernflower"))
+
+(use-package lsp-jedi)
 
 (use-package eldoc
   :diminish "doc"
