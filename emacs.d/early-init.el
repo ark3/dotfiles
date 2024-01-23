@@ -15,8 +15,7 @@
 
 ;; GUI frames
 (setq inhibit-splash-screen t
-      default-frame-alist '((menu-bar-lines . 1)
-                            (tool-bar-lines . 0)
+      default-frame-alist '((tool-bar-lines . 0)
                             (width . 120)  ; characters
                             (height . 50)  ; characters
                             (foreground-color . "#fff")
@@ -43,6 +42,11 @@
                                  (font-get my/font :family)
                                  (truncate (font-get my/font :size))))))
 
+(add-to-list 'default-frame-alist
+             (if (memq window-system '(mac ns))
+                 '(menu-bar-lines . 1)
+               '(menu-bar-lines . 0)))
+
 (add-hook 'after-init-hook
           (lambda ()
             (when (find-font my/font)
@@ -50,6 +54,6 @@
               (set-face-attribute 'fixed-pitch nil :font my/font))
             (when (find-font my/variable-pitch-font)
               (set-face-attribute 'variable-pitch nil :font my/variable-pitch-font))
-            (when (< 640 (display-pixel-width) 1800)
+            (when (< 640 (display-pixel-width) 2000)
               (set-frame-parameter nil 'fullscreen 'maximized)))
           -99)
