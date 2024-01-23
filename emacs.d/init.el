@@ -49,6 +49,8 @@
          ("M-SPC" . cycle-spacing)
          ("M-o" . other-window)
          ("M-`" . bury-buffer)
+         ("C-x j" . duplicate-dwim)
+         ("C-x x r" . rename-visited-file)
          ("C-z" . nil)
          ("C-x C-z" . nil))
   :init
@@ -142,9 +144,9 @@
     (let ((this-win-buffer (window-buffer)))
       (winner-undo)
       (set-window-buffer (next-window) this-win-buffer)))
-  (global-set-key (kbd "C-x -") #'toggle-window-split)
-  (global-set-key (kbd "C-x C--") #'reposition-buffer)
-  (global-set-key (kbd "C-x C-=") #'windmove-swap-states-left)
+  (global-set-key (kbd "C-x w -") #'toggle-window-split)
+  (global-set-key (kbd "C-x w C--") #'reposition-buffer)
+  (global-set-key (kbd "C-x w C-=") #'windmove-swap-states-left)
 
   (customize-set-variable 'mouse-wheel-scroll-amount
                           '(1 ((shift) . hscroll) ((meta) . nil))
@@ -196,7 +198,6 @@
   (setq scroll-conservatively 10000
         scroll-margin 2
         scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
-        comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil)
 
   ;; Interactive search
@@ -249,8 +250,6 @@
   :config
   (mood-line-mode))
 
-;; See also pulse-momentary-highlight-one-line, possibly as used by
-;; https://github.com/protesilaos/pulsar/blob/main/pulsar.el
 (use-package hl-line+
   :hook
   (window-scroll-functions . hl-line-flash)
@@ -409,6 +408,7 @@
                  args))))
 
 (use-package fancy-dabbrev
+  :disabled
   :diminish fancy-dabbrev-mode
   :bind (("TAB" . fancy-dabbrev-expand-or-indent)
          ;;("M-/" . dabbrev-completion)
@@ -418,6 +418,13 @@
   (global-fancy-dabbrev-mode)
   (setq fancy-dabbrev-preview-delay 0.3
         fancy-dabbrev-expansion-on-preview-only t))
+
+;; https://git.sr.ht/~eshel/completion-preview/tree/master/item/completion-preview.el
+(use-package completion-preview
+  :straight (completion-preview :host sourcehut :repo "eshel/completion-preview")
+  :config
+  (add-hook 'prog-mode-hook #'completion-preview-mode)
+  )
 
 (use-package ibuffer-project
   :disabled
@@ -454,6 +461,19 @@
   ;; Vertico commands are hidden in normal buffers.
   (setq read-extended-command-predicate
         #'command-completion-default-include-p)
+
+  ;; Add prompt indicator to `completing-read-multiple'. Propertize the
+  ;; separator to make it stand out.
+  (defun crm-indicator (args)
+    (cons (format "[Multi: %s] %s"
+                  (propertize
+                   (replace-regexp-in-string
+                    "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                    crm-separator)
+                   'face 'error)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
@@ -530,7 +550,7 @@ If it's not a Tramp filename, return nil."
    dabbrev-case-fold-search t     ; ignore case on search
    dabbrev-case-replace t)        ; keep typed case
   (visual-fill-column-mode 1)
-  (org-indent-mode 1)
+  ;; (org-indent-mode 1)
   (variable-pitch-mode 1))
 
 (use-package qrencode
@@ -559,9 +579,10 @@ If it's not a Tramp filename, return nil."
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
   :bind (("C-c x" . org-capture)
-         :map org-mode-map
-         ("<tab>" . fancy-dabbrev-expand-or-indent)
-         ("<backtab>" . fancy-dabbrev-backward))
+         ;; :map org-mode-map
+         ;; ("<tab>" . fancy-dabbrev-expand-or-indent)
+         ;; ("<backtab>" . fancy-dabbrev-backward)
+         )
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
@@ -580,8 +601,9 @@ If it's not a Tramp filename, return nil."
            "* %?\n\nEntered on %U\n  %i\n  %a"))
         org-default-notes-file (expand-file-name "~/notes.org")
         org-cycle-emulate-tab nil)
-  (add-hook 'org-mode-hook
-            (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle))))
+  ;; (add-hook 'org-mode-hook
+  ;;           (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle)))
+  )
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
@@ -595,24 +617,30 @@ If it's not a Tramp filename, return nil."
 
 ;;; Programming stuff
 
+(use-package expand-region
+  :bind (("C-," . er/expand-region)     ; overridden by puni in prog modes
+         ("C-=" . er/expand-region)))
+
 (use-package puni
   :hook ((prog-mode sgml-mode nxml-mode tex-mode eval-expression-minibuffer-setup) . puni-mode)
   :config
   (add-hook 'prog-mode-hook 'electric-pair-mode)
-  (define-advice puni-kill-line (:before (&rest _))
-    "Go back to indentation before killing the line if it makes sense to."
-    (when (looking-back "^[[:space:]]*")
-      (if (bound-and-true-p indent-line-function)
-          (funcall indent-line-function)
-        (back-to-indentation))))
+  ;; (define-advice puni-kill-line (:before (&rest _))
+  ;;   "Go back to indentation before killing the line if it makes sense to."
+  ;;   (when (looking-back "^[[:space:]]*")
+  ;;     (if (bound-and-true-p indent-line-function)
+  ;;         (funcall indent-line-function)
+  ;;       (back-to-indentation))))
   :bind (:map puni-mode-map
-              ("C-," . puni-expand-region)))
+              ("C-," . puni-expand-region))) ; Overrides er/expand-region
 
 
 (defun prog-stuff ()
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
   (setq fill-column 80
+        tab-always-indent 'complete
+        show-trailing-whitespace t
         indent-tabs-mode nil)
   (setq-local
    dabbrev-case-distinction nil    ; different case as different expansions
@@ -681,9 +709,10 @@ Switch to the project specific term buffer if it already exists."
 ;; see
 ;; - https://emacs.stackexchange.com/a/41418 (sentinel for done, view mode)
 ;; - https://emacs.stackexchange.com/a/35638 (set up revert)
+
+;; https://github.com/elizagamedev/shell-command-x.el
 (use-package shell-command-x
-  :straight (shell-command-x
-             :type git :host github :repo "elizagamedev/shell-command-x.el")
+  ;; :disabled
   :custom
   (shell-command-x-buffer-name-format "*cmd:%n*" "not really shell-related")
   (shell-command-x-buffer-name-async-format "*cmd:%n*" "not really shell-related")
@@ -763,6 +792,7 @@ Switch to the project specific term buffer if it already exists."
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
         magit-prefer-remote-upstream t
+        magit-diff-refine-hunk t
         project-switch-commands '((project-find-file "Find file")
                                   (project-dired "Dired")
                                   (project-eshell "Eshell")
@@ -842,9 +872,12 @@ Switch to the project specific term buffer if it already exists."
     (message "Deleting %s..." lsp-java-workspace-cache-dir)
     (delete-directory lsp-java-workspace-cache-dir t)
     (message "Deleted %s" lsp-java-workspace-cache-dir))
+  (let* ((lombok (substitute-in-file-name "$HOME/.m2/repository/org/projectlombok/lombok/1.18.24/lombok-1.18.24.jar"))
+         (extra-arg (concat "-javaagent:" lombok)))
+    (add-to-list 'lsp-java-vmargs extra-arg))
   (setq lsp-java-maven-download-sources t
         lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
-        lsp-java-java-path "java-for-jdt.sh"
+        ;; lsp-java-java-path "java-for-jdt.sh"
         lsp-java-content-provider-preferred "fernflower"))
 
 (use-package lsp-jedi)
