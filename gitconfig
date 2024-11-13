@@ -8,6 +8,8 @@
 [core]
 	editor = emacsclient
 	excludesfile = ~/.config/git/ignore
+[init]
+	defaultBranch = main
 [merge]
 	tool = meld
 [difftool]

@@ -219,13 +219,6 @@
   fill-column 100)
 
 (after! eglot
-  ;; eclipse-jdt breaks the spec which in turn breaks code actions
-  ;; This behaviour can't be disabled and needs to be worked around
-  ;; https://github.com/joaotavora/eglot/pull/937
-  (cl-defmethod eglot-execute-command
-    (_server (_cmd (eql java.apply.workspaceEdit)) arguments)
-    "Eclipse JDT breaks spec and replies with edits as arguments."
-    (mapc #'eglot--apply-workspace-edit arguments))
   (set-face-attribute 'eglot-highlight-symbol-face nil :inherit 'match))
 
 (after! diff-hl

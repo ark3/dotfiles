@@ -71,7 +71,7 @@ vterm_cmd() {
 # And iTerm's use of OSC-1337: https://iterm2.com/documentation-escape-codes.html
 emacs_prompt_end() {
     if [[ "$INSIDE_EMACS" = vterm* ]]; then
-        printf '\e]%s\e\\' "51;A$(whoami)@$(hostname):$(pwd)"
+        printf "\e]%s\e\\" "51;A$(whoami)@$(hostname):$(pwd)"
     elif [[ "$INSIDE_EMACS" = *comint* ]]; then
         printf "\e]7;file://%s%s\e\\" "$HOSTNAME" "$PWD"
     fi
