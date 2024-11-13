@@ -51,6 +51,7 @@
          ("M-`" . bury-buffer)
          ("C-x j" . duplicate-dwim)
          ("C-x x r" . rename-visited-file)
+         ("C-x C-b" . ibuffer)
          ("C-z" . nil)
          ("C-x C-z" . nil))
   :init
@@ -58,9 +59,7 @@
         initial-scratch-message nil
         sentence-end-double-space nil
         require-final-newline t
-        ring-bell-function 'ignore
-        frame-resize-pixelwise t
-        frame-inhibit-implied-resize t)
+        ring-bell-function 'ignore)
 
   (setq user-full-name "Abhay Saxena"
         user-mail-address "ark3@email.com")
@@ -82,14 +81,14 @@
   ;; write over selected text on input... like all modern editors do
   (delete-selection-mode t)
 
-  ;; don't want ESC as a modifier
-  ;;(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+  ;; support consistent keyboard usage
+  (cua-mode t)
 
   ;; Don't quit w/o warning
   (setq confirm-kill-emacs 'y-or-n-p)
 
-  ;; But don't mess up window layout. Instead, short-circuit the cond
-  ;; expression by defining a do-nothing buffer-quit-function.
+  ;; Don't mess up window layout on keyboard escape quit. Instead, short-circuit
+  ;; the cond expression by defining a do-nothing buffer-quit-function.
   (defadvice keyboard-escape-quit
       (around keyboard-escape-quit-dont-close-windows activate)
     (let ((buffer-quit-function (lambda () ())))
@@ -198,7 +197,9 @@
   (setq scroll-conservatively 10000
         scroll-margin 2
         scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
+        scroll-error-top-bottom t            ; move point when can't scroll
         comint-scroll-show-maximum-output nil)
+  (setq compilation-scroll-output 'first-error)
 
   ;; Interactive search
   (setq isearch-lazy-count t
@@ -209,28 +210,9 @@
   (display-time-mode -1)
   (column-number-mode t))
 
-;; ;; Tagged buffers
-;; ;; as written by Henrik Lissner (author of Doom Emacs)
-;; ;; https://discord.com/channels/406534637242810369/806409569013858314/967047606326947841
-;; (defvar my/buffer-tags ())
-
-;; (defun my/tag-buffer (n)
-;;   (interactive (list (read-number ">")))
-;;   (setf (alist-get n my/buffer-tags) (current-buffer)))
-
-;; (defun my/switch-to-tagged-buffer (n)
-;;   (interactive (list (read-number ">")))
-;;   (switch-to-buffer
-;;    (or (alist-get n my/buffer-tags)
-;;        (user-error "No buffer with tag %d" n))))
-
-;; (dotimes (i 9)
-;;   (global-set-key (kbd (format "C-z C-%d" i))
-;;                   (lambda () (interactive)
-;;                     (my/tag-buffer i)))
-;;   (global-set-key (kbd (format "C-z %d" i))
-;;                   (lambda () (interactive)
-;;                     (my/switch-to-tagged-buffer i))))
+(defun my/maximize-vertically ()
+  (interactive)
+  (set-frame-height nil (- (display-pixel-height) 96) nil t))
 
 
 ;; Packages
@@ -238,6 +220,7 @@
 (use-package diminish)
 
 (use-package stutter
+  :disabled                             ; probably don't need this on Emacs 29
   :straight (stutter
              :type git :host github :repo "ark3/stutter.el")
   :custom
@@ -250,17 +233,11 @@
   :config
   (mood-line-mode))
 
-(use-package hl-line+
-  :hook
-  (window-scroll-functions . hl-line-flash)
-  (focus-in . hl-line-flash)
-  (post-command . hl-line-flash)
-
-  :custom
-  (global-hl-line-mode nil)
-  (hl-line-flash-show-period 0.4)
-  (hl-line-inhibit-highlighting-for-modes '(dired-mode vterm-mode))
-  (hl-line-overlay-priority -100)) ;; sadly, seems not observed by diredfl
+(use-package lin
+  :config
+  (customize-set-variable 'lin-face 'lin-cyan)
+  (global-hl-line-mode 1)
+  (lin-global-mode 1))
 
 (use-package modus-themes
   :config
@@ -306,6 +283,11 @@
               ("r" . dired-hist-go-forward))
   :config
   (dired-hist-mode 1))
+
+;; Reveal Dired's features using a Transient menu
+;; (use-package casual-dired
+;;   :bind (:map dired-mode-map
+;;               ("C-o" . casual-dired-tmenu)))
 
 (use-package marginalia
   :config
@@ -379,7 +361,137 @@
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file)))
 
-(use-package wgrep)
+(use-package wgrep
+  :config
+  (setq wgrep-auto-save-buffer t))
+
+(use-package key-chord
+  :config
+  (key-chord-mode t))
+
+(use-package general
+  :config
+  (general-define-key :prefix-map 'my/leader-map :prefix-name "")
+  (general-define-key :prefix-map 'my/shell-map :prefix-name "shell")
+
+  (general-create-definer my/leader-def :keymaps 'my/leader-map)
+  (my/leader-def
+    "" nil
+    ":" 'execute-extended-command
+    "SPC" 'execute-extended-command
+    "x" 'execute-extended-command
+
+    "a" (cons "app" (make-sparse-keymap "app"))
+    "a g" 'magit-file-dispatch
+    "a q" 'qrencode-region
+    "a s" (cons "shell" my/shell-map)
+    "a v" 'vterm
+    "a x" 'org-capture
+
+    "b" (cons "buffer" (make-sparse-keymap "buffer"))
+    "b b" 'consult-buffer
+    "b B" 'ibuffer
+    "b d" 'kill-current-buffer
+    "b k" 'kill-current-buffer
+    "b v" 'revert-buffer
+    "b x" 'kill-buffer-and-window
+    "b s" 'save-buffer
+    "b S" 'save-some-buffers
+
+    "c" (cons "code" (make-sparse-keymap "code"))
+    "c x" 'kill-compilation
+
+    "c l" (cons "lsp" (make-sparse-keymap "lsp"))
+    "c l a" 'lsp-execute-code-action
+    "c l h" 'lsp-describe-thing-at-point
+    "c l o" 'lsp-organize-imports
+    "c l r" 'lsp-rename
+    "c l w" 'lsp-workspace-restart
+    "c l =" 'lsp-format-buffer
+
+    "c f" (cons "flymake" (make-sparse-keymap "flymake"))
+    "c f n" 'flymake-goto-next-error
+    "c f p" 'flymake-goto-prev-error
+    "c f b" 'flymake-show-buffer-diagnostics
+    "c f B" 'flymake-show-project-diagnostics
+
+    "f" (cons "file" (make-sparse-keymap "file"))
+    "f d" 'dired-jump
+    "f D" 'dired
+    "f f" 'find-file
+    "f r" 'consult-recent-file
+    "f R" 'rename-visited-file
+    "f s" 'save-buffer
+    "f v" 'find-alternate-file
+    "f w" 'write-file
+
+    "g" (cons "go" (make-sparse-keymap "go"))
+    "g e" 'consult-compile-error
+    "g f" 'consult-flymake
+    "g g" 'consult-goto-line
+    "g o" 'consult-outline
+    "g m" 'consult-mark
+    "g k" 'consult-global-mark
+    "g i" 'consult-imenu
+    "g I" 'consult-imenu-multi
+
+    "h" (cons "help" help-map)
+
+    "j" (cons "jump" (make-sparse-keymap "jump"))
+    "j j" 'avy-goto-char-timer
+    "j r" 'jump-to-register
+
+    "p" (cons "project" project-prefix-map)
+
+    "q" (cons "quit" (make-sparse-keymap "quit"))
+    "q d" 'restart-emacs-debug-init
+    "q r" 'restart-emacs
+    "q R" 'restart-emacs-without-desktop
+    "q f" 'delete-frame
+    "q q" 'save-buffers-kill-terminal
+    "q Q" 'save-buffers-kill-emacs
+
+    "s" (cons "search" (make-sparse-keymap "search"))
+    "s f" 'consult-find
+    "s F" 'consult-locate
+    "s g" 'consult-grep
+    "s G" 'consult-git-grep
+    "s r" 'consult-ripgrep
+    "s h" 'consult-history
+    "s l" 'consult-line
+    "s L" 'consult-line-multi
+    "s k" 'consult-keep-lines
+    "s u" 'consult-focus-lines
+    "s e" 'consult-isearch-history
+
+    "s s" 'save-buffer
+
+    "t" (cons "toggle" (make-sparse-keymap "toggle"))
+    "t r" 'read-only-mode
+    "t t" 'toggle-truncate-lines
+    "t v" 'visual-line-mode
+    "t V" 'visual-fill-column-mode
+    "t w" 'whitespace-mode
+
+    "w" (cons "window" (make-sparse-keymap "window"))
+    "w =" 'window-swap-states
+    "w 0" 'delete-window
+    "w 1" 'delete-other-windows
+    "w 2" 'split-window-below
+    "w 3" 'split-window-right
+    "w 4" ctl-x-4-map
+    "w 5" ctl-x-5-map
+    "w o" 'other-window-prefix
+    "w t" 'toggle-window-split
+    "w u" 'winner-undo
+    "w U" 'winner-redo
+    "w v" 'my/maximize-vertically
+    "w w" 'ace-window
+    )
+  (key-chord-define-global "dk" my/leader-map)
+  (general-def "<menu>" my/leader-map)
+  (general-def "C-c s" (cons "shell" my/shell-map))
+  )
 
 (use-package flymake
   :bind (:map flymake-mode-map
@@ -388,10 +500,11 @@
               ("C-c f b" . flymake-show-buffer-diagnostics)
               ("C-c f B" . flymake-show-project-diagnostics))
   :config
-  (setq flymake-show-diagnostics-at-end-of-line t))
+  (setq flymake-show-diagnostics-at-end-of-line nil))
 
 (use-package vertico
   :bind (:map vertico-map
+              ("DEL" . vertico-directory-delete-char)
               ("TAB" . minibuffer-complete)
               ("M-TAB" . vertico-insert))
   :config
@@ -423,6 +536,7 @@
 (use-package completion-preview
   :straight (completion-preview :host sourcehut :repo "eshel/completion-preview")
   :config
+  (setq completion-preview-exact-match-only t)
   (add-hook 'prog-mode-hook #'completion-preview-mode)
   )
 
@@ -506,19 +620,10 @@
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (setq tramp-histfile-override nil     ; Don't create .tramp_history
         tramp-default-method "scpx"
+        tramp-copy-size-limit nil
         vc-handled-backends '(Git))
   ;;; Assume ControlPersist is set in ~/.ssh/config
-  (customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
-
-  (defun tramp-ensure-dissected-file-name (vec-or-filename)
-    "Return a `tramp-file-name' structure for VEC-OR-FILENAME.
-
-VEC-OR-FILENAME may be either a string or a `tramp-file-name'.
-If it's not a Tramp filename, return nil."
-    (cond
-     ((tramp-file-name-p vec-or-filename) vec-or-filename)
-     ((tramp-tramp-file-p vec-or-filename)
-      (tramp-dissect-file-name vec-or-filename)))))
+  (customize-set-variable 'tramp-use-ssh-controlmaster-options nil))
 
 (use-package helpful
   :bind (;; Remap standard commands.
@@ -551,7 +656,7 @@ If it's not a Tramp filename, return nil."
    dabbrev-case-replace t)        ; keep typed case
   (visual-fill-column-mode 1)
   ;; (org-indent-mode 1)
-  (variable-pitch-mode 1))
+  (variable-pitch-mode 0))
 
 (use-package qrencode
   :bind (("C-c q" . qrencode-region)))
@@ -578,15 +683,13 @@ If it's not a Tramp filename, return nil."
   :hook ((org-mode . text-stuff)
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
-  :bind (("C-c x" . org-capture)
-         ;; :map org-mode-map
-         ;; ("<tab>" . fancy-dabbrev-expand-or-indent)
-         ;; ("<backtab>" . fancy-dabbrev-backward)
-         )
+  :bind (("C-c x" . org-capture))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
   (org-startup-folded 'content)
+  (org-startup-indented t)
+  (org-support-shift-select 'always)
   (org-export-with-toc nil)
   (org-export-with-section-numbers nil)
   (org-export-initial-scope 'subtree)
@@ -612,8 +715,8 @@ If it's not a Tramp filename, return nil."
          ("\\.md\\'" . markdown-mode)
          ("\\.mkdn\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "pandoc"))
-
+  :init (setq markdown-command "pandoc")
+  :config (setq markdown-fontify-code-blocks-natively t))
 
 ;;; Programming stuff
 
@@ -685,7 +788,10 @@ Switch to the project specific term buffer if it already exists."
   :bind (("C-c v" . vterm)
          ("C-x p v" . project-vterm)
          :map vterm-copy-mode-map
-         ("C-c C-c" . vterm-copy-mode))
+         ("C-c C-c" . vterm-copy-mode)
+         :map vterm-mode-map
+         ("C-v" . vterm-yank)
+         ("C-c C-v" . vterm-yank))
   :init
   (setq vterm-always-compile-module t)
   :config
@@ -743,7 +849,11 @@ Switch to the project specific term buffer if it already exists."
   (global-set-key (kbd "C-c s s")
                   (my/make-shell-in-dir "/scpx:strife:" "strife" "/bin/bash"))
   (setq comint-terminfo-terminal "ansi"
-        comint-scroll-show-maximum-output nil
+        comint-scroll-show-maximum-output nil ; to preserve C-l recentering
+        comint-move-point-for-output nil
+        comint-scroll-to-bottom-on-input t
+        comint-prompt-read-only t
+        comint-completion-addsuffix t
         comint-input-ignoredups t)
   (add-hook 'comint-output-filter-functions 'comint-osc-process-output)
   (add-hook 'shell-mode-hook
@@ -758,7 +868,6 @@ Switch to the project specific term buffer if it already exists."
   :config
   (bash-completion-setup))
 
-;; FIXME: Consider using this instead
 ;; https://github.com/CeleritasCelery/emacs-native-shell-complete
 (use-package native-complete
   :disabled
@@ -821,6 +930,7 @@ Switch to the project specific term buffer if it already exists."
   (unbind-key "TAB" yas-minor-mode-map))
 
 (use-package yasnippet-snippets
+  :disabled
   :after yasnippet)
 
 (use-package eglot
@@ -848,18 +958,21 @@ Switch to the project specific term buffer if it already exists."
   (setq lsp-keymap-prefix "C-c l"       ; prefix for lsp-command-map
         lsp-idle-delay 0.3              ; default 0.5
         lsp-completion-provider :none   ; don't fuss with company?
+        lsp-keep-workspace-alive nil
         lsp-file-watch-threshold 20000)
   :hook ((python-mode . lsp-deferred)
          (java-mode . lsp-deferred)
+         (scala-mode . lsp-deferred)
          (go-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
+         (lsp-mode . lsp-lens-mode)
          (lsp-mode . lsp-ui-mode)))
 
 (use-package lsp-ui
   :config
   (setq lsp-ui-doc-enable t
-        lsp-ui-doc-position 'top
-        lsp-ui-doc-delay 0.2
+        lsp-ui-doc-position 'at-point
+        lsp-ui-doc-delay 0.5
         lsp-ui-doc-show-with-cursor t
         lsp-ui-doc-show-with-mouse nil
         lsp-ui-sideline-diagnostic-max-lines 10))
@@ -872,12 +985,13 @@ Switch to the project specific term buffer if it already exists."
     (message "Deleting %s..." lsp-java-workspace-cache-dir)
     (delete-directory lsp-java-workspace-cache-dir t)
     (message "Deleted %s" lsp-java-workspace-cache-dir))
-  (let* ((lombok (substitute-in-file-name "$HOME/.m2/repository/org/projectlombok/lombok/1.18.24/lombok-1.18.24.jar"))
+  (let* ((lombok (substitute-in-file-name "$HOME/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar"))
          (extra-arg (concat "-javaagent:" lombok)))
     (add-to-list 'lsp-java-vmargs extra-arg))
   (setq lsp-java-maven-download-sources t
         lsp-java-format-settings-url "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml"
         ;; lsp-java-java-path "java-for-jdt.sh"
+        lsp-java-compile-null-analysis-mode "automatic"
         lsp-java-content-provider-preferred "fernflower"))
 
 (use-package lsp-jedi)
@@ -890,6 +1004,22 @@ Switch to the project specific term buffer if it already exists."
 (use-package protobuf-mode)
 (use-package go-mode)
 (use-package graphql-mode)
+
+(use-package scala-mode
+  :interpreter ("scala" . scala-mode))
+(use-package lsp-metals)
+
+(use-package sbt-mode
+  :commands sbt-start sbt-command
+  :config
+  ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
+  ;; allows using SPACE when in the minibuffer
+  (substitute-key-definition
+   'minibuffer-complete-word
+   'self-insert-command
+   minibuffer-local-completion-map)
+  ;; sbt-supershell kills sbt-mode:  https://github.com/hvesalai/emacs-sbt-mode/issues/152
+  (setq sbt:program-options '("-Dsbt.supershell=false")))
 
 (use-package tree-sitter-langs
   :hook
@@ -904,7 +1034,8 @@ Switch to the project specific term buffer if it already exists."
 (use-package cmake-mode)
 
 (use-package yaml-mode
-  :hook (yaml-mode . prog-stuff))
+  :hook ((yaml-mode . prog-stuff)
+         (yaml-mode . apheleia-mode)))
 
 (use-package dumb-jump
   :config
@@ -994,6 +1125,84 @@ Switch to the project specific term buffer if it already exists."
 
 (add-hook 'java-mode-hook (lambda () (setq fill-column 100)))
 (add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
+
+(use-package gptel
+  :config
+  (setq
+   gptel-model "llama3:latest"
+   gptel-backend (gptel-make-ollama "Ollama"
+                   :host "localhost:11434"
+                   :stream t
+                   :models '("gemma:7b" "llama3:latest" "codegemma:latest"
+                             "codellama:latest" "zephyr:latest")))
+  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
+  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
+  )
+
+(use-package mu4e
+  :disabled
+  :config
+  (setq
+   mu4e-search-skip-duplicates  t
+   mu4e-view-show-images t
+   mu4e-view-show-addresses t
+   mu4e-compose-format-flowed nil
+   mu4e-date-format "%y-%m-%d"
+   mu4e-headers-date-format "%Y-%m-%d"
+   mu4e-change-filenames-when-moving t
+   mu4e-attachments-dir "~/Downloads"
+
+   mu4e-maildir       "~/Maildir"   ;; top-level Maildir
+   ;; note that these folders below must start with /
+   ;; the paths are relative to maildir root
+   mu4e-refile-folder "/Archive"
+   mu4e-sent-folder   "/Sent"
+   mu4e-drafts-folder "/Drafts"
+   mu4e-trash-folder  "/Trash")
+
+  ;; this setting allows to re-sync and re-index mail
+  ;; by pressing U
+  (setq mu4e-get-mail-command  "mbsync -a")
+  (fset 'my-move-to-trash "mTrash")
+  (define-key mu4e-headers-mode-map (kbd "d") 'my-move-to-trash)
+  (define-key mu4e-view-mode-map (kbd "d") 'my-move-to-trash)
+  )
+
+(use-package clipetty
+  :unless window-system
+  :hook ((after-init . global-clipetty-mode)
+         (after-init . xterm-mouse-mode)))
+
+(use-package kkp
+  :config
+  (global-kkp-mode +1))
+
+;; WSL-specific setup
+
+(when (and (eq system-type 'gnu/linux)
+           (getenv "WSLENV"))
+  ;; WSL clipboard fix -- maybe only needed _without_ XWayland
+  ;; (setq interprogram-cut-function
+  ;;       (lambda (text)
+  ;;         (with-temp-buffer
+  ;;           (insert text)
+  ;;           ;; (call-process-region (point-min) (point-max) "win32yank.exe" nil 0 nil "-i" "--crlf")
+  ;;           (call-process-region (point-min) (point-max) "win32yank.exe" nil 0 nil "-i"))))
+
+  ;; WSL clipboard fix alternative
+  (setq select-active-regions nil
+        select-enable-clipboard 't
+        select-enable-primary nil
+        interprogram-cut-function #'gui-select-text)
+
+  ;; Open links in the default Windows browser
+  (let ((cmd-exe "/mnt/c/Windows/System32/cmd.exe")
+        (cmd-args '("/c" "start")))
+    (when (file-exists-p cmd-exe)
+      (setq browse-url-generic-program  cmd-exe
+            browse-url-generic-args     cmd-args
+            browse-url-browser-function 'browse-url-generic
+            search-web-default-browser  'browse-url-generic))))
 
 ;; direnv support using https://github.com/purcell/envrc
 ;;
