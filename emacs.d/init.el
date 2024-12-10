@@ -219,16 +219,6 @@
 
 (use-package diminish)
 
-(use-package stutter
-  :disabled                             ; probably don't need this on Emacs 29
-  :straight (stutter
-             :type git :host github :repo "ark3/stutter.el")
-  :custom
-  (stutter-minimum-growth 1024 "Smaller chunks useful on MacOS")
-  :hook
-  (shell-mode . stutter-mode)
-  (compilation-mode . stutter-mode))
-
 (use-package mood-line
   :config
   (mood-line-mode))
@@ -509,51 +499,12 @@
               ("M-TAB" . vertico-insert))
   :config
   (vertico-mode)
-  (setq vertico-resize 'grow-only)
+  (setq vertico-resize 'grow-only))
 
-  ;; Use `consult-completion-in-region' if Vertico is enabled, but not in the
-  ;; minibuffer. Otherwise use the default `completion--in-region' function.
-  (setq completion-in-region-function
-        (lambda (&rest args)
-          (apply (if (and vertico-mode (not vertico--input))
-                     #'consult-completion-in-region
-                   #'completion--in-region)
-                 args))))
-
-(use-package fancy-dabbrev
-  :disabled
-  :diminish fancy-dabbrev-mode
-  :bind (("TAB" . fancy-dabbrev-expand-or-indent)
-         ;;("M-/" . dabbrev-completion)
-         ("M-/" . hippie-expand)
-         ("C-M-/" . hippie-expand))
-  :config
-  (global-fancy-dabbrev-mode)
-  (setq fancy-dabbrev-preview-delay 0.3
-        fancy-dabbrev-expansion-on-preview-only t))
-
-;; https://git.sr.ht/~eshel/completion-preview/tree/master/item/completion-preview.el
-(use-package completion-preview
-  :straight (completion-preview :host sourcehut :repo "eshel/completion-preview")
-  :config
-  (setq completion-preview-exact-match-only t)
-  (add-hook 'prog-mode-hook #'completion-preview-mode)
-  )
-
-(use-package ibuffer-project
-  :disabled
-  :bind ("C-x C-b" . ibuffer)
-  :config
-  (add-hook 'ibuffer-hook
-            (lambda ()
-              (setq ibuffer-filter-groups
-                    (ibuffer-project-generate-filter-groups))
-              (unless (eq ibuffer-sorting-mode 'project-file-relative)
-                (ibuffer-do-sort-by-project-file-relative))))
-  (add-to-list 'ibuffer-project-root-functions
-               '(tramp-handle-file-remote-p . "Remote"))
-  (setq ibuffer-show-empty-filter-groups nil
-        ibuffer-project-use-cache t))
+(use-package corfu
+  :init
+  (setq corfu-auto t)
+  (global-corfu-mode))
 
 (use-package orderless
   :init
@@ -1109,7 +1060,6 @@ Switch to the project specific term buffer if it already exists."
   :hook ((prog-mode . ws-butler-mode)))
 
 (use-package dockerfile-mode)
-(use-package docker-tramp :disabled)
 
 (use-package apheleia
   :config
