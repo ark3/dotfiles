@@ -114,38 +114,6 @@
 
   ;; Buffer/window stuff
   (winner-mode t)   ;; enable winner mode globally for undo/redo window layout changes
-  (defun toggle-window-split ()
-    (interactive)
-    (if (= (count-windows) 2)
-        (let* ((this-win-buffer (window-buffer))
-               (next-win-buffer (window-buffer (next-window)))
-               (this-win-edges (window-edges (selected-window)))
-               (next-win-edges (window-edges (next-window)))
-               (this-win-2nd (not (and (<= (car this-win-edges)
-                                           (car next-win-edges))
-                                       (<= (cadr this-win-edges)
-                                           (cadr next-win-edges)))))
-               (splitter
-                (if (= (car this-win-edges)
-                       (car (window-edges (next-window))))
-                    'split-window-horizontally
-                  'split-window-vertically)))
-          (delete-other-windows)
-          (let ((first-win (selected-window)))
-            (funcall splitter)
-            (if this-win-2nd (other-window 1))
-            (set-window-buffer (selected-window) this-win-buffer)
-            (set-window-buffer (next-window) next-win-buffer)
-            (select-window first-win)
-            (if this-win-2nd (other-window 1))))))
-  (defun reposition-buffer ()
-    (interactive)
-    (let ((this-win-buffer (window-buffer)))
-      (winner-undo)
-      (set-window-buffer (next-window) this-win-buffer)))
-  (global-set-key (kbd "C-x w -") #'toggle-window-split)
-  (global-set-key (kbd "C-x w C--") #'reposition-buffer)
-  (global-set-key (kbd "C-x w C-=") #'windmove-swap-states-left)
 
   (customize-set-variable 'mouse-wheel-scroll-amount
                           '(1 ((shift) . hscroll) ((meta) . nil))
@@ -160,13 +128,7 @@
   (global-auto-revert-mode 1)
   (setq global-auto-revert-non-file-buffers t)
   (add-to-list 'global-auto-revert-ignore-modes 'Buffer-menu-mode)
-  ;;(transient-mark-mode -1)
   (put 'narrow-to-region 'disabled nil)
-
-  ;; Automatically set executable bit (chmod) for files with a shebang (#!)
-  ;; In practice, this is really annoying for things with #!/hint/bash etc.
-  ;;(add-hook 'after-save-hook
-  ;;          'executable-make-buffer-file-executable-if-script-p)
 
   ;; less noise when compiling elisp
   (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local)
@@ -183,14 +145,12 @@
   (setq windmove-wrap-around t)
   (setq use-dialog-box nil)
   (setq window-min-width 40)
-  (setq describe-bindings-outline t)
 
   ;; Performance: Turn off bidirectional text
   (setq bidi-inhibit-bpa t)
   (setq-default bidi-paragraph-direction 'left-to-right)
 
   ;; Performance: I/O-related tuning
-  (setq process-adaptive-read-buffering nil)
   (setq read-process-output-max (* 1024 1024)) ; 1mb
 
   ;; Scrolling
@@ -273,11 +233,6 @@
               ("r" . dired-hist-go-forward))
   :config
   (dired-hist-mode 1))
-
-;; Reveal Dired's features using a Transient menu
-;; (use-package casual-dired
-;;   :bind (:map dired-mode-map
-;;               ("C-o" . casual-dired-tmenu)))
 
 (use-package marginalia
   :config
@@ -679,12 +634,6 @@
   :hook ((prog-mode sgml-mode nxml-mode tex-mode eval-expression-minibuffer-setup) . puni-mode)
   :config
   (add-hook 'prog-mode-hook 'electric-pair-mode)
-  ;; (define-advice puni-kill-line (:before (&rest _))
-  ;;   "Go back to indentation before killing the line if it makes sense to."
-  ;;   (when (looking-back "^[[:space:]]*")
-  ;;     (if (bound-and-true-p indent-line-function)
-  ;;         (funcall indent-line-function)
-  ;;       (back-to-indentation))))
   :bind (:map puni-mode-map
               ("C-," . puni-expand-region))) ; Overrides er/expand-region
 
@@ -721,12 +670,7 @@
 Switch to the project specific term buffer if it already exists."
   (interactive)
   (let* ((default-directory (project-root (project-current t)))
-         (project-vterm-name
-          (string-replace
-           "service-alchemy-" "s-a-"
-           (string-replace
-            "lib-alchemy-" "l-a-"
-            (project-prefixed-buffer-name "vterm")))))
+         (project-vterm-name (project-prefixed-buffer-name "vterm")))
     (unless (buffer-live-p (get-buffer project-vterm-name))
       (unless (require 'vterm nil 'noerror)
         (error "Package 'vterm' is not available"))
@@ -993,68 +937,6 @@ Switch to the project specific term buffer if it already exists."
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
   (setq dumb-jump-prefer-searcher 'rg))
 
-(use-package hideshow ; built-in
-  ;; https://karthinks.com/software/simple-folding-with-hideshow/
-  ;; Roughly https://github.com/karthink/.emacs.d/blob/master/init.el#L3159
-  :diminish hs-minor-mode
-  :bind (:map prog-mode-map
-              ("C-<tab>" . hs-cycle)
-              ("C-S-<tab>" . hs-global-cycle)
-              ("<backtab>" . hs-global-cycle)
-              ("C-S-<iso-lefttab>" . hs-global-cycle))
-  :config
-  (setq hs-hide-comments-when-hiding-all nil
-        ;; Nicer code-folding overlays (with fringe indicators)
-        hs-set-up-overlay #'hideshow-set-up-overlay-fn)
-
-  (defface hideshow-folded-face
-    `((t (:inherit font-lock-comment-face :weight light)))
-    "Face to hightlight `hideshow' overlays."
-    :group 'hideshow)
-
-  (defun hideshow-set-up-overlay-fn (ov)
-    (when (eq 'code (overlay-get ov 'hs))
-      (overlay-put
-       ov 'display (propertize "  [...]  " 'face 'hideshow-folded-face))))
-
-  (dolist (hs-command (list #'hs-cycle
-                            #'hs-global-cycle))
-    (advice-add hs-command :before
-                (lambda (&optional end) "Advice to ensure `hs-minor-mode' is enabled"
-                  (unless (bound-and-true-p hs-minor-mode)
-                    (hs-minor-mode +1)))))
-
-  (defun hs-cycle (&optional level)
-    (interactive "p")
-    (if (= level 1)
-        (pcase last-command
-          ('hs-cycle
-           (hs-hide-level 1)
-           (setq this-command 'hs-cycle-children))
-          ('hs-cycle-children
-           ;;TODO: Fix this case. `hs-show-block' needs to be called twice to
-           ;;open all folds of the parent block.
-           (save-excursion (hs-show-block))
-           (hs-show-block)
-           (setq this-command 'hs-cycle-subtree))
-          ('hs-cycle-subtree
-           (hs-hide-block))
-          (_
-           (if (not (hs-already-hidden-p))
-               (hs-hide-block)
-             (hs-hide-level 1)
-             (setq this-command 'hs-cycle-children))))
-      (hs-hide-level level)
-      (setq this-command 'hs-hide-level)))
-
-  (defun hs-global-cycle ()
-    (interactive)
-    (pcase last-command
-      ('hs-global-cycle
-       (save-excursion (hs-show-all))
-       (setq this-command 'hs-global-show))
-      (_ (hs-hide-all)))))
-
 (use-package ws-butler
   :diminish
   :hook ((prog-mode . ws-butler-mode)))
@@ -1131,15 +1013,7 @@ Switch to the project specific term buffer if it already exists."
 
 (when (and (eq system-type 'gnu/linux)
            (getenv "WSLENV"))
-  ;; WSL clipboard fix -- maybe only needed _without_ XWayland
-  ;; (setq interprogram-cut-function
-  ;;       (lambda (text)
-  ;;         (with-temp-buffer
-  ;;           (insert text)
-  ;;           ;; (call-process-region (point-min) (point-max) "win32yank.exe" nil 0 nil "-i" "--crlf")
-  ;;           (call-process-region (point-min) (point-max) "win32yank.exe" nil 0 nil "-i"))))
-
-  ;; WSL clipboard fix alternative
+  ;; WSL clipboard fix
   (setq select-active-regions nil
         select-enable-clipboard 't
         select-enable-primary nil
