@@ -43,8 +43,7 @@
       ;; (font-spec :family "ia Writer Duo V" :size 11.0 :weight 'medium)
       )
 
-;; (face-attribute 'default :height nil)
-;; (set-face-attribute 'default nil :height 110)
+(set-face-attribute 'default nil :height 110)
 ;; (set-face-attribute 'default nil :family "IBM Plex Mono" :weight 'medium)
 ;; (set-face-attribute 'default nil :family "Cascadia Code" :weight 'regular)
 ;; (set-face-attribute 'default nil :family "Intel Mono One" :weight 'regular)
@@ -53,12 +52,6 @@
 ;; (set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :weight 'regular :height 130)
 ;; (font-family-list)
 ;; (set-frame-size nil 220 64)
-
-(when (find-font my/font)
-  (add-to-list 'default-frame-alist
-               `(font . ,(format "%s %s"
-                                 (font-get my/font :family)
-                                 (truncate (font-get my/font :size))))))
 
 (add-to-list 'default-frame-alist
              (if (memq window-system '(mac ns))
