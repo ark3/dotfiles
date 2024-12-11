@@ -50,10 +50,12 @@
          ("M-o" . other-window)
          ("M-`" . bury-buffer)
          ("C-x j" . duplicate-dwim)
+         ("C-x m" . execute-extended-command)
          ("C-x x r" . rename-visited-file)
          ("C-x C-b" . ibuffer)
-         ("C-z" . nil)
-         ("C-x C-z" . nil))
+         ("C-z" . undo)
+         ("C-S-z" . undo-redo)
+         ("C-x C-z" . undo-only))
   :init
   (setq inhibit-startup-screen t
         initial-scratch-message nil
@@ -80,9 +82,6 @@
 
   ;; write over selected text on input... like all modern editors do
   (delete-selection-mode t)
-
-  ;; support consistent keyboard usage
-  (cua-mode t)
 
   ;; Don't quit w/o warning
   (setq confirm-kill-emacs 'y-or-n-p)
@@ -310,133 +309,124 @@
   :config
   (setq wgrep-auto-save-buffer t))
 
-(use-package key-chord
+(use-package devil
   :config
-  (key-chord-mode t))
+  (global-devil-mode))
 
-(use-package general
-  :config
-  (general-define-key :prefix-map 'my/leader-map :prefix-name "")
-  (general-define-key :prefix-map 'my/shell-map :prefix-name "shell")
+(define-prefix-command 'my/app-map)
+(define-prefix-command 'my/shell-map)
+(define-prefix-command 'my/buffer-map)
+(define-prefix-command 'my/code-map)
+(define-prefix-command 'my/lsp-map)
+(define-prefix-command 'my/flymake-map)
+(define-prefix-command 'my/file-map)
+(define-prefix-command 'my/go-map)
+(define-prefix-command 'my/jump-map)
+(define-prefix-command 'my/quit-map)
+(define-prefix-command 'my/search-map)
+(define-prefix-command 'my/toggle-map)
+(define-prefix-command 'my/window-map)
 
-  (general-create-definer my/leader-def :keymaps 'my/leader-map)
-  (my/leader-def
-    "" nil
-    ":" 'execute-extended-command
-    "SPC" 'execute-extended-command
-    "x" 'execute-extended-command
+(global-set-key (kbd "C-c a") (cons "app" my/app-map))
+(define-key my/app-map (kbd "s") my/shell-map)
 
-    "a" (cons "app" (make-sparse-keymap "app"))
-    "a g" 'magit-file-dispatch
-    "a q" 'qrencode-region
-    "a s" (cons "shell" my/shell-map)
-    "a v" 'vterm
-    "a x" 'org-capture
+(global-set-key (kbd "C-c b") (cons "buffer" my/buffer-map))
+(define-key my/buffer-map (kbd "`") 'bury-buffer)
+(define-key my/buffer-map (kbd "b") 'consult-buffer)
+(define-key my/buffer-map (kbd "B") 'ibuffer)
+(define-key my/buffer-map (kbd "d") 'kill-current-buffer)
+(define-key my/buffer-map (kbd "k") 'kill-current-buffer)
+(define-key my/buffer-map (kbd "v") 'revert-buffer)
+(define-key my/buffer-map (kbd "x") 'kill-buffer-and-window)
+(define-key my/buffer-map (kbd "s") 'save-buffer)
+(define-key my/buffer-map (kbd "S") 'save-some-buffers)
 
-    "b" (cons "buffer" (make-sparse-keymap "buffer"))
-    "b b" 'consult-buffer
-    "b B" 'ibuffer
-    "b d" 'kill-current-buffer
-    "b k" 'kill-current-buffer
-    "b v" 'revert-buffer
-    "b x" 'kill-buffer-and-window
-    "b s" 'save-buffer
-    "b S" 'save-some-buffers
+(global-set-key (kbd "C-c c") (cons "code" my/code-map))
+(define-key my/code-map (kbd "x") 'kill-compilation)
+(define-key my/code-map (kbd "l") (cons "lsp" my/lsp-map))
+(define-key my/lsp-map (kbd "a") 'lsp-execute-code-action)
+(define-key my/lsp-map (kbd "h") 'lsp-describe-thing-at-point)
+(define-key my/lsp-map (kbd "o") 'lsp-organize-imports)
+(define-key my/lsp-map (kbd "r") 'lsp-rename)
+(define-key my/lsp-map (kbd "w") 'lsp-workspace-restart)
+(define-key my/lsp-map (kbd "=") 'lsp-format-buffer)
+(define-key my/code-map (kbd "f") (cons "flymake" my/flymake-map))
+(define-key my/flymake-map (kbd "n") 'flymake-goto-next-error)
+(define-key my/flymake-map (kbd "p") 'flymake-goto-prev-error)
+(define-key my/flymake-map (kbd "b") 'flymake-show-buffer-diagnostics)
+(define-key my/flymake-map (kbd "B") 'flymake-show-project-diagnostics)
 
-    "c" (cons "code" (make-sparse-keymap "code"))
-    "c x" 'kill-compilation
+(global-set-key (kbd "C-c f") (cons "file" my/file-map))
+(define-key my/file-map (kbd "d") 'dired-jump)
+(define-key my/file-map (kbd "D") 'dired)
+(define-key my/file-map (kbd "f") 'find-file)
+(define-key my/file-map (kbd "r") 'consult-recent-file)
+(define-key my/file-map (kbd "R") 'rename-visited-file)
+(define-key my/file-map (kbd "s") 'save-buffer)
+(define-key my/file-map (kbd "v") 'find-alternate-file)
+(define-key my/file-map (kbd "w") 'write-file)
 
-    "c l" (cons "lsp" (make-sparse-keymap "lsp"))
-    "c l a" 'lsp-execute-code-action
-    "c l h" 'lsp-describe-thing-at-point
-    "c l o" 'lsp-organize-imports
-    "c l r" 'lsp-rename
-    "c l w" 'lsp-workspace-restart
-    "c l =" 'lsp-format-buffer
+(global-set-key (kbd "C-c g") (cons "go" my/go-map))
+(define-key my/go-map (kbd "e") 'consult-compile-error)
+(define-key my/go-map (kbd "f") 'consult-flymake)
+(define-key my/go-map (kbd "g") 'consult-goto-line)
+(define-key my/go-map (kbd "o") 'consult-outline)
+(define-key my/go-map (kbd "m") 'consult-mark)
+(define-key my/go-map (kbd "k") 'consult-global-mark)
+(define-key my/go-map (kbd "i") 'consult-imenu)
+(define-key my/go-map (kbd "I") 'consult-imenu-multi)
 
-    "c f" (cons "flymake" (make-sparse-keymap "flymake"))
-    "c f n" 'flymake-goto-next-error
-    "c f p" 'flymake-goto-prev-error
-    "c f b" 'flymake-show-buffer-diagnostics
-    "c f B" 'flymake-show-project-diagnostics
+(global-set-key (kbd "C-c h") (cons "help" help-map))
 
-    "f" (cons "file" (make-sparse-keymap "file"))
-    "f d" 'dired-jump
-    "f D" 'dired
-    "f f" 'find-file
-    "f r" 'consult-recent-file
-    "f R" 'rename-visited-file
-    "f s" 'save-buffer
-    "f v" 'find-alternate-file
-    "f w" 'write-file
+(global-set-key (kbd "C-c j") (cons "jump" my/jump-map))
+(define-key my/jump-map (kbd "j") 'avy-goto-char-timer)
+(define-key my/jump-map (kbd "r") 'jump-to-register)
 
-    "g" (cons "go" (make-sparse-keymap "go"))
-    "g e" 'consult-compile-error
-    "g f" 'consult-flymake
-    "g g" 'consult-goto-line
-    "g o" 'consult-outline
-    "g m" 'consult-mark
-    "g k" 'consult-global-mark
-    "g i" 'consult-imenu
-    "g I" 'consult-imenu-multi
+(global-set-key (kbd "C-c p") (cons "project" project-prefix-map))
 
-    "h" (cons "help" help-map)
+(global-set-key (kbd "C-c q") (cons "quit" my/quit-map))
+(define-key my/quit-map (kbd "d") 'restart-emacs-debug-init)
+(define-key my/quit-map (kbd "r") 'restart-emacs)
+(define-key my/quit-map (kbd "R") 'restart-emacs-without-desktop)
+(define-key my/quit-map (kbd "f") 'delete-frame)
+(define-key my/quit-map (kbd "q") 'save-buffers-kill-terminal)
+(define-key my/quit-map (kbd "Q") 'save-buffers-kill-emacs)
 
-    "j" (cons "jump" (make-sparse-keymap "jump"))
-    "j j" 'avy-goto-char-timer
-    "j r" 'jump-to-register
+(global-set-key (kbd "C-c s") (cons "search" my/search-map))
+(define-key my/search-map (kbd "f") 'consult-find)
+(define-key my/search-map (kbd "F") 'consult-locate)
+(define-key my/search-map (kbd "g") 'consult-grep)
+(define-key my/search-map (kbd "G") 'consult-git-grep)
+(define-key my/search-map (kbd "r") 'consult-ripgrep)
+(define-key my/search-map (kbd "h") 'consult-history)
+(define-key my/search-map (kbd "l") 'consult-line)
+(define-key my/search-map (kbd "L") 'consult-line-multi)
+(define-key my/search-map (kbd "k") 'consult-keep-lines)
+(define-key my/search-map (kbd "u") 'consult-focus-lines)
+(define-key my/search-map (kbd "e") 'consult-isearch-history)
+(define-key my/search-map (kbd "s") 'save-buffer)
 
-    "p" (cons "project" project-prefix-map)
+(global-set-key (kbd "C-c t") (cons "toggle" my/toggle-map))
+(define-key my/toggle-map (kbd "r") 'read-only-mode)
+(define-key my/toggle-map (kbd "t") 'toggle-truncate-lines)
+(define-key my/toggle-map (kbd "v") 'visual-line-mode)
+(define-key my/toggle-map (kbd "V") 'visual-fill-column-mode)
+(define-key my/toggle-map (kbd "w") 'whitespace-mode)
 
-    "q" (cons "quit" (make-sparse-keymap "quit"))
-    "q d" 'restart-emacs-debug-init
-    "q r" 'restart-emacs
-    "q R" 'restart-emacs-without-desktop
-    "q f" 'delete-frame
-    "q q" 'save-buffers-kill-terminal
-    "q Q" 'save-buffers-kill-emacs
-
-    "s" (cons "search" (make-sparse-keymap "search"))
-    "s f" 'consult-find
-    "s F" 'consult-locate
-    "s g" 'consult-grep
-    "s G" 'consult-git-grep
-    "s r" 'consult-ripgrep
-    "s h" 'consult-history
-    "s l" 'consult-line
-    "s L" 'consult-line-multi
-    "s k" 'consult-keep-lines
-    "s u" 'consult-focus-lines
-    "s e" 'consult-isearch-history
-
-    "s s" 'save-buffer
-
-    "t" (cons "toggle" (make-sparse-keymap "toggle"))
-    "t r" 'read-only-mode
-    "t t" 'toggle-truncate-lines
-    "t v" 'visual-line-mode
-    "t V" 'visual-fill-column-mode
-    "t w" 'whitespace-mode
-
-    "w" (cons "window" (make-sparse-keymap "window"))
-    "w =" 'window-swap-states
-    "w 0" 'delete-window
-    "w 1" 'delete-other-windows
-    "w 2" 'split-window-below
-    "w 3" 'split-window-right
-    "w 4" ctl-x-4-map
-    "w 5" ctl-x-5-map
-    "w o" 'other-window-prefix
-    "w t" 'toggle-window-split
-    "w u" 'winner-undo
-    "w U" 'winner-redo
-    "w v" 'my/maximize-vertically
-    "w w" 'ace-window
-    )
-  (key-chord-define-global "dk" my/leader-map)
-  (general-def "<menu>" my/leader-map)
-  (general-def "C-c s" (cons "shell" my/shell-map))
-  )
+(global-set-key (kbd "C-c w") (cons "window" my/window-map))
+(define-key my/window-map (kbd "=") 'window-swap-states)
+(define-key my/window-map (kbd "0") 'delete-window)
+(define-key my/window-map (kbd "1") 'delete-other-windows)
+(define-key my/window-map (kbd "2") 'split-window-below)
+(define-key my/window-map (kbd "3") 'split-window-right)
+(define-key my/window-map (kbd "4") ctl-x-4-map)
+(define-key my/window-map (kbd "5") ctl-x-5-map)
+(define-key my/window-map (kbd "o") 'other-window-prefix)
+(define-key my/window-map (kbd "t") 'toggle-window-split)
+(define-key my/window-map (kbd "u") 'winner-undo)
+(define-key my/window-map (kbd "U") 'winner-redo)
+(define-key my/window-map (kbd "v") 'my/maximize-vertically)
+(define-key my/window-map (kbd "w") 'ace-window)
 
 (use-package flymake
   :bind (:map flymake-mode-map
@@ -565,7 +555,7 @@
   (variable-pitch-mode 0))
 
 (use-package qrencode
-  :bind (("C-c q" . qrencode-region)))
+  :bind (:map my/app-map ("q" . qrencode-region)))
 
 (use-package flyspell
   :custom
@@ -589,7 +579,7 @@
   :hook ((org-mode . text-stuff)
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
-  :bind (("C-c x" . org-capture))
+  :bind (:map my/app-map ("x" . org-capture))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
   (org-hide-emphasis-markers t)
@@ -680,8 +670,11 @@ Switch to the project specific term buffer if it already exists."
     (pop-to-buffer-same-window (get-buffer project-vterm-name))))
 
 (use-package vterm
-  :bind (("C-c v" . vterm)
-         ("C-x p v" . project-vterm)
+  :bind (
+         :map project-prefix-map
+         ("v" . project-vterm)
+         :map my/app-map
+         ("v" . vterm)
          :map vterm-copy-mode-map
          ("C-c C-c" . vterm-copy-mode)
          :map vterm-mode-map
@@ -713,7 +706,6 @@ Switch to the project specific term buffer if it already exists."
 
 ;; https://github.com/elizagamedev/shell-command-x.el
 (use-package shell-command-x
-  ;; :disabled
   :custom
   (shell-command-x-buffer-name-format "*cmd:%n*" "not really shell-related")
   (shell-command-x-buffer-name-async-format "*cmd:%n*" "not really shell-related")
@@ -740,9 +732,9 @@ Switch to the project specific term buffer if it already exists."
                      (buffer (get-buffer-create buffer-name)))
                 (shell buffer shell-file-name))))
       function-name))
-  (global-set-key (kbd "C-c s h") (my/make-shell-in-dir (getenv "HOME")))
-  (global-set-key (kbd "C-c s s")
-                  (my/make-shell-in-dir "/scpx:strife:" "strife" "/bin/bash"))
+  (define-key my/shell-map (kbd "h") (my/make-shell-in-dir (getenv "HOME")))
+  (define-key my/shell-map (kbd "s")
+              (my/make-shell-in-dir "/scpx:strife:" "strife" "/bin/bash"))
   (setq comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil ; to preserve C-l recentering
         comint-move-point-for-output nil
@@ -789,9 +781,11 @@ Switch to the project specific term buffer if it already exists."
 
 (use-package magit
   :init (setq-default git-magit-status-fullscreen t)
-  :bind (("C-c g s" . magit-status)
-         ("C-c g g" . magit-file-dispatch)
-         ("C-x p m" . magit-project-status))
+  :bind (
+         :map my/app-map
+         ("g" . magit-file-dispatch)
+         :map project-prefix-map
+         ("m" . magit-project-status))
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
