@@ -111,6 +111,11 @@
   (auto-save-visited-mode t)
   (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 
+  (add-to-list 'save-some-buffers-action-alist
+               (list "d"
+                     (lambda (buffer) (diff-buffer-with-file (buffer-file-name buffer)))
+                     "show diff between the buffer and its file"))
+
   ;; follow symlinks
   (setq vc-follow-symlinks t
         find-file-visit-truename t)
@@ -310,6 +315,8 @@
   (setq wgrep-auto-save-buffer t))
 
 (use-package devil
+  :straight (devil
+             :type git :host github :repo "fbrosda/devil" :branch "dev")
   :config
   (global-devil-mode))
 
@@ -446,10 +453,20 @@
   (vertico-mode)
   (setq vertico-resize 'grow-only))
 
+(use-package cape
+  :config
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-keyword)
+  (add-hook 'completion-at-point-functions #'cape-file))
+
 (use-package corfu
-  :init
-  (setq corfu-auto t)
-  (global-corfu-mode))
+  :config
+  (setq corfu-auto t
+        corfu-quit-no-match t)
+  (define-key corfu-map (kbd "RET") nil)
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-echo-mode))
 
 (use-package orderless
   :init
@@ -670,9 +687,14 @@ Switch to the project specific term buffer if it already exists."
   (add-to-list 'vterm-eval-cmds '("set" my/term-set-header-message))
   :hook (vterm-mode . my/term-setup))
 
-;; See also other terminal emulators:
-;; - https://codeberg.org/akib/emacs-eat (works with eshell)
+(use-package eat                        ; https://codeberg.org/akib/emacs-eat
+  :config
+  (add-hook 'eshell-load-hook #'eat-eshell-mode))
+
 (use-package coterm                     ; https://repo.or.cz/emacs-coterm.git
+  :bind (:map shell-mode-map
+              ("C-c C-j" . coterm-char-mode-cycle)
+              ("C-c C-k" . coterm-char-mode-cycle))
   :config
   (coterm-mode))
 
@@ -715,6 +737,32 @@ Switch to the project specific term buffer if it already exists."
   (define-key my/shell-map (kbd "h") (my/make-shell-in-dir (getenv "HOME")))
   (define-key my/shell-map (kbd "s")
               (my/make-shell-in-dir "/scpx:strife:" "strife" "/bin/bash"))
+
+  (defun my/cursor-at-shell-prompt-p ()
+    "Return non-nil if the cursor is at or after the shell prompt."
+    (>= (point) (marker-position (process-mark (get-buffer-process (current-buffer))))))
+  (defun my/shell-up-key (n)
+    "Move up in the history if at the shell prompt, otherwise move the cursor up."
+    (interactive "p")
+    (if (my/cursor-at-shell-prompt-p)
+        (let ((last-command (if (memq last-command '(my/shell-up-key my/shell-down-key))
+                                'comint-previous-matching-input-from-input
+                              last-command)))
+          (comint-previous-matching-input-from-input n))
+      (previous-line n)))
+  (defun my/shell-down-key (n)
+    "Move down in the history if at the shell prompt, otherwise move the cursor down."
+    (interactive "p")
+    (if (my/cursor-at-shell-prompt-p)
+        (let ((last-command (if (memq last-command '(my/shell-up-key my/shell-down-key))
+                                'comint-previous-matching-input-from-input
+                              last-command)))
+          (comint-next-matching-input-from-input n))
+      (next-line n)))
+  (with-eval-after-load 'shell
+    (define-key shell-mode-map (kbd "<up>") 'my/shell-up-key)
+    (define-key shell-mode-map (kbd "<down>") 'my/shell-down-key))
+
   (setq comint-terminfo-terminal "ansi"
         comint-scroll-show-maximum-output nil ; to preserve C-l recentering
         comint-move-point-for-output nil
