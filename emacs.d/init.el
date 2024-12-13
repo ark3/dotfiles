@@ -61,6 +61,10 @@
         initial-scratch-message nil
         sentence-end-double-space nil
         require-final-newline t
+        fill-column 100
+        tab-always-indent 'complete
+        show-trailing-whitespace t
+        indent-tabs-mode nil
         ring-bell-function 'ignore)
 
   (setq user-full-name "Abhay Saxena"
@@ -215,12 +219,8 @@
 (use-package iedit)  ; Binds C-;
 
 (use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
   :config
-  (setq which-key-idle-delay 1
-        which-key-idle-secondary-delay 0.05
-        which-key-show-early-on-C-h nil))      ; Use embark-prefix-help-command
+  (which-key-mode))
 
 ;; Use l/r to go back/forward in dired
 ;; https://github.com/karthink/dired-hist
@@ -544,16 +544,6 @@
 
 ;;; Text stuff
 
-(defun text-stuff ()
-  (setq fill-column 100)
-  (setq-local
-   dabbrev-case-distinction t     ; treat expansions same if differ in case
-   dabbrev-case-fold-search t     ; ignore case on search
-   dabbrev-case-replace t)        ; keep typed case
-  (visual-fill-column-mode 1)
-  ;; (org-indent-mode 1)
-  (variable-pitch-mode 0))
-
 (use-package qrencode
   :bind (:map my/app-map ("q" . qrencode-region)))
 
@@ -576,7 +566,7 @@
 (use-package org-appear :after org)
 
 (use-package org
-  :hook ((org-mode . text-stuff)
+  :hook ((org-mode . visual-fill-column-mode)
          (org-mode . org-appear-mode)
          (org-mode . org-autolist-mode))
   :bind (:map my/app-map ("x" . org-capture))
@@ -600,13 +590,11 @@
            "* %?\n\nEntered on %U\n  %i\n  %a"))
         org-default-notes-file (expand-file-name "~/notes.org")
         org-cycle-emulate-tab nil)
-  ;; (add-hook 'org-mode-hook
-  ;;           (lambda () (setq-local fancy-dabbrev-indent-command 'org-cycle)))
   )
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
-  :hook (markdown-mode . text-stuff)
+  :hook (markdown-mode . visual-fill-column-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.mkdn\\'" . markdown-mode)
@@ -631,14 +619,8 @@
 (defun prog-stuff ()
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
-  (setq fill-column 80
-        tab-always-indent 'complete
-        show-trailing-whitespace t
-        indent-tabs-mode nil)
-  (setq-local
-   dabbrev-case-distinction nil    ; different case as different expansions
-   dabbrev-case-fold-search t      ; ignore case on search
-   dabbrev-case-replace nil))      ; replaced typed case with existing case
+  (setq fill-column 80)
+  )
 
 (add-hook 'prog-mode-hook 'prog-stuff)
 
@@ -662,8 +644,6 @@ Switch to the project specific term buffer if it already exists."
   (let* ((default-directory (project-root (project-current t)))
          (project-vterm-name (project-prefixed-buffer-name "vterm")))
     (unless (buffer-live-p (get-buffer project-vterm-name))
-      (unless (require 'vterm nil 'noerror)
-        (error "Package 'vterm' is not available"))
       (vterm project-vterm-name)
       (vterm-send-string (concat "cd " default-directory))
       (vterm-send-return))
@@ -750,30 +730,9 @@ Switch to the project specific term buffer if it already exists."
               (setq-local scroll-margin 0
                           recenter-positions '(top bottom middle)))))
 
-(use-package bash-completion
-  :disabled
-  :config
-  (bash-completion-setup))
-
-;; https://github.com/CeleritasCelery/emacs-native-shell-complete
-(use-package native-complete
-  :disabled
-  :config
-  (with-eval-after-load 'shell
-    (native-complete-setup-bash))
-  (add-hook 'shell-mode-hook
-            (lambda ()
-              (add-to-list 'completion-at-point-functions #'native-complete-at-point))))
-
 (use-package ansi-color
   :config
-  (if (>= emacs-major-version 28)
-      (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
-    (progn
-      (defun colorize-compilation-buffer ()
-        (let ((inhibit-read-only t))
-          (ansi-color-apply-on-region compilation-filter-start (point))))
-      (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)))
+  (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
   (defun display-ansi-colors ()
     (interactive)
     (let ((inhibit-read-only t))
@@ -797,10 +756,6 @@ Switch to the project specific term buffer if it already exists."
                                   (project-shell "Shell")
                                   (project-vterm "Vterm")
                                   (magit-project-status "Magit"))))
-
-(use-package git-timemachine
-  :disabled ;; not loading for some reason
-  :bind (("C-c g t" . git-timemachine)))
 
 (use-package diff-hl
   :config
@@ -899,7 +854,6 @@ Switch to the project specific term buffer if it already exists."
 (use-package lsp-metals)
 
 (use-package sbt-mode
-  :commands sbt-start sbt-command
   :config
   ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
   ;; allows using SPACE when in the minibuffer
