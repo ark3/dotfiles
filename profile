@@ -21,39 +21,33 @@ if [ -e "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
 fi
 
 # Set up PATH
-new_path=
-build_new_path() {
-    # Skip a relative pathname
-    case "$1" in
-    "/*") : ;;
-    "*") return ;;
-    esac
+paths_to_add=(
+  "$HOME/bin"
+  "$HOME/.local/bin"
+  "$HOME/go/bin"
+  "$HOME/.krew/bin"
+  "$HOME/.cargo/bin"
+  "/usr/local/go/bin"
+  "/opt/X11/bin"
+  "/snap/bin"
+)
 
-    # Skip empty or missing argument, non-directory
-    [ -z "$1" ] && return
-    [ ! -d "$1" ] && return
-
-    # Skip if already present
-    printf "%s" "$new_path" | tr ':' '\n' | grep -qx "$1" && return
-
-    # Append to the new path, from https://unix.stackexchange.com/a/415028
-    new_path=${new_path:+${new_path}:}$1
-}
-
-build_new_path "$HOME/bin"
-build_new_path "$HOME/.local/bin"
-build_new_path "$HOME/go/bin"
-build_new_path "$HOME/.krew/bin"
-build_new_path "$HOME/.cargo/bin"
-build_new_path "/usr/local/go/bin"
-build_new_path "/opt/X11/bin"
-build_new_path "/snap/bin"
-
-for path_comp in $(printf "%s" "$PATH" | tr ':' '\n'); do
-    build_new_path "$path_comp"
+paths=()
+for p in "${paths_to_add[@]}" $(echo $PATH | tr ':' ' '); do
+  # Skip empty paths
+  if [[ -z "$p" ]]; then
+    continue
+  # Skip relative paths (not starting with /)
+  elif [[ "$p" != /* ]]; then
+    continue
+  # Skip non-directory paths
+  elif [[ ! -d "$p" ]]; then
+    continue
+  # Add only if not already present (deduplicate)
+  elif [[ ! " ${paths[*]} " =~ " $p " ]]; then
+    paths+=("$p")
+  fi
 done
 
-PATH=$new_path
-
-unset -v path_comp new_path
-unset -f build_new_path
+PATH=$(IFS=:; echo "${paths[*]}")
+unset paths_to_add paths
