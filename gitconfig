@@ -1,32 +1,11 @@
 [user]
 	name = Abhay Saxena
 	email = ark3@email.com
-[color]
-	diff = auto
-	status = auto
-	branch = auto
 [core]
 	editor = emacsclient
 	excludesfile = ~/.config/git/ignore
 [init]
 	defaultBranch = main
-[merge]
-	tool = meld
-[difftool]
-	prompt = false
-[diff]
-	tool = meld
-	algorithm = histogram
-[filter "lfs"]
-	# These are added by the Github app in some order
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-[gui]
-	# Run using `git gui`
-	fontui = -family \".SF NS Text\" -size 13 -weight normal -slant roman -underline 0 -overstrike 0
-	fontdiff = -family \"Fira Code\" -size 12 -weight normal -slant roman -underline 0 -overstrike 0
 [branch]
 	autosetupmerge = always   # New local branch tracks remote branch
 	autosetuprebase = always  # Pull will rebase, not merge
@@ -37,5 +16,3 @@
 [url "git@ark3.ssh.github.com:"]
     pushInsteadOf = https://github.com/
     insteadOf = https://github.com/
-[protocol]
-	version = 2
