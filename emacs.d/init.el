@@ -61,7 +61,6 @@
         initial-scratch-message nil
         sentence-end-double-space nil
         require-final-newline t
-        fill-column 100
         tab-always-indent 'complete
         show-trailing-whitespace t
         indent-tabs-mode nil
@@ -90,12 +89,11 @@
   ;; Don't quit w/o warning
   (setq confirm-kill-emacs 'y-or-n-p)
 
-  ;; Don't mess up window layout on keyboard escape quit. Instead, short-circuit
-  ;; the cond expression by defining a do-nothing buffer-quit-function.
-  (defadvice keyboard-escape-quit
-      (around keyboard-escape-quit-dont-close-windows activate)
+  (defun keyboard-escape-quit--around (orig-fun &rest args)
+    "Don't mess up window layout on keyboard escape quit."
     (let ((buffer-quit-function (lambda () ())))
-      ad-do-it))
+      (apply orig-fun args)))
+  (advice-add 'keyboard-escape-quit :around #'keyboard-escape-quit--around)
 
   ;; Don't persist a custom file, this bites me more than it helps
   (setq custom-file (make-temp-file "")) ; use a temp file as a placeholder
@@ -314,30 +312,32 @@
   :config
   (setq wgrep-auto-save-buffer t))
 
+(use-package key-chord
+  :config
+  (key-chord-mode t))
+
 (use-package devil
+  :disabled
   :straight (devil
              :type git :host github :repo "fbrosda/devil" :branch "dev")
   :config
   (global-devil-mode))
 
+(define-prefix-command 'my/leader-map)
+(global-set-key (kbd "C-c") 'my/leader-map)
+(global-set-key (kbd "M-m") 'my/leader-map)
+(key-chord-define-global "dk" 'my/leader-map)
+
+(define-key my/leader-map (kbd "x") 'execute-extended-command)
+
 (define-prefix-command 'my/app-map)
 (define-prefix-command 'my/shell-map)
-(define-prefix-command 'my/buffer-map)
-(define-prefix-command 'my/code-map)
-(define-prefix-command 'my/lsp-map)
-(define-prefix-command 'my/flymake-map)
-(define-prefix-command 'my/file-map)
-(define-prefix-command 'my/go-map)
-(define-prefix-command 'my/jump-map)
-(define-prefix-command 'my/quit-map)
-(define-prefix-command 'my/search-map)
-(define-prefix-command 'my/toggle-map)
-(define-prefix-command 'my/window-map)
-
-(global-set-key (kbd "C-c a") (cons "app" my/app-map))
+(define-key my/leader-map (kbd "a") (cons "app" my/app-map))
+(define-key my/app-map (kbd "a") 'async-shell-command)
 (define-key my/app-map (kbd "s") my/shell-map)
 
-(global-set-key (kbd "C-c b") (cons "buffer" my/buffer-map))
+(define-prefix-command 'my/buffer-map)
+(define-key my/leader-map (kbd "b") (cons "buffer" my/buffer-map))
 (define-key my/buffer-map (kbd "`") 'bury-buffer)
 (define-key my/buffer-map (kbd "b") 'consult-buffer)
 (define-key my/buffer-map (kbd "B") 'ibuffer)
@@ -348,7 +348,10 @@
 (define-key my/buffer-map (kbd "s") 'save-buffer)
 (define-key my/buffer-map (kbd "S") 'save-some-buffers)
 
-(global-set-key (kbd "C-c c") (cons "code" my/code-map))
+(define-prefix-command 'my/code-map)
+(define-prefix-command 'my/lsp-map)
+(define-prefix-command 'my/flymake-map)
+(define-key my/leader-map (kbd "c") (cons "code" my/code-map))
 (define-key my/code-map (kbd "x") 'kill-compilation)
 (define-key my/code-map (kbd "l") (cons "lsp" my/lsp-map))
 (define-key my/lsp-map (kbd "a") 'lsp-execute-code-action)
@@ -363,7 +366,8 @@
 (define-key my/flymake-map (kbd "b") 'flymake-show-buffer-diagnostics)
 (define-key my/flymake-map (kbd "B") 'flymake-show-project-diagnostics)
 
-(global-set-key (kbd "C-c f") (cons "file" my/file-map))
+(define-prefix-command 'my/file-map)
+(define-key my/leader-map (kbd "f") (cons "file" my/file-map))
 (define-key my/file-map (kbd "d") 'dired-jump)
 (define-key my/file-map (kbd "D") 'dired)
 (define-key my/file-map (kbd "f") 'find-file)
@@ -373,7 +377,8 @@
 (define-key my/file-map (kbd "v") 'find-alternate-file)
 (define-key my/file-map (kbd "w") 'write-file)
 
-(global-set-key (kbd "C-c g") (cons "go" my/go-map))
+(define-prefix-command 'my/go-map)
+(define-key my/leader-map (kbd "g") (cons "go" my/go-map))
 (define-key my/go-map (kbd "e") 'consult-compile-error)
 (define-key my/go-map (kbd "f") 'consult-flymake)
 (define-key my/go-map (kbd "g") 'consult-goto-line)
@@ -383,15 +388,17 @@
 (define-key my/go-map (kbd "i") 'consult-imenu)
 (define-key my/go-map (kbd "I") 'consult-imenu-multi)
 
-(global-set-key (kbd "C-c h") (cons "help" help-map))
+(define-key my/leader-map (kbd "h") (cons "help" help-map))
 
-(global-set-key (kbd "C-c j") (cons "jump" my/jump-map))
+(define-prefix-command 'my/jump-map)
+(define-key my/leader-map (kbd "j") (cons "jump" my/jump-map))
 (define-key my/jump-map (kbd "j") 'avy-goto-char-timer)
 (define-key my/jump-map (kbd "r") 'jump-to-register)
 
-(global-set-key (kbd "C-c p") (cons "project" project-prefix-map))
+(define-key my/leader-map (kbd "p") (cons "project" project-prefix-map))
 
-(global-set-key (kbd "C-c q") (cons "quit" my/quit-map))
+(define-prefix-command 'my/quit-map)
+(define-key my/leader-map (kbd "q") (cons "quit" my/quit-map))
 (define-key my/quit-map (kbd "d") 'restart-emacs-debug-init)
 (define-key my/quit-map (kbd "r") 'restart-emacs)
 (define-key my/quit-map (kbd "R") 'restart-emacs-without-desktop)
@@ -399,7 +406,8 @@
 (define-key my/quit-map (kbd "q") 'save-buffers-kill-terminal)
 (define-key my/quit-map (kbd "Q") 'save-buffers-kill-emacs)
 
-(global-set-key (kbd "C-c s") (cons "search" my/search-map))
+(define-prefix-command 'my/search-map)
+(define-key my/leader-map (kbd "s") (cons "search" my/search-map))
 (define-key my/search-map (kbd "f") 'consult-find)
 (define-key my/search-map (kbd "F") 'consult-locate)
 (define-key my/search-map (kbd "g") 'consult-grep)
@@ -413,14 +421,16 @@
 (define-key my/search-map (kbd "e") 'consult-isearch-history)
 (define-key my/search-map (kbd "s") 'save-buffer)
 
-(global-set-key (kbd "C-c t") (cons "toggle" my/toggle-map))
+(define-prefix-command 'my/toggle-map)
+(define-key my/leader-map (kbd "t") (cons "toggle" my/toggle-map))
 (define-key my/toggle-map (kbd "r") 'read-only-mode)
 (define-key my/toggle-map (kbd "t") 'toggle-truncate-lines)
 (define-key my/toggle-map (kbd "v") 'visual-line-mode)
 (define-key my/toggle-map (kbd "V") 'visual-fill-column-mode)
 (define-key my/toggle-map (kbd "w") 'whitespace-mode)
 
-(global-set-key (kbd "C-c w") (cons "window" my/window-map))
+(define-prefix-command 'my/window-map)
+(define-key my/leader-map (kbd "w") (cons "window" my/window-map))
 (define-key my/window-map (kbd "=") 'window-swap-states)
 (define-key my/window-map (kbd "0") 'delete-window)
 (define-key my/window-map (kbd "1") 'delete-other-windows)
@@ -571,6 +581,7 @@
 (use-package visual-fill-column
   :init
   (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
+  (setq-default fill-column 100)
   (setq visual-fill-column-center-text t
         visual-fill-column-enable-sensible-window-split t))
 
@@ -995,15 +1006,6 @@ Switch to the project specific term buffer if it already exists."
   (define-key mu4e-headers-mode-map (kbd "d") 'my-move-to-trash)
   (define-key mu4e-view-mode-map (kbd "d") 'my-move-to-trash)
   )
-
-(use-package clipetty
-  :unless window-system
-  :hook ((after-init . global-clipetty-mode)
-         (after-init . xterm-mouse-mode)))
-
-(use-package kkp
-  :config
-  (global-kkp-mode +1))
 
 ;; WSL-specific setup
 
