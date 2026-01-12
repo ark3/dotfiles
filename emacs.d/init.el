@@ -160,7 +160,7 @@
   (setq read-process-output-max (* 1024 1024)) ; 1mb
 
   ;; Scrolling
-  (setq scroll-conservatively 10000
+  (setq scroll-conservatively 20
         scroll-margin 2
         scroll-preserve-screen-position nil  ; didn't like t, 1 maybe okay
         scroll-error-top-bottom t            ; move point when can't scroll
@@ -241,6 +241,7 @@
   (marginalia-mode))
 
 (use-package embark
+  :after which-key
   :bind
   (("C-." . embark-act)
    ("s-." . embark-dwim)
@@ -313,6 +314,8 @@
   (setq wgrep-auto-save-buffer t))
 
 (use-package key-chord
+  :custom
+  (key-chord-two-keys-delay 0.15)
   :config
   (key-chord-mode t))
 
@@ -350,8 +353,12 @@
 
 (define-prefix-command 'my/code-map)
 (define-prefix-command 'my/lsp-map)
-(define-prefix-command 'my/flymake-map)
 (define-key my/leader-map (kbd "c") (cons "code" my/code-map))
+(define-key my/code-map (kbd "f") 'apheleia-format-buffer)
+(define-key my/code-map (kbd "n") 'flymake-goto-next-error)
+(define-key my/code-map (kbd "p") 'flymake-goto-prev-error)
+(define-key my/code-map (kbd "b") 'flymake-show-buffer-diagnostics)
+(define-key my/code-map (kbd "B") 'flymake-show-project-diagnostics)
 (define-key my/code-map (kbd "x") 'kill-compilation)
 (define-key my/code-map (kbd "l") (cons "lsp" my/lsp-map))
 (define-key my/lsp-map (kbd "a") 'lsp-execute-code-action)
@@ -360,11 +367,7 @@
 (define-key my/lsp-map (kbd "r") 'lsp-rename)
 (define-key my/lsp-map (kbd "w") 'lsp-workspace-restart)
 (define-key my/lsp-map (kbd "=") 'lsp-format-buffer)
-(define-key my/code-map (kbd "f") (cons "flymake" my/flymake-map))
-(define-key my/flymake-map (kbd "n") 'flymake-goto-next-error)
-(define-key my/flymake-map (kbd "p") 'flymake-goto-prev-error)
-(define-key my/flymake-map (kbd "b") 'flymake-show-buffer-diagnostics)
-(define-key my/flymake-map (kbd "B") 'flymake-show-project-diagnostics)
+(define-key my/lsp-map (kbd "f") 'lsp-format-buffer)
 
 (define-prefix-command 'my/file-map)
 (define-key my/leader-map (kbd "f") (cons "file" my/file-map))
@@ -456,9 +459,7 @@
 
 (use-package vertico
   :bind (:map vertico-map
-              ("DEL" . vertico-directory-delete-char)
-              ("TAB" . minibuffer-complete)
-              ("M-TAB" . vertico-insert))
+              ("DEL" . vertico-directory-delete-char))
   :config
   (vertico-mode)
   (setq vertico-resize 'grow-only))
@@ -471,9 +472,13 @@
 
 (use-package corfu
   :config
-  (setq corfu-auto t
-        corfu-quit-no-match t)
-  (define-key corfu-map (kbd "RET") nil)
+  ;; (setq corfu-auto t
+  ;;       corfu-quit-no-match t)
+  ;; Use RET only in shell modes
+  (keymap-set corfu-map "RET" `( menu-item "" nil :filter
+                                 ,(lambda (&optional _)
+                                    (and (derived-mode-p 'eshell-mode 'comint-mode)
+                                         #'corfu-send))))
   (global-corfu-mode)
   (corfu-popupinfo-mode)
   (corfu-echo-mode))
@@ -692,6 +697,7 @@ Switch to the project specific term buffer if it already exists."
   (setq vterm-always-compile-module t)
   :config
   (setq vterm-max-scrollback 99000
+        vterm-copy-mode-remove-fake-newlines t
         vterm-tramp-shells '(("docker" "/bin/bash")
                              ("scpx" "/bin/bash")
                              ("sshx" "/bin/bash")))
@@ -699,8 +705,16 @@ Switch to the project specific term buffer if it already exists."
   :hook (vterm-mode . my/term-setup))
 
 (use-package eat                        ; https://codeberg.org/akib/emacs-eat
+  ;; Make sure the terminfo and integration directories from the repository are
+  ;; available in the build directory. Otherwise stuff won't work correctly.
+  ;;  cd ~/.emacs.d/straight/repos/eat && cp -a terminfo integration ../../build/eat/
+  :hook ((eat-mode . my/term-setup)
+         (eshell-load . eat-eshell-mode))
+  :bind (:map project-prefix-map
+              ("e" . eat-project)
+              ("E" . project-eshell))
   :config
-  (add-hook 'eshell-load-hook #'eat-eshell-mode))
+  (setopt eat-term-scrollback-size nil))
 
 (use-package coterm                     ; https://repo.or.cz/emacs-coterm.git
   :bind (:map shell-mode-map
@@ -869,7 +883,70 @@ Switch to the project specific term buffer if it already exists."
          (go-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . lsp-lens-mode)
-         (lsp-mode . lsp-ui-mode)))
+         (lsp-mode . lsp-ui-mode))
+  :config
+  (defun my/lsp-generate-prune-commands ()
+    "Generate Elisp commands to remove non-existent LSP workspace folders.
+This function will output a list of `lsp-workspace-folders-remove' calls
+to the `*Messages*' buffer. You can then copy, edit, and execute these
+commands to prune your LSP workspaces."
+    (interactive)
+    (unless (fboundp 'lsp-session)
+      (error "lsp-mode not loaded or `lsp-session' not defined."))
+
+    (let* ((current-session (lsp-session))
+           (all-folders (lsp-session-folders current-session))
+           (commands-to-remove-non-existent-folders '())
+           (commands-for-existing-folders '()))
+
+      (when (null all-folders)
+        (message "No LSP workspace folders found in current session.")
+        (ding)
+        (cl-return-from zack/lsp-generate-prune-commands nil))
+
+      (message "Generating prune commands for LSP workspaces...")
+
+      ;; Iterate through all known folders
+      (cl-loop for folder in all-folders
+               do
+               (if (file-exists-p folder)
+                   ;; Folder exists, so we would *keep* it, but user wants to prune.
+                   ;; We generate a removal command for *all* folders, so the user can filter.
+                   (push (format "(lsp-workspace-folders-remove \"%s\")" (string-replace "\\" "\\\\" folder))
+                         commands-for-existing-folders)
+                 ;; Folder does not exist, definitely a candidate for removal
+                 (push (format "(lsp-workspace-folders-remove \"%s\")" (string-replace "\\" "\\\\" folder))
+                       commands-to-remove-non-existent-folders)))
+
+      ;; Reverse the lists to maintain original order (or close to it)
+      (setq commands-to-remove-non-existent-folders (nreverse commands-to-remove-non-existent-folders))
+      (setq commands-for-existing-folders (nreverse commands-for-existing-folders))
+
+      (with-current-buffer (get-buffer-create "*LSP Prune Commands*")
+        (erase-buffer)
+        (insert ";; Generated LSP Pruning Commands\n")
+        (insert ";; Review these commands. Lines starting with ';;' are comments.\n")
+        (insert ";; To remove a workspace, ensure its line is NOT commented out.\n")
+        (insert ";; To keep a workspace, comment out its line.\n\n")
+
+        (insert ";; --- Commands for NON-EXISTENT folders (candidates for removal) ---\n")
+        (insert ";; These are likely the ones you want to keep uncommented:\n")
+        (if commands-to-remove-non-existent-folders
+            (insert (string-join commands-to-remove-non-existent-folders "\n") "\n\n")
+          (insert ";; No non-existent folders found.\n\n"))
+
+        (insert ";; --- Commands for EXISTING folders (uncomment to remove) ---\n")
+        (insert ";; These are probably the ones you want to comment OUT:\n")
+        (if commands-for-existing-folders
+            (progn
+              ;; Pre-comment out existing folders, as the goal is to remove non-existent ones.
+              (insert (string-join (mapcar (lambda (cmd) (concat ";; " cmd)) commands-for-existing-folders) "\n") "\n")
+              (insert ";; You can uncomment specific lines if you wish to remove an existing workspace.\n"))
+          (insert ";; No existing folders found.\n"))
+
+        (goto-char (point-min))
+        (display-buffer (current-buffer))
+        (message "LSP prune commands generated in buffer *LSP Prune Commands*. Review and execute.")))))
 
 (use-package lsp-ui
   :config
@@ -948,15 +1025,25 @@ Switch to the project specific term buffer if it already exists."
   :diminish
   :hook ((prog-mode . ws-butler-mode)))
 
-(use-package dockerfile-mode)
+(use-package dockerfile-mode
+  :config
+  ;; Dockerfile mode uses the 'face text property of the text at the beginning
+  ;; of the line to compute the correct indentation. Unfortunately lsp-mode and
+  ;; tree-sitter-hl-mode both change the 'face property, thus breaking
+  ;; indentation.
+  (add-hook 'dockerfile-mode-hook (lambda() (tree-sitter-hl-mode -1))))
 
 (use-package apheleia
   :config
   (setq apheleia-mode-lighter " fmt"
         apheleia-remote-algorithm 'remote)
   (push '(elisp-mode . lisp-indent) apheleia-mode-alist)
-  :hook
-  (prog-mode . apheleia-mode))
+  ;; ; Don't turn on automatically because I spend so much time editing other
+  ;; ; people's code, or AI-generated code, that format-on-save just creates
+  ;; ; annoying unintentional diffs. Use `LEADER c f' to format buffer.
+  ;; :hook
+  ;; (prog-mode . apheleia-mode)
+  )
 
 (use-package google-c-style
   :hook
@@ -966,6 +1053,7 @@ Switch to the project specific term buffer if it already exists."
 (add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
 
 (use-package gptel
+  :disabled
   :config
   (setq
    gptel-model "llama3:latest"

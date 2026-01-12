@@ -77,6 +77,8 @@ emacs_prompt_end() {
     fi
 }
 
+[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && source "$EAT_SHELL_INTEGRATION_DIR/bash"
+
 # Exit code stuff must be first, but Apple Terminal sticks something in front.
 # Adapted from https://github.com/jimeh/git-aware-prompt/blob/master/prompt.sh
 # and https://github.com/sapegin/dotfiles/blob/bash/includes/bash_prompt.bash
@@ -158,7 +160,7 @@ prompt_command() {
     #     printf "\033k${myhost}\033\\"
     # fi
 
-    if [[ "$INSIDE_EMACS" = vterm* ]]; then
+    if [[ "$INSIDE_EMACS" = disabled_vterm* ]]; then
         vterm_cmd set "$(printf %s \
             "${BOLD}>>${NOCOLOR} " \
             "${BOLD}${MAGENTA}${host_prompt}${NOCOLOR}" \
