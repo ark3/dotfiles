@@ -13,6 +13,3 @@
 	default = current
 [fetch]
 	prune = true
-[url "git@ark3.ssh.github.com:"]
-    pushInsteadOf = https://github.com/
-    insteadOf = https://github.com/
