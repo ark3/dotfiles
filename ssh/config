@@ -10,3 +10,5 @@ Host *
 # github-keygen manages ~/.ssh/github-keygen
 # Run ~/dotfiles/setup-github-ssh <username> to set up or update
 Include github-keygen
+
+Include local-config
