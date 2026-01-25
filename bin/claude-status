@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+import json
+import sys
+import subprocess
+from pathlib import Path
+
+# Model name mappings
+MODEL_ALIASES = {
+    "us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0": "Claude Sonnet 4.5",
+    "claude-opus-4-5-20251101": "Claude Opus 4.5",
+    "claude-sonnet-4-5-20250929": "Claude Sonnet 4.5",
+    "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+    # Add more mappings as needed
+}
+
+
+def get_git_stats(directory):
+    """Get git branch and change stats for the given directory."""
+    try:
+        # Get current branch
+        branch = subprocess.check_output(
+            ["git", "-C", directory, "rev-parse", "--abbrev-ref", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+
+        # Get stats for uncommitted changes
+        diff_stats = subprocess.check_output(
+            ["git", "-C", directory, "diff", "--numstat"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+
+        # Get stats for staged changes
+        staged_stats = subprocess.check_output(
+            ["git", "-C", directory, "diff", "--cached", "--numstat"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+
+        # Parse stats
+        additions = deletions = 0
+        for line in (diff_stats + "\n" + staged_stats).strip().split("\n"):
+            if line:
+                parts = line.split()
+                if len(parts) >= 2 and parts[0] != "-" and parts[1] != "-":
+                    try:
+                        additions += int(parts[0])
+                        deletions += int(parts[1])
+                    except ValueError:
+                        pass
+
+        if additions > 0 or deletions > 0:
+            return f"{branch} (+{additions},-{deletions})"
+        return branch
+
+    except subprocess.CalledProcessError:
+        return None
+
+
+def main():
+    # Read JSON from stdin
+    try:
+        data = json.load(sys.stdin)
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON input")
+        return
+
+    # Extract data from JSON
+    model_id = data.get("model", {}).get("display_name", "Model Unknown")
+    current_dir = data.get("workspace", {}).get("current_dir", "")
+
+    # Apply model alias if available
+    model_name = MODEL_ALIASES.get(model_id, model_id)
+
+    # Get directory name
+    directory_name = Path(current_dir).name if current_dir else "Path Unknown"
+
+    # Get git info
+    git_info = get_git_stats(current_dir) if current_dir else None
+
+    # Build status line
+    if git_info:
+        print(f"{model_name} | {directory_name} | {git_info}")
+    else:
+        print(f"{model_name} | {directory_name}")
+
+
+if __name__ == "__main__":
+    main()
