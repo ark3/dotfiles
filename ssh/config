@@ -1,13 +1,10 @@
-Host strife
-  User ark3
-  Hostname strife.xelfer.com
-
 # Opportunistically multiplex connections; use `ssh -S none` to avoid
 # this, e.g., for transferring large data volumes.
 Host *
+  ServerAliveInterval 30
   ForwardX11Timeout 0
   ControlMaster auto
-  ControlPath ~/.ssh/conn-%n
+  ControlPath ~/.ssh/%u.ssh.%r@%h-%p
   ControlPersist 300s
 
 # -- github-keygen - begin --
