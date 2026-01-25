@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Setup or update GitHub SSH access using github-keygen.
+# This script creates/updates ~/.ssh/github-keygen which is
+# included by the dotfiles-managed ~/.ssh/config.
+
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 <github-username>" >&2
+    exit 1
+fi
+
+GITHUB_USER="$1"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMP_DIR="$(mktemp -d)"
+
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
+
+echo "Cloning github-keygen..."
+git clone --quiet https://github.com/dolmen/github-keygen.git "$TEMP_DIR/github-keygen"
+
+echo "Running github-keygen for $GITHUB_USER..."
+"$TEMP_DIR/github-keygen/github-keygen" "$GITHUB_USER" -d
+
+echo "Extracting github-keygen config to ~/.ssh/github-keygen..."
+sed -n '/^# -- github-keygen - begin --$/,/^# -- github-keygen - end --$/p' ~/.ssh/config > ~/.ssh/github-keygen
+chmod 600 ~/.ssh/github-keygen
+
+echo "Restoring dotfiles ssh/config..."
+git -C "$DOTFILES_DIR" restore ssh/config
+
+echo "Updating dotfiles remote to use SSH..."
+git -C "$DOTFILES_DIR" remote set-url origin "git@github.com:${GITHUB_USER}/dotfiles.git"
+
+echo "Verifying GitHub SSH access..."
+SSH_OUTPUT=$(ssh -T github.com 2>&1 || true)
+echo "$SSH_OUTPUT"
+if echo "$SSH_OUTPUT" | grep -q "successfully authenticated"; then
+    echo "Success! GitHub SSH is configured."
+else
+    echo "Warning: Could not verify GitHub SSH access." >&2
+    echo "You may need to add the public key to your GitHub account." >&2
+    echo "Key: ~/.ssh/id_${GITHUB_USER}@github.pub" >&2
+fi

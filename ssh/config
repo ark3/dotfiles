@@ -7,10 +7,6 @@ Host *
   ControlPath ~/.ssh/%u.ssh.%r@%h-%p
   ControlPersist 300s
 
-# github-keygen manages ~/.ssh/github-keygen; run it to set up GitHub SSH access:
-#   git clone https://github.com/dolmen/github-keygen.git
-#   cd github-keygen
-#   ./github-keygen <my-github-username>
-#   cd ..
-#   rm -Rf github-keygen
+# github-keygen manages ~/.ssh/github-keygen
+# Run ~/dotfiles/setup-github-ssh <username> to set up or update
 Include github-keygen
