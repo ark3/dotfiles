@@ -6,10 +6,10 @@ from pathlib import Path
 
 # Model name mappings
 MODEL_ALIASES = {
-    "us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0": "Claude Sonnet 4.5",
-    "claude-opus-4-5-20251101": "Claude Opus 4.5",
-    "claude-sonnet-4-5-20250929": "Claude Sonnet 4.5",
-    "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+    "us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0": "Gov Sonnet 4.5",
+    "claude-opus-4-5-20251101": "Opus 4.5",
+    "claude-sonnet-4-5-20250929": "Sonnet 4.5",
+    "claude-haiku-4-5-20251001": "Haiku 4.5",
     # Add more mappings as needed
 }
 
@@ -69,6 +69,7 @@ def main():
     # Extract data from JSON
     model_id = data.get("model", {}).get("display_name", "Model Unknown")
     current_dir = data.get("workspace", {}).get("current_dir", "")
+    context_window = data.get("context_window", {})
 
     # Apply model alias if available
     model_name = MODEL_ALIASES.get(model_id, model_id)
@@ -79,11 +80,19 @@ def main():
     # Get git info
     git_info = get_git_stats(current_dir) if current_dir else None
 
+    # Get token usage
+    window_size = context_window.get("context_window_size", 200000)
+    used_percentage = context_window.get("used_percentage", 0)
+    tokens = window_size * used_percentage / 100.0
+    token_info = f"{tokens / 1000:.1f}k"
+
     # Build status line
+    parts = [model_name, directory_name]
     if git_info:
-        print(f"{model_name} | {directory_name} | {git_info}")
-    else:
-        print(f"{model_name} | {directory_name}")
+        parts.append(git_info)
+    parts.append(token_info)
+
+    print(" | ".join(parts))
 
 
 if __name__ == "__main__":
