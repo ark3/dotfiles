@@ -1,8 +1,0 @@
-#!/bin/bash
-
-for arg in "$@"
-do
-    target=$(basename "$arg" .md).html
-    echo "$arg" "-->" "$target"
-    curl -s -H "Content-Type: text/plain" -X POST --data-binary "@$arg" https://api.github.com/markdown/raw > "$target"
-done
