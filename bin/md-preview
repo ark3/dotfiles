@@ -1,27 +1,30 @@
-#!/usr/bin/env -S uv run --script
-# -*- mode: python -*-
-# /// script
-# dependencies = [
-#   "markdown",
-#   "pymdown-extensions",
-#   "pygments",
-# ]
-# ///
+#!/usr/bin/env bash
 
-"""
-Preview markdown files in the browser with GitHub-style styling.
-Opens an ephemeral HTML file in the default browser.
-"""
+# Preview markdown files in the browser with GitHub-style styling.
+# Usage: md-preview [--debug] <markdown-file>
+#   --debug: Output HTML to stdout instead of opening browser
 
-import sys
-import tempfile
-import webbrowser
-import atexit
-import os
-from pathlib import Path
-from markdown import Markdown
+set -euo pipefail
 
-GITHUB_CSS = """
+DEBUG=false
+if [[ "${1:-}" == "--debug" ]]; then
+    DEBUG=true
+    shift
+fi
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 [--debug] <markdown-file>" >&2
+    exit 1
+fi
+
+MD_FILE="$1"
+if [[ ! -f "$MD_FILE" ]]; then
+    echo "Error: $MD_FILE not found" >&2
+    exit 1
+fi
+
+# GitHub dark theme CSS
+GITHUB_CSS='
 .markdown-body {
   color: #c9d1d9;
   background-color: #0d1117;
@@ -38,7 +41,7 @@ GITHUB_CSS = """
 .markdown-body h4 { font-size: 1em; }
 .markdown-body p { margin-top: 0; margin-bottom: 16px; }
 .markdown-body code { padding: 0.2em 0.4em; margin: 0; font-size: 85%; background-color: rgba(110,118,129,0.4); border-radius: 6px; font-family: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace; }
-.markdown-body pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: #161b22; border-radius: 6px; }
+.markdown-body pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: #161b22; border-radius: 6px; white-space: pre; }
 .markdown-body pre code { padding: 0; margin: 0; background-color: transparent; border-radius: 0; display: inline; }
 .markdown-body pre > code { display: block; }
 .markdown-body blockquote { margin: 0; padding: 0 1em; color: #8b949e; border-left: 0.25em solid #30363d; }
@@ -52,186 +55,86 @@ GITHUB_CSS = """
 .markdown-body a { color: #58a6ff; text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
 .markdown-body img { max-width: 100%; box-sizing: border-box; }
-"""
+'
 
-# Pygments CSS for syntax highlighting (GitHub dark theme)
-PYGMENTS_CSS = """
-.codehilite { background: #161b22; }
-.codehilite .hll { background-color: #161b22; }
-.codehilite .c { color: #8b949e; font-style: italic; }
-.codehilite .err { color: #f85149; }
-.codehilite .k { color: #ff7b72; }
-.codehilite .o { color: #ff7b72; }
-.codehilite .ch { color: #8b949e; font-style: italic; }
-.codehilite .cm { color: #8b949e; font-style: italic; }
-.codehilite .cp { color: #8b949e; font-weight: bold; }
-.codehilite .cpf { color: #8b949e; font-style: italic; }
-.codehilite .c1 { color: #8b949e; font-style: italic; }
-.codehilite .cs { color: #8b949e; font-weight: bold; font-style: italic; }
-.codehilite .gd { color: #ffa198; background-color: #490202; }
-.codehilite .ge { font-style: italic; }
-.codehilite .gr { color: #f85149; }
-.codehilite .gh { color: #79c0ff; font-weight: bold; }
-.codehilite .gi { color: #56d364; background-color: #0f5323; }
-.codehilite .go { color: #8b949e; }
-.codehilite .gp { color: #8b949e; }
-.codehilite .gs { font-weight: bold; }
-.codehilite .gu { color: #79c0ff; font-weight: bold; }
-.codehilite .gt { color: #f85149; }
-.codehilite .kc { color: #79c0ff; }
-.codehilite .kd { color: #ff7b72; }
-.codehilite .kn { color: #ff7b72; }
-.codehilite .kp { color: #79c0ff; }
-.codehilite .kr { color: #ff7b72; }
-.codehilite .kt { color: #ff7b72; }
-.codehilite .m { color: #79c0ff; }
-.codehilite .s { color: #a5d6ff; }
-.codehilite .na { color: #79c0ff; }
-.codehilite .nb { color: #d2a8ff; }
-.codehilite .nc { color: #f0883e; }
-.codehilite .no { color: #79c0ff; }
-.codehilite .nd { color: #d2a8ff; }
-.codehilite .ni { color: #ffa657; }
-.codehilite .ne { color: #f0883e; }
-.codehilite .nf { color: #d2a8ff; }
-.codehilite .nl { color: #79c0ff; }
-.codehilite .nn { color: #f0883e; }
-.codehilite .nt { color: #7ee787; }
-.codehilite .nv { color: #79c0ff; }
-.codehilite .ow { color: #ff7b72; }
-.codehilite .w { color: #6e7681; }
-.codehilite .mb { color: #79c0ff; }
-.codehilite .mf { color: #79c0ff; }
-.codehilite .mh { color: #79c0ff; }
-.codehilite .mi { color: #79c0ff; }
-.codehilite .mo { color: #79c0ff; }
-.codehilite .sa { color: #79c0ff; }
-.codehilite .sb { color: #a5d6ff; }
-.codehilite .sc { color: #a5d6ff; }
-.codehilite .dl { color: #79c0ff; }
-.codehilite .sd { color: #a5d6ff; }
-.codehilite .s2 { color: #a5d6ff; }
-.codehilite .se { color: #79c0ff; }
-.codehilite .sh { color: #a5d6ff; }
-.codehilite .si { color: #a5d6ff; }
-.codehilite .sx { color: #a5d6ff; }
-.codehilite .sr { color: #7ee787; }
-.codehilite .s1 { color: #a5d6ff; }
-.codehilite .ss { color: #a5d6ff; }
-.codehilite .bp { color: #79c0ff; }
-.codehilite .fm { color: #d2a8ff; }
-.codehilite .vc { color: #79c0ff; }
-.codehilite .vg { color: #79c0ff; }
-.codehilite .vi { color: #79c0ff; }
-.codehilite .vm { color: #79c0ff; }
-.codehilite .il { color: #79c0ff; }
-"""
+# Render markdown using bun with markdown-it
+MD_FILENAME=$(basename "$MD_FILE")
 
-# Track temp files for cleanup
-_temp_files = []
+# Create temp script for bun
+RENDER_SCRIPT=$(mktemp --suffix=.mjs)
 
+cat > "$RENDER_SCRIPT" <<'EOJS'
+import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js';
 
-def cleanup_temp_files():
-    """Clean up temporary HTML files on exit."""
-    for temp_file in _temp_files:
-        try:
-            if os.path.exists(temp_file):
-                os.unlink(temp_file)
-        except Exception:
-            pass
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: false,
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return '<pre class="hljs"><code>' +
+               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+               '</code></pre>';
+      } catch (__) {}
+    }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+  }
+});
 
+const input = await Bun.file(process.argv[2]).text();
+console.log(md.render(input));
+EOJS
 
-def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <markdown-file>", file=sys.stderr)
-        sys.exit(1)
+HTML_CONTENT=$(bun "$RENDER_SCRIPT" "$MD_FILE")
 
-    md_file = Path(sys.argv[1])
-    if not md_file.exists():
-        print(f"Error: {md_file} not found", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        # Read the markdown file
-        md_content = md_file.read_text(encoding='utf-8')
-    except Exception as e:
-        print(f"Error reading file: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        # Configure markdown with GFM-like extensions
-        md = Markdown(extensions=[
-            'tables',          # Tables support
-            'fenced_code',     # Fenced code blocks
-            'codehilite',      # Syntax highlighting  
-            'nl2br',           # Newline to <br>
-            'sane_lists',      # Better list handling
-            'pymdownx.magiclink',      # Auto-link URLs
-            'pymdownx.tasklist',       # Task lists
-            'pymdownx.tilde',          # Strikethrough
-        ], extension_configs={
-            'codehilite': {
-                'css_class': 'codehilite',
-                'guess_lang': False,
-                'noclasses': False,
-            },
-            'pymdownx.tasklist': {
-                'custom_checkbox': True
-            }
-        })
-        
-        html_content = md.convert(md_content)
-    except Exception as e:
-        print(f"Error converting markdown: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    styled_html = f"""<!DOCTYPE html>
+# Generate full HTML
+FULL_HTML="<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>{md_file.name}</title>
+  <meta charset=\"utf-8\">
+  <title>${MD_FILENAME}</title>
   <style>
-  body {{
+  body {
     box-sizing: border-box;
     min-width: 200px;
     max-width: 980px;
     margin: 0 auto;
     padding: 45px;
-  }}
-  @media (max-width: 767px) {{
-    body {{ padding: 15px; }}
-  }}
-  {GITHUB_CSS}
-  {PYGMENTS_CSS}
+  }
+  @media (max-width: 767px) {
+    body { padding: 15px; }
+  }
+  ${GITHUB_CSS}
   </style>
+  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css\">
 </head>
-<body class="markdown-body">
-{html_content}
+<body class=\"markdown-body\">
+${HTML_CONTENT}
 </body>
-</html>"""
+</html>"
 
-    try:
-        with tempfile.NamedTemporaryFile(
-            suffix='.html',
-            delete=False,
-            mode='w',
-            encoding='utf-8'
-        ) as f:
-            f.write(styled_html)
-            temp_path = f.name
-        
-        # Register cleanup on exit
-        _temp_files.append(temp_path)
-        if len(_temp_files) == 1:
-            atexit.register(cleanup_temp_files)
-        
-        print(f"Opening {md_file.name} in browser...")
-        webbrowser.open(f'file://{temp_path}')
-    except Exception as e:
-        print(f"Error creating preview: {e}", file=sys.stderr)
-        sys.exit(1)
+if [[ "$DEBUG" == "true" ]]; then
+    echo "$FULL_HTML"
+    rm -f "$RENDER_SCRIPT"
+else
+    # Create temp file and open in browser
+    TEMP_FILE=$(mktemp --suffix=.html)
+    echo "$FULL_HTML" > "$TEMP_FILE"
 
+    # Cleanup on exit
+    trap "rm -f '$TEMP_FILE' '$RENDER_SCRIPT'" EXIT
 
-if __name__ == '__main__':
-    main()
+    echo "Opening ${MD_FILENAME} in browser..." >&2
 
+    if [[ -n "${BROWSER:-}" ]]; then
+        "$BROWSER" "$TEMP_FILE" &>/dev/null &
+    else
+        echo "Error: \$BROWSER not set" >&2
+        exit 1
+    fi
+
+    # Keep script running briefly so temp file stays available
+    sleep 2
+fi
