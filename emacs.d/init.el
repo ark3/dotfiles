@@ -648,7 +648,6 @@
   :bind (:map puni-mode-map
               ("C-," . puni-expand-region))) ; Overrides er/expand-region
 
-
 (defun prog-stuff ()
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
@@ -927,7 +926,8 @@ commands to prune your LSP workspaces."
         (insert ";; Generated LSP Pruning Commands\n")
         (insert ";; Review these commands. Lines starting with ';;' are comments.\n")
         (insert ";; To remove a workspace, ensure its line is NOT commented out.\n")
-        (insert ";; To keep a workspace, comment out its line.\n\n")
+        (insert ";; To keep a workspace, comment out its line.\n")
+        (insert ";; Use `M-x eval-buffer' to apply these changes.\n\n")
 
         (insert ";; --- Commands for NON-EXISTENT folders (candidates for removal) ---\n")
         (insert ";; These are likely the ones you want to keep uncommented:\n")
@@ -1052,19 +1052,12 @@ commands to prune your LSP workspaces."
 (add-hook 'java-mode-hook (lambda () (setq fill-column 100)))
 (add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
 
-(use-package gptel
-  :disabled
-  :config
-  (setq
-   gptel-model "llama3:latest"
-   gptel-backend (gptel-make-ollama "Ollama"
-                   :host "localhost:11434"
-                   :stream t
-                   :models '("gemma:7b" "llama3:latest" "codegemma:latest"
-                             "codellama:latest" "zephyr:latest")))
-  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
-  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
-  )
+(use-package agent-shell
+  :bind (:map agent-shell-mode-map
+              ("RET" . newline)
+              ("C-<return>" . shell-maker-submit)
+              ("M-<return>" . shell-maker-submit)
+              ("C-c C-c" . agent-shell-interrupt)))
 
 (use-package mu4e
   :disabled
