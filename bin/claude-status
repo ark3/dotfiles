@@ -70,7 +70,6 @@ def main():
     # Extract data from JSON
     model_id = data.get("model", {}).get("display_name", "Model Unknown")
     current_dir = data.get("workspace", {}).get("current_dir", "")
-    context_window = data.get("context_window", {})
 
     # Apply model alias if available
     model_name = MODEL_ALIASES.get(model_id, model_id)
@@ -81,17 +80,10 @@ def main():
     # Get git info
     git_info = get_git_stats(current_dir) if current_dir else None
 
-    # Get token usage
-    window_size = context_window.get("context_window_size", 200000)
-    used_percentage = context_window.get("used_percentage", 0) or 0
-    tokens = round(window_size * used_percentage / 100.0, -2)
-    token_info = f"{tokens / 1000:.1f}k"
-
     # Build status line
     parts = [model_name, directory_name]
     if git_info:
         parts.append(git_info)
-    parts.append(token_info)
 
     print(" | ".join(parts))
 
