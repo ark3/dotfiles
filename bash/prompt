@@ -26,19 +26,6 @@ if [ -t 1 ]; then
 fi
 LINE=$(printf "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500%.0s" {1..200})
 
-in_ssh=
-in_docker_exec=
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    in_ssh=1
-elif [ -f "${root}/.dockerenv" ] || [ -f "${root}/.dockerinit" ] || \
-       grep -qF /docker/ "${root}/proc/self/cgroup" 2>/dev/null; then
-    in_docker_exec=1
-fi
-in_docker_exec=  # FIXME
-
-vterm_hostname=$(hostname)
-[ -n "$in_docker_exec" ] && vterm_hostname=/docker:${user}@$vterm_hostname
-
 vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
         # Tell tmux to pass the escape sequences through
@@ -106,7 +93,6 @@ prompt_command() {
     if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
         if [[ "$branch" == "HEAD" ]]; then
 	    git_color=${RED}
-	    git_color_num=1
             branch='detached*'
         fi  # FIXME do we need an else here?
 
@@ -114,11 +100,9 @@ prompt_command() {
         if [[ "$status" != "" ]]; then
             git_info="($branch*) "
             git_color=${YELLOW}
-	    git_color_num=3
         else
             git_info="($branch) "
             git_color=${GREEN}
-	    git_color_num=2
         fi
     fi
 
@@ -150,31 +134,28 @@ prompt_command() {
     # Add hostname overrides here, e.g.,
     # [[ $myhost = ark3-workstation* ]] && myhost="GKE"
     host_prompt=
-    if [ -n "$in_ssh" ] || [ -n "$in_docker_exec" ]; then
+    if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
         host_prompt="[${myhost}] "
     fi
-    # This is supposed to display the hostname in the window or tab title.
-    # However, the test is not quite right. The VSCode terminal (for example)
-    # shows the hostname inline.
-    # if [[ $TERM = screen* ]] || [ -n "$STY" ] || [ -n "$TMUX" ]; then
-    #     printf "\033k${myhost}\033\\"
-    # fi
 
-    if [[ "$INSIDE_EMACS" = disabled_vterm* ]]; then
+    # Terminal title (OSC 0 sets both window and icon titles)
+    if [ -n "$ASX_HOSTNAME_IN_TITLE" ]; then
+        printf "\e]0;%s\007" "${myhost}"
+    fi
+
+    if [[ "$INSIDE_EMACS" = vterm* ]]; then
         vterm_cmd set "$(printf %s \
             "${BOLD}>>${NOCOLOR} " \
             "${BOLD}${MAGENTA}${host_prompt}${NOCOLOR}" \
             "${MAGENTA}${kctx_prompt}${NOCOLOR}" \
             "${BLUE}${venv_prompt}${NOCOLOR}" \
             "${git_color}${git_info}${NOCOLOR}" \
-            "${exit_color}${exit_prompt}${NOCOLOR}" | base64)"
+            "${exit_color}${exit_prompt}${NOCOLOR}" | base64 -w0)"
     fi
 
     history -a                  # append this shell's history to the file
     #history -n                 # read history from the file into this shell
     line_prompt=${LINE:0:$(tput cols)}
-    time_prompt=" \A "
-    dir_prompt="\w"
 }
 
 CLEAN_PROMPT='\[${exit_color}\]$ \[${NOCOLOR}\]\[$(shell_integration)\]'
