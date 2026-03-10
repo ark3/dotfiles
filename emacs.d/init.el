@@ -817,6 +817,9 @@ Switch to the project specific term buffer if it already exists."
          ("g" . magit-file-dispatch)
          :map project-prefix-map
          ("m" . magit-project-status))
+  :hook (git-commit-setup . (lambda ()
+                              (setq fill-column 72)
+                              (display-fill-column-indicator-mode 1)))
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
