@@ -584,11 +584,12 @@
   (ispell-program-name "aspell"))
 
 (use-package visual-fill-column
-  :init
-  (add-hook 'visual-fill-column-mode-hook #'visual-line-mode)
-  (setq-default fill-column 100)
-  (setq visual-fill-column-center-text t
-        visual-fill-column-enable-sensible-window-split t))
+  :hook ((visual-fill-column-mode . visual-line-mode)
+         (visual-line-mode . visual-wrap-prefix-mode))
+  :custom
+  (visual-fill-column-center-text t)
+  (visual-fill-column-enable-sensible-window-split t)
+  (visual-fill-column-width 100))
 
 (use-package org-autolist
   :after org
@@ -878,7 +879,8 @@ Switch to the project specific term buffer if it already exists."
         lsp-idle-delay 0.3              ; default 0.5
         lsp-completion-provider :none   ; don't fuss with company?
         lsp-keep-workspace-alive nil
-        lsp-file-watch-threshold 20000)
+        lsp-file-watch-threshold 20000
+        lsp-enable-dap-auto-configure nil)
   :hook ((python-mode . lsp-deferred)
          (java-mode . lsp-deferred)
          (scala-mode . lsp-deferred)
