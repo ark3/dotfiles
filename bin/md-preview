@@ -1,30 +1,30 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bun
 
-# Preview markdown files in the browser with GitHub-style styling.
-# Usage: md-preview [--debug] <markdown-file>
-#   --debug: Output HTML to stdout instead of opening browser
+// Preview markdown files in the browser with GitHub-style styling and live reload.
+// Usage: md-preview [--debug] <markdown-file>
+//   --debug: Output HTML to stdout instead of opening browser
 
-set -euo pipefail
+import { basename, resolve } from "path";
+import { watch } from "fs";
+import MarkdownIt from "markdown-it";
+import hljs from "highlight.js";
 
-DEBUG=false
-if [[ "${1:-}" == "--debug" ]]; then
-    DEBUG=true
-    shift
-fi
+const args = process.argv.slice(2);
+let debug = false;
+if (args[0] === "--debug") {
+  debug = true;
+  args.shift();
+}
 
-if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 [--debug] <markdown-file>" >&2
-    exit 1
-fi
+if (args.length < 1) {
+  console.error("Usage: md-preview [--debug] <markdown-file>");
+  process.exit(1);
+}
 
-MD_FILE="$1"
-if [[ ! -f "$MD_FILE" ]]; then
-    echo "Error: $MD_FILE not found" >&2
-    exit 1
-fi
+const mdFile = resolve(args[0]);
 
-# GitHub dark theme CSS
-GITHUB_CSS='
+// GitHub dark theme CSS
+const githubCss = `
 .markdown-body {
   color: #c9d1d9;
   background-color: #0d1117;
@@ -55,17 +55,7 @@ GITHUB_CSS='
 .markdown-body a { color: #58a6ff; text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
 .markdown-body img { max-width: 100%; box-sizing: border-box; }
-'
-
-# Render markdown using bun with markdown-it
-MD_FILENAME=$(basename "$MD_FILE")
-
-# Create temp script for bun
-RENDER_SCRIPT=$(mktemp --suffix=.mjs)
-
-cat > "$RENDER_SCRIPT" <<'EOJS'
-import MarkdownIt from 'markdown-it';
-import hljs from 'highlight.js';
+`;
 
 const md = new MarkdownIt({
   html: true,
@@ -74,27 +64,65 @@ const md = new MarkdownIt({
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return '<pre class="hljs"><code>' +
-               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-               '</code></pre>';
-      } catch (__) {}
+        return (
+          '<pre class="hljs"><code>' +
+          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+          "</code></pre>"
+        );
+      } catch {
+        // fall through to escape
+      }
     }
-    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
-  }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + "</code></pre>";
+  },
 });
 
-const input = await Bun.file(process.argv[2]).text();
-console.log(md.render(input));
-EOJS
+const defaultFence =
+  md.renderer.rules.fence ||
+  function (tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
 
-HTML_CONTENT=$(bun "$RENDER_SCRIPT" "$MD_FILE")
+md.renderer.rules.fence = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  if (token.info.trim() === "mermaid") {
+    return `<div class="mermaid">\n${token.content}</div>\n`;
+  }
+  return defaultFence(tokens, idx, options, env, self);
+};
 
-# Generate full HTML
-FULL_HTML="<!DOCTYPE html>
+// Open external links in new tab
+const defaultLinkOpen =
+  md.renderer.rules.link_open ||
+  function (tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  const hrefIndex = token.attrIndex('href');
+  if (hrefIndex >= 0) {
+    const href = token.attrs[hrefIndex][1];
+    if (href.startsWith('http://') || href.startsWith('https://')) {
+      token.attrPush(['target', '_blank']);
+    }
+  }
+  return defaultLinkOpen(tokens, idx, options, env, self);
+};
+
+const mdFilename = basename(mdFile);
+
+async function renderMarkdown() {
+  const input = await Bun.file(mdFile).text();
+  return md.render(input);
+}
+
+function buildHtml(htmlContent) {
+  return `<!DOCTYPE html>
 <html>
 <head>
-  <meta charset=\"utf-8\">
-  <title>${MD_FILENAME}</title>
+  <meta charset="utf-8">
+  <title>${mdFilename}</title>
   <style>
   body {
     box-sizing: border-box;
@@ -106,35 +134,220 @@ FULL_HTML="<!DOCTYPE html>
   @media (max-width: 767px) {
     body { padding: 15px; }
   }
-  ${GITHUB_CSS}
+  ${githubCss}
   </style>
-  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css\">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+  <script>
+    // Preserve scroll position across reloads
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('scrollX', window.scrollX);
+      sessionStorage.setItem('scrollY', window.scrollY);
+    });
+
+    window.addEventListener('load', () => {
+      const scrollX = sessionStorage.getItem('scrollX');
+      const scrollY = sessionStorage.getItem('scrollY');
+      if (scrollX !== null && scrollY !== null) {
+        window.scrollTo(parseInt(scrollX), parseInt(scrollY));
+      }
+    });
+
+    // Connect to server for live reload
+    const es = new EventSource('/events');
+    es.addEventListener('reload', () => {
+      location.reload();
+    });
+    es.onerror = () => {
+      es.close();
+    };
+  </script>
 </head>
-<body class=\"markdown-body\">
-${HTML_CONTENT}
+<body class="markdown-body">
+${htmlContent}
 </body>
-</html>"
+</html>`;
+}
 
-if [[ "$DEBUG" == "true" ]]; then
-    echo "$FULL_HTML"
-    rm -f "$RENDER_SCRIPT"
-else
-    # Create temp file and open in browser
-    TEMP_FILE=$(mktemp --suffix=.html)
-    echo "$FULL_HTML" > "$TEMP_FILE"
+// Debug mode: just output HTML
+if (debug) {
+  try {
+    const htmlContent = await renderMarkdown();
+    console.log(buildHtml(htmlContent));
+  } catch (err) {
+    console.error(`Error: ${mdFile} not found or unreadable`);
+    process.exit(1);
+  }
+  process.exit(0);
+}
 
-    # Cleanup on exit
-    trap "rm -f '$TEMP_FILE' '$RENDER_SCRIPT'" EXIT
+// Background ourselves if not already backgrounded
+if (!process.env.MD_PREVIEW_BACKGROUNDED) {
+  const browser = process.env.BROWSER;
+  if (!browser) {
+    console.error("Error: $BROWSER not set");
+    process.exit(1);
+  }
 
-    echo "Opening ${MD_FILENAME} in browser..." >&2
+  const child = Bun.spawn([process.argv[0], process.argv[1], mdFile], {
+    env: { ...process.env, MD_PREVIEW_BACKGROUNDED: "1" },
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "inherit",
+    detached: true,
+  });
 
-    if [[ -n "${BROWSER:-}" ]]; then
-        "$BROWSER" "$TEMP_FILE" &>/dev/null &
-    else
-        echo "Error: \$BROWSER not set" >&2
-        exit 1
-    fi
+  // Read the server URL from the child's output
+  const reader = child.stdout.getReader();
+  const decoder = new TextDecoder();
+  let output = "";
 
-    # Keep script running briefly so temp file stays available
-    sleep 2
-fi
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    output += decoder.decode(value);
+    const match = output.match(/http:\/\/localhost:\d+/);
+    if (match) {
+      const url = match[0];
+      console.log(`Opening ${mdFilename} in browser (server running in background)`);
+      try {
+        Bun.spawn([browser, url], {
+          stdin: "ignore",
+          stdout: "ignore",
+          stderr: "ignore",
+          detached: true,
+        });
+      } catch (err) {
+        console.error(`Error: failed to launch browser: ${String(err)}`);
+      }
+      break;
+    }
+  }
+
+  child.unref();
+  process.exit(0);
+}
+
+// Live reload server
+const clients = new Set();
+let debounceTimer = null;
+
+const server = Bun.serve({
+  port: 0,
+  idleTimeout: 0,
+  async fetch(req) {
+    const url = new URL(req.url);
+
+    if (url.pathname === "/events") {
+      // Server-Sent Events endpoint
+      const signal = req.signal;
+      let client = null;
+      let keepalive = null;
+
+      const stream = new ReadableStream({
+        start(controller) {
+          client = {
+            send: (eventType, data) => {
+              if (clients.has(client)) {
+                try {
+                  controller.enqueue(`event: ${eventType}\ndata: ${data}\n\n`);
+                } catch {
+                  client.close();
+                }
+              }
+            },
+            close: () => {
+              if (clients.has(client)) {
+                clients.delete(client);
+                if (keepalive) clearInterval(keepalive);
+                try {
+                  controller.close();
+                } catch {}
+                checkShutdown();
+              }
+            }
+          };
+
+          clients.add(client);
+
+          // Detect disconnect via abort signal
+          signal.addEventListener('abort', () => {
+            client.close();
+          });
+
+          // Send keepalive every 15 seconds
+          keepalive = setInterval(() => {
+            if (clients.has(client)) {
+              try {
+                controller.enqueue(": keepalive\n\n");
+              } catch {
+                clearInterval(keepalive);
+                client.close();
+              }
+            } else {
+              clearInterval(keepalive);
+            }
+          }, 15000);
+
+          // Send initial connection message
+          controller.enqueue("data: connected\n\n");
+        },
+        cancel() {
+          if (client) client.close();
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Serve the HTML
+    const htmlContent = await renderMarkdown();
+    return new Response(buildHtml(htmlContent), {
+      headers: { "Content-Type": "text/html" },
+    });
+  },
+});
+
+console.log(`Serving ${mdFilename} at http://localhost:${server.port}`);
+
+// Watch for file changes
+const watcher = watch(mdFile, (eventType) => {
+  if (eventType === "change") {
+    // Debounce rapid changes
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      // Notify all connected clients
+      for (const client of clients) {
+        client.send("reload", "");
+      }
+    }, 100);
+  }
+});
+
+// Shutdown when no clients remain
+let shutdownTimer = null;
+function checkShutdown() {
+  if (shutdownTimer) {
+    clearTimeout(shutdownTimer);
+    shutdownTimer = null;
+  }
+
+  if (clients.size === 0) {
+    shutdownTimer = setTimeout(() => {
+      if (clients.size === 0) {
+        watcher.close();
+        server.stop();
+        process.exit(0);
+      }
+    }, 5000);
+  }
+}
