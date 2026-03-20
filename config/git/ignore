@@ -41,3 +41,4 @@ Temporary Items
 __pycache__
 
 **/.claude/settings.local.json
+.worktrees
