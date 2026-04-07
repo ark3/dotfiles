@@ -69,8 +69,11 @@
   (setq user-full-name "Abhay Saxena"
         user-mail-address "ark3@email.com")
 
-  ;; always allow 'y' instead of 'yes'.
-  (defalias 'yes-or-no-p 'y-or-n-p)
+  ;; Allow 'y' instead of 'yes'.
+  (setopt use-short-answers t)
+
+  ;; Associate uv Python runner with python-mode
+  (add-to-list 'interpreter-mode-alist '("uv" . python-mode))
 
   ;; default to utf-8 for all the things FIXME this breaks coterm :frown:
   ;; (set-charset-priority 'unicode)
@@ -636,6 +639,9 @@
   :init (setq markdown-command "pandoc")
   :config (setq markdown-fontify-code-blocks-natively t))
 
+(use-package unfill
+  :bind (("M-q" . unfill-toggle)))
+
 ;;; Programming stuff
 
 (use-package expand-region
@@ -665,6 +671,7 @@
 
 (defun my/term-setup ()
   (my/term-set-header-message (base64-encode-string ""))
+  (setq-local global-hl-line-mode nil)
   (setq header-line-format
         '(" "
           (:eval (ansi-color-apply my/term-header-message))
@@ -1135,8 +1142,7 @@ commands to prune your LSP workspaces."
         '(" env[" (:propertize "!" face envrc-mode-line-error-face) "]"))
   (envrc-global-mode))
 
-;; Local
-
+;; Load optional local configuration
 (load "~/.local/emacs/config" t)  ; NOERROR if file does not exist
 
 ;;; Wrap-up
