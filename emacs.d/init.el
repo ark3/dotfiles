@@ -1058,6 +1058,9 @@ commands to prune your LSP workspaces."
 (add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
 
 (use-package agent-shell
+  :config
+  (setopt agent-shell-command-prefix '("sbox")
+          agent-shell-permission-responder-function #'agent-shell-permission-allow-always)
   :bind (:map agent-shell-mode-map
               ("RET" . newline)
               ("C-<return>" . shell-maker-submit)

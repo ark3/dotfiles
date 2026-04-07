@@ -42,3 +42,4 @@ __pycache__
 
 **/.claude/settings.local.json
 .worktrees
+.agent-shell
