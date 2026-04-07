@@ -13,3 +13,6 @@
 	default = current
 [fetch]
 	prune = true
+[include]
+	# Optional local configuration for e.g., work email address
+	path = ~/.local/gitconfig
