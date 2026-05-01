@@ -60,11 +60,12 @@
   (setq inhibit-startup-screen t
         initial-scratch-message nil
         sentence-end-double-space nil
-        require-final-newline t
         tab-always-indent 'complete
-        show-trailing-whitespace t
-        indent-tabs-mode nil
         ring-bell-function 'ignore)
+
+  (setq-default require-final-newline t
+                show-trailing-whitespace t
+                indent-tabs-mode nil)
 
   (setq user-full-name "Abhay Saxena"
         user-mail-address "ark3@email.com")
@@ -569,6 +570,8 @@
          ("M-f" . #'helpful-macro)
          ("C" . #'helpful-command))
   :config
+  (setopt help-window-select t
+	  help-window-keep-selected t)
   ;; FIXME: Use display-buffer-alist to do this somehow?
   (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer)
   (defun my/helpful-switch-to-buffer (buffer-or-name)
@@ -660,6 +663,11 @@
   (display-fill-column-indicator-mode t)
   (setq fill-column 80)
   )
+
+;; Switch to compilation buffer's window on compile/project-compile
+(add-hook 'compilation-start-hook
+          (lambda (proc)
+            (pop-to-buffer (process-buffer proc))))
 
 (add-hook 'prog-mode-hook 'prog-stuff)
 
@@ -841,6 +849,7 @@ Switch to the project specific term buffer if it already exists."
                                   (magit-project-status "Magit"))))
 
 (use-package diff-hl
+  :hook (dired-mode . diff-hl-dired-mode)
   :config
   (global-diff-hl-mode)
   (unless (window-system) (diff-hl-margin-mode))
