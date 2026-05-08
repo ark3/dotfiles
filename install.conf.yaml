@@ -29,6 +29,8 @@
       path: config/git/ignore
     ~/.config/fish:
       path: config/fish
+    ~/.config/agents/AGENTS.md:
+      path: config/agents/AGENTS.md
     ~/.editorconfig:
     ~/.inputrc:
     ~/.spacemacs:
