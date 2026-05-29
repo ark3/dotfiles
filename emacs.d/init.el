@@ -64,7 +64,6 @@
         ring-bell-function 'ignore)
 
   (setq-default require-final-newline t
-                show-trailing-whitespace t
                 indent-tabs-mode nil)
 
   (setq user-full-name "Abhay Saxena"
@@ -582,6 +581,10 @@
 
 ;;; Text stuff
 
+(add-hook 'text-mode-hook
+          (lambda ()
+            (setq-local show-trailing-whitespace t)))
+
 (use-package qrencode
   :bind (:map my/app-map ("q" . qrencode-region)))
 
@@ -662,7 +665,7 @@
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
   (setq fill-column 80)
-  )
+  (setq-local show-trailing-whitespace t))
 
 ;; Switch to compilation buffer's window on compile/project-compile
 (add-hook 'compilation-start-hook
