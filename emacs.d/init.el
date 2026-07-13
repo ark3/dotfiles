@@ -150,7 +150,8 @@
     (setq ls-lisp-use-insert-directory-program nil))
 
   (setq dired-dwim-target t
-        dired-kill-when-opening-new-dired-buffer t)
+        dired-kill-when-opening-new-dired-buffer t
+        delete-by-moving-to-trash t)
   (setq windmove-wrap-around t)
   (setq use-dialog-box nil)
   (setq window-min-width 40)
@@ -612,18 +613,11 @@
   (visual-fill-column-enable-sensible-window-split t)
   (visual-fill-column-width 100))
 
-(use-package org-autolist
-  :after org
-  :diminish
-  :config
-  (setq org-autolist-enable-delete nil))
-
 (use-package org-appear :after org)
 
 (use-package org
   :hook ((org-mode . visual-fill-column-mode)
-         (org-mode . org-appear-mode)
-         (org-mode . org-autolist-mode))
+         (org-mode . org-appear-mode))
   :bind (:map my/app-map ("x" . org-capture))
   :custom
   (org-export-backends '(md ascii html beamer odt latex org))
