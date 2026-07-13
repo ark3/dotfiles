@@ -198,6 +198,8 @@
   (global-hl-line-mode 1)
   (lin-global-mode 1))
 
+;; Load a fully specified base theme first, then layer Alabaster on top for
+;; its look without falling back to default Emacs faces where it is incomplete.
 (use-package modus-themes
   :config
   (setq modus-themes-hl-line '(accented)
@@ -205,6 +207,16 @@
         modus-themes-mixed-fonts t
         modus-themes-variable-pitch-ui t)
   (load-theme 'modus-vivendi :no-confirm))
+
+(use-package alabaster-themes
+  :after modus-themes
+  :config
+  (setopt alabaster-themes-dark-palette-overrides '((bg-hl-line bg-blue-subtle)))
+  (load-theme 'alabaster-themes-dark :no-confirm)
+  (custom-set-faces
+   '(diff-hl-insert ((t :background "#060")))
+   '(diff-hl-delete ((t :background "#600")))
+   '(diff-hl-change ((t :background "#660")))))
 
 (use-package avy
   :bind

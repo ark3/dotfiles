@@ -29,7 +29,8 @@
       indicate-unused-lines t)
 
 (set-face-attribute 'default nil :family "IBM Plex Mono" :weight 'medium :height 110)
-(set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :weight 'regular :height 100)
+(set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :weight 'regular)
+;; (set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :weight 'regular :height 100)
 ;; (set-face-attribute 'variable-pitch nil :family "iA Writer Duo V" :weight 'book)
 
 ;; Keep these around to use manually via `C-x C-e'
