@@ -43,6 +43,12 @@ The user welcomes these clarifying questions.
 
 When there's observable reality to inspect: **gather evidence before theorizing**. Check configuration, read code, trace execution, examine logs. If you catch yourself guessing ("probably", "should be", "it's likely"), stop and verify instead.
 
+## Writing Implementation Plans
+
+**Goals are durable, orders are brittle.** Trust and delegate over command and control.
+
+When creating plans for other agents, convey intent, nuance, and how to verify—not prescriptive steps. Link to examples in the codebase rather than writing implementations. Target ~200-300 lines.
+
 ## Tooling Preferences
 
 Prefer these tools over their "standard" counterparts when available:
@@ -53,9 +59,13 @@ Prefer these tools over their "standard" counterparts when available:
 
 For scripting and non-trivial processing, prefer a small `python3` or `bun` script over complex shell pipelines. When in doubt, write a short script instead of an opaque one-liner.
 
-## Commit Messages
+## Git
 
 When asked to suggest a commit message, determine the author's style by running `git log --author="$(git config user.name)" --format="%s" -20`. Match their actual patterns - do not assume conventional commit format or any particular style.
+
+Each commit represents one logical change. When asked to commit, only stage the files that are part of that change. Use `git add <specific-files>` for the files you actually changed yourself. Never use `git add -A`.
+
+When using `git rebase`, be careful not to invoke the user's editor.
 
 Never execute `git push` under any circumstances.
 
