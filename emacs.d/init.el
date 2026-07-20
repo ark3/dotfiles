@@ -694,19 +694,48 @@
           (:eval (ansi-color-apply my/term-header-message))
           (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
-(defun project-vterm ()
-  "Invoke `vterm' in the project's root.
-Switch to the project specific term buffer if it already exists."
-  (interactive)
-  (let* ((default-directory (project-root (project-current t)))
-         (project-vterm-name (project-prefixed-buffer-name "vterm")))
-    (unless (buffer-live-p (get-buffer project-vterm-name))
-      (vterm project-vterm-name)
-      (vterm-send-string (concat "cd " default-directory))
-      (vterm-send-return))
-    (pop-to-buffer-same-window (get-buffer project-vterm-name))))
+(defvar-local my/ghostel-term-header-state nil)
+
+(defun my/ghostel-set-header-state (kctx venv branch dirty exit-code)
+  (setq-local my/ghostel-term-header-state
+              (list :kctx (string-trim-right (or kctx ""))
+                    :venv (string-trim-right (or venv ""))
+                    :branch (or branch "")
+                    :dirty (string= dirty "1")
+                    :exit (string-to-number (or exit-code "0")))))
+
+;; Ghostel sends plain fields and Emacs renders faces here; reusing the old
+;; ANSI-colored header-message path dropped colors in the header line.
+(defun my/ghostel-render-header ()
+  (let* ((state my/ghostel-term-header-state)
+         (kctx (plist-get state :kctx))
+         (venv (plist-get state :venv))
+         (branch (plist-get state :branch))
+         (dirty (plist-get state :dirty))
+         (exit-code (plist-get state :exit)))
+    (concat
+     (propertize ">> " 'face 'bold)
+     (unless (string-empty-p kctx)
+       (concat (propertize kctx 'face 'font-lock-keyword-face) " "))
+     (unless (string-empty-p venv)
+       (concat (propertize venv 'face 'font-lock-string-face) " "))
+     (unless (string-empty-p branch)
+       (concat (propertize (format "(%s%s)" branch (if dirty "*" ""))
+                           'face (if dirty 'warning 'success)) " "))
+     (when (/= exit-code 0)
+       (concat (propertize (format "(%d)" exit-code) 'face 'error) " ")))))
+
+(defun my/ghostel-term-setup ()
+  (setq-local my/ghostel-term-header-state
+              '(:kctx "" :venv "" :branch "" :dirty nil :exit 0))
+  (setq-local global-hl-line-mode nil)
+  (setq header-line-format
+        '(" "
+          (:eval (my/ghostel-render-header))
+          (:eval (string-trim (abbreviate-file-name default-directory) "" "/")))))
 
 (use-package vterm
+  :disabled
   :bind (
          :map project-prefix-map
          ("v" . project-vterm)
@@ -720,6 +749,17 @@ Switch to the project specific term buffer if it already exists."
   :init
   (setq vterm-always-compile-module t)
   :config
+  (defun project-vterm ()
+    "Invoke `vterm' in the project's root.
+Switch to the project specific term buffer if it already exists."
+    (interactive)
+    (let* ((default-directory (project-root (project-current t)))
+           (project-vterm-name (project-prefixed-buffer-name "vterm")))
+      (unless (buffer-live-p (get-buffer project-vterm-name))
+        (vterm project-vterm-name)
+        (vterm-send-string (concat "cd " default-directory))
+        (vterm-send-return))
+      (pop-to-buffer-same-window (get-buffer project-vterm-name))))
   (setq vterm-max-scrollback 99000
         vterm-copy-mode-remove-fake-newlines t
         vterm-tramp-shells '(("docker" "/bin/bash")
@@ -729,6 +769,7 @@ Switch to the project specific term buffer if it already exists."
   :hook (vterm-mode . my/term-setup))
 
 (use-package eat                        ; https://codeberg.org/akib/emacs-eat
+  :disabled
   ;; Make sure the terminfo and integration directories from the repository are
   ;; available in the build directory. Otherwise stuff won't work correctly.
   ;;  cd ~/.emacs.d/straight/repos/eat && cp -a terminfo integration ../../build/eat/
@@ -741,11 +782,30 @@ Switch to the project specific term buffer if it already exists."
   (setopt eat-term-scrollback-size nil))
 
 (use-package coterm                     ; https://repo.or.cz/emacs-coterm.git
+  :disabled
   :bind (:map shell-mode-map
               ("C-c C-j" . coterm-char-mode-cycle)
               ("C-c C-k" . coterm-char-mode-cycle))
   :config
   (coterm-mode))
+
+;; Ghostel gets its own header-state path so it can render theme-aware faces
+;; without depending on ANSI escape processing in the header line.
+(use-package ghostel
+  :bind (:map project-prefix-map
+              ("g" . ghostel-project)
+              ("G" . ghostel-project-list-buffers))
+  :hook ((ghostel-mode . my/ghostel-term-setup)
+         (eshell-load . ghostel-eshell-visual-command-mode)
+         (after-init . ghostel-comint-global-mode)
+         (after-init . ghostel-compile-global-mode))
+  :config
+  (add-to-list 'ghostel-eval-cmds '("set-header-state" my/ghostel-set-header-state))
+  (setq ghostel-module-auto-install 'download
+        ghostel-max-scrollback (* 15 1024 1024)
+        ghostel-tramp-shells '(("docker" "/bin/bash")
+                               ("scpx" "/bin/bash")
+                               ("sshx" "/bin/bash"))))
 
 ;; async-shell-command: when the process is done
 ;; - switch to view-mode (for q to quit)
@@ -854,7 +914,8 @@ Switch to the project specific term buffer if it already exists."
                                   (project-dired "Dired")
                                   (project-eshell "Eshell")
                                   (project-shell "Shell")
-                                  (project-vterm "Vterm")
+                                  ;; (project-vterm "Vterm")
+                                  (ghostel-project "Ghostel")
                                   (magit-project-status "Magit"))))
 
 (use-package diff-hl

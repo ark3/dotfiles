@@ -72,6 +72,10 @@ shell_integration() {
 prompt_command() {
     # Exit code
     local EXIT="$?"
+    # Ghostel wraps PROMPT_COMMAND and preserves the real command status here.
+    if [[ "${INSIDE_EMACS%%,*}" = ghostel && -n "${__ghostel_last_status+x}" ]]; then
+        EXIT="$__ghostel_last_status"
+    fi
     exit_prompt=
     exit_color=${GREEN}
     if [ ${EXIT} != 0 ]; then
@@ -88,6 +92,7 @@ prompt_command() {
     # Git
     # Based on: http://stackoverflow.com/a/13003854/170413
     git_info=
+    git_dirty=0
     git_color=
     local branch
     if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
@@ -98,6 +103,7 @@ prompt_command() {
 
         local status=$(git status --porcelain 2> /dev/null)
         if [[ "$status" != "" ]]; then
+            git_dirty=1
             git_info="($branch*) "
             git_color=${YELLOW}
         else
@@ -151,6 +157,14 @@ prompt_command() {
             "${BLUE}${venv_prompt}${NOCOLOR}" \
             "${git_color}${git_info}${NOCOLOR}" \
             "${exit_color}${exit_prompt}${NOCOLOR}" | base64 -w0)"
+    elif [[ "${INSIDE_EMACS%%,*}" = ghostel ]]; then
+        # Ghostel takes positional string args more cleanly than Vterm's eval payloads.
+        ghostel_cmd set-header-state \
+            "$kctx_prompt" \
+            "$venv_prompt" \
+            "$branch" \
+            "$git_dirty" \
+            "$EXIT"
     fi
 
     history -a                  # append this shell's history to the file
