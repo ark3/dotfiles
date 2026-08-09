@@ -670,7 +670,7 @@
 (defun prog-stuff ()
   (display-line-numbers-mode t)
   (display-fill-column-indicator-mode t)
-  (setq fill-column 80)
+  (setq-local fill-column (if (derived-mode-p '(java-mode c++-mode)) 100 80))
   (setq-local show-trailing-whitespace t))
 
 ;; Switch to compilation buffer's window on compile/project-compile
@@ -801,11 +801,12 @@ Switch to the project specific term buffer if it already exists."
          (after-init . ghostel-compile-global-mode))
   :config
   (add-to-list 'ghostel-eval-cmds '("set-header-state" my/ghostel-set-header-state))
-  (setq ghostel-module-auto-install 'download
-        ghostel-max-scrollback (* 15 1024 1024)
-        ghostel-tramp-shells '(("docker" "/bin/bash")
-                               ("scpx" "/bin/bash")
-                               ("sshx" "/bin/bash"))))
+  (setopt ghostel-module-auto-install 'download
+          ghostel-max-scrollback (* 15 1024 1024)
+          ghostel-enable-osc52 t
+          ghostel-tramp-shells '(("docker" "/bin/bash")
+                                 ("scpx" "/bin/bash")
+                                 ("sshx" "/bin/bash"))))
 
 ;; async-shell-command: when the process is done
 ;; - switch to view-mode (for q to quit)
@@ -903,7 +904,7 @@ Switch to the project specific term buffer if it already exists."
          :map project-prefix-map
          ("m" . magit-project-status))
   :hook (git-commit-setup . (lambda ()
-                              (setq fill-column 72)
+                              (setq-local fill-column 72)
                               (display-fill-column-indicator-mode 1)))
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
@@ -1139,9 +1140,6 @@ commands to prune your LSP workspaces."
 (use-package google-c-style
   :hook
   (java-mode . google-set-c-style))
-
-(add-hook 'java-mode-hook (lambda () (setq fill-column 100)))
-(add-hook 'c++-mode-hook (lambda () (setq fill-column 100)))
 
 (use-package agent-shell
   :config
