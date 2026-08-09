@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 import json
-import sys
 import subprocess
+import sys
+import tempfile
+import time
 from pathlib import Path
 
-# Model name mappings
-MODEL_ALIASES = {
-    "us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0": "GOV Sonnet 4.5",
-    "MiniMaxAI/MiniMax-M2": "GOV MiniMax-M2",
-    "claude-opus-4-5-20251101": "Opus 4.5",
-    "claude-sonnet-4-5-20250929": "Sonnet 4.5",
-    "claude-haiku-4-5-20251001": "Haiku 4.5",
-    # Add more mappings as needed
-}
+GIT_CACHE_MAX_AGE = 5  # seconds
+MODEL_ALIASES_FILE = (
+    Path.home() / ".local" / "share" / "claude-status" / "model_aliases.json"
+)
+
+
+def load_model_aliases():
+    """Load model name mappings from MODEL_ALIASES_FILE, if present."""
+    try:
+        return json.loads(MODEL_ALIASES_FILE.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
 
 
 def get_git_stats(directory):
@@ -59,6 +64,27 @@ def get_git_stats(directory):
         return None
 
 
+def get_cached_git_stats(directory, session_id):
+    """
+    Get git stats for directory, caching the result per session_id for
+    GIT_CACHE_MAX_AGE seconds.
+    """
+    if not session_id:
+        return get_git_stats(directory)
+
+    cache_file = Path(tempfile.gettempdir()) / f"claude-status-git-cache-{session_id}"
+
+    try:
+        if time.time() - cache_file.stat().st_mtime < GIT_CACHE_MAX_AGE:
+            return json.loads(cache_file.read_text())["result"]
+    except (OSError, json.JSONDecodeError, KeyError):
+        pass
+
+    result = get_git_stats(directory)
+    cache_file.write_text(json.dumps({"result": result}))
+    return result
+
+
 def main():
     # Read JSON from stdin
     try:
@@ -70,18 +96,24 @@ def main():
     # Extract data from JSON
     model_id = data.get("model", {}).get("display_name", "Model Unknown")
     current_dir = data.get("workspace", {}).get("current_dir", "")
+    context_window = data.get("context_window", {})
+    session_id = data.get("session_id", "")
 
     # Apply model alias if available
-    model_name = MODEL_ALIASES.get(model_id, model_id)
+    model_name = load_model_aliases().get(model_id, model_id)
 
     # Get directory name
     directory_name = Path(current_dir).name if current_dir else "Path Unknown"
 
     # Get git info
-    git_info = get_git_stats(current_dir) if current_dir else None
+    git_info = get_cached_git_stats(current_dir, session_id) if current_dir else None
+
+    # Get token usage
+    tokens = context_window.get("total_input_tokens", 0) or 0
+    token_info = f"{tokens:,}"
 
     # Build status line
-    parts = [model_name, directory_name]
+    parts = [model_name, token_info, directory_name]
     if git_info:
         parts.append(git_info)
 
