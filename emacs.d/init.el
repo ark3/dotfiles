@@ -219,6 +219,20 @@
    '(diff-hl-delete ((t :background "#600")))
    '(diff-hl-change ((t :background "#660")))))
 
+(use-package tab-bar
+  :config
+  (defun my/tab-bar-tab-name-project ()
+    "Name the tab after the project of the selected window's buffer.
+Fall back to the buffer name outside of any project."
+    (let ((buffer (window-buffer (or (minibuffer-selected-window)
+                                     (and (window-minibuffer-p)
+                                          (get-mru-window))))))
+      (or (with-current-buffer buffer
+            (when-let* ((project (project-current)))
+              (project-name project)))
+          (buffer-name buffer))))
+  (setq tab-bar-tab-name-function #'my/tab-bar-tab-name-project))
+
 (use-package avy
   :bind
   (("C-c SPC" . avy-goto-char-timer)
@@ -902,11 +916,16 @@ Switch to the project specific term buffer if it already exists."
          :map my/app-map
          ("g" . magit-file-dispatch)
          :map project-prefix-map
-         ("m" . magit-project-status))
+         ("m" . my/magit-project-status-expanded))
   :hook (git-commit-setup . (lambda ()
                               (setq-local fill-column 72)
                               (display-fill-column-indicator-mode 1)))
   :config
+  (defun my/magit-project-status-expanded ()
+    "Like `magit-project-status', but expand sections as if M-2 were pressed."
+    (interactive)
+    (magit-project-status)
+    (magit-section-show-level-2-all))
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
         magit-prefer-remote-upstream t
@@ -917,7 +936,7 @@ Switch to the project specific term buffer if it already exists."
                                   (project-shell "Shell")
                                   ;; (project-vterm "Vterm")
                                   (ghostel-project "Ghostel")
-                                  (magit-project-status "Magit"))))
+                                  (my/magit-project-status-expanded "Magit"))))
 
 (use-package diff-hl
   :hook (dired-mode . diff-hl-dired-mode)
