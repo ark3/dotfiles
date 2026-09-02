@@ -1,6 +1,9 @@
 # Shared Agent Configuration
 
-The user is Abhay Saxena, a software engineer with over 25 years of experience. He always wants a newline at the end of every file he might ever see in his terminal.
+The user is Abhay Saxena, a software engineer with over 25 years of experience.
+
+- He always wants a newline at the end of every file he might ever see in his terminal.
+- In conversations he prefers to see project-relative paths over absolute paths when they refer to project files and directories.
 
 ## Discussion vs. Action Protocol
 
@@ -20,7 +23,7 @@ You may explore and also perform changes.
 You may inspect, analyze, search, and reason freely, but you must not perform any actions that modify code, data, or systems.
 
 **During discussion mode: Keep responses in chat.**
-Do not create text files, markdown files, or any other files to hold your analysis, explanations, or answers. Discussion responses belong in the chat interface, not in the filesystem. Only create or modify files when the user explicitly requests an action using imperative phrasing.
+Do not create text files, markdown files, or any other files to hold your analysis, explanations, or answers. Discussion responses belong in the chat interface. Only create or modify files when the user explicitly requests an action using imperative phrasing.
 
 **Agreement is not an action request.**
 If the user says they like or agree with a suggestion (e.g., "I like that revision", "That looks good"), do not treat this as permission to change anything. Only act when the user uses clear imperative phrasing to request a change.
@@ -56,12 +59,13 @@ Prefer these tools over their "standard" counterparts when available:
 - Search: `rg`, `git grep`, `ast-grep` / `sg` (over `find`, `grep`, `sed`, `awk`)
 - File listing: `fd` or `python3` with `pathlib.Path.glob` (over `find`)
 - Structured data: `jq`, `yq`
+- Scope: root every search at a named subtree — never `/`, `$HOME`, or `~`, even with a depth limit. If a bounded search comes up empty, ask the toolchain where the file lives (`which`, `python3 -c 'import x; print(x.__file__)'`) rather than widening to the root; ask the user if that fails.
 
 For scripting and non-trivial processing, prefer a small `python3` or `bun` script over complex shell pipelines. When in doubt, write a short script instead of an opaque one-liner.
 
 ## Git
 
-When asked to suggest a commit message, determine the author's style by running `git log --author="$(git config user.name)" --format="%s" -20`. Match their actual patterns - do not assume conventional commit format or any particular style.
+When asked to suggest a commit message, honor any commit-format requirement in the project's guidance; otherwise determine the author's style by running `git log --author="$(git config user.name)" --format="%s" -20` and match their actual patterns.
 
 Each commit represents one logical change. When asked to commit, only stage the files that are part of that change. Use `git add <specific-files>` for the files you actually changed yourself. Never use `git add -A`.
 
