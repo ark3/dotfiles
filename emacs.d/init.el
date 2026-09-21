@@ -687,6 +687,18 @@ Fall back to the buffer name outside of any project."
   (setq-local fill-column (if (derived-mode-p '(java-mode c++-mode)) 100 80))
   (setq-local show-trailing-whitespace t))
 
+;; Emacs 31+ ships built-in tree-sitter modes.  Remap the traditional modes
+;; to their `*-ts-mode' variants wherever a grammar is available, installing
+;; grammars on demand.  On older Emacs this block is skipped and the
+;; third-party elisp-tree-sitter packages below are used instead.
+(use-package emacs
+  :if (boundp 'treesit-enabled-modes)
+  :hook ((yaml-ts-mode . prog-stuff)
+         (yaml-ts-mode . apheleia-mode))
+  :config
+  (setopt treesit-enabled-modes t
+          treesit-auto-install-grammar 'always))
+
 ;; Switch to compilation buffer's window on compile/project-compile
 (add-hook 'compilation-start-hook
           (lambda (proc)
@@ -838,6 +850,30 @@ Switch to the project specific term buffer if it already exists."
   :config
   (shell-command-x-mode 1))
 
+;; `async-shell-command' starts its process, then runs
+;; `async-shell-command-mode', and only then installs `shell-command-sentinel'
+;; and `comint-output-filter' (simple.el).  Anything that yields to the event
+;; loop during the mode setup lets a fast-exiting process be reaped by Emacs'
+;; default sentinel/filter instead: the output still arrives, the buffer gets a
+;; trailing "Process Shell finished", and `shell-command-sentinel' never runs --
+;; so shell-command-x's exit hook never runs and the buffer stays writable, with
+;; `q' self-inserting.  envrc does exactly that yield: with `envrc-async' nil,
+;; `envrc--maybe-wait' blocks in a `sleep-for' loop whenever direnv has to
+;; re-run, and `sleep-for' services other processes' sentinels.  Install the
+;; sentinel and filter first, before anything can yield; Emacs installs the same
+;; two values moments later, which is a no-op.
+(when (boundp 'async-shell-command-mode)   ; Emacs 30+
+  (defun my/async-shell-command-mode ()
+    "Like `shell-command-mode', but wire up the process first.
+Guards against the process exiting before `async-shell-command' has
+installed its sentinel and filter."
+    (when-let* ((proc (get-buffer-process (current-buffer))))
+      (set-process-sentinel proc #'shell-command-sentinel)
+      (set-process-filter proc #'comint-output-filter))
+    (shell-command-mode))
+
+  (setq async-shell-command-mode #'my/async-shell-command-mode))
+
 (use-package shell
   :bind (:map shell-mode-map
               ("M-P" . comint-previous-matching-input-from-input)
@@ -967,10 +1003,10 @@ Switch to the project specific term buffer if it already exists."
               ("C-c l =" . eglot-format-buffer)
               ("C-c l R" . eglot-reconnect)
               ("C-c l K" . eglot-shutdown-all))
-  :hook ((python-mode . eglot-ensure)
-         (c++-mode . eglot-ensure)
-         (java-mode . eglot-ensure)
-         (go-mode . eglot-ensure))
+  :hook ((python-mode . eglot-ensure) (python-ts-mode . eglot-ensure)
+         (c++-mode . eglot-ensure)    (c++-ts-mode . eglot-ensure)
+         (java-mode . eglot-ensure)   (java-ts-mode . eglot-ensure)
+         (go-mode . eglot-ensure)     (go-ts-mode . eglot-ensure))
   :config
   (set-face-attribute 'eglot-highlight-symbol-face nil
                       :inherit 'match))
@@ -986,15 +1022,19 @@ Switch to the project specific term buffer if it already exists."
         lsp-completion-provider :none   ; don't fuss with company?
         lsp-keep-workspace-alive nil
         lsp-file-watch-threshold 20000
+        lsp-warn-no-matched-clients nil ; quiet when a prog-mode has no LSP client
+        ;; ...and don't offer to install one; use M-x lsp-install-server instead
+        lsp-enable-suggest-server-download nil
         lsp-enable-dap-auto-configure nil)
-  :hook ((python-mode . lsp-deferred)
-         (java-mode . lsp-deferred)
-         (scala-mode . lsp-deferred)
-         (go-mode . lsp-deferred)
+  :hook ((prog-mode . my/lsp-for-project-file)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . lsp-lens-mode)
          (lsp-mode . lsp-ui-mode))
   :config
+  (defun my/lsp-for-project-file ()
+    "Start `lsp-deferred' if the current buffer belongs to a project."
+    (when (project-current) (lsp-deferred)))
+
   (defun my/lsp-generate-prune-commands ()
     "Generate Elisp commands to remove non-existent LSP workspace folders.
 This function will output a list of `lsp-workspace-folders-remove' calls
@@ -1093,7 +1133,10 @@ commands to prune your LSP workspaces."
   (setq eldoc-echo-area-use-multiline-p 0.5))
 
 (use-package protobuf-mode)
-(use-package go-mode)
+(use-package go-mode
+  ;; Emacs 31+ has built-in go-ts-mode; its extra commands (gofmt, godoc,
+  ;; go-import-add, ...) are covered by lsp/gopls, so skip the package there.
+  :if (not (boundp 'treesit-enabled-modes)))
 (use-package graphql-mode)
 
 (use-package scala-mode
@@ -1111,19 +1154,27 @@ commands to prune your LSP workspaces."
   ;; sbt-supershell kills sbt-mode:  https://github.com/hvesalai/emacs-sbt-mode/issues/152
   (setq sbt:program-options '("-Dsbt.supershell=false")))
 
+;; Third-party elisp-tree-sitter, for Emacs <31 (superseded by built-in
+;; tree-sitter above on 31+).
 (use-package tree-sitter-langs
+  :if (not (boundp 'treesit-enabled-modes))
   :hook
   (tree-sitter-after-on . tree-sitter-hl-mode))
 
 (use-package tree-sitter
+  :if (not (boundp 'treesit-enabled-modes))
   :diminish
   :config
   (global-tree-sitter-mode)
   :after (tree-sitter-langs))
 
-(use-package cmake-mode)
+(use-package cmake-mode
+  ;; Emacs 31+ has built-in cmake-ts-mode.
+  :if (not (boundp 'treesit-enabled-modes)))
 
 (use-package yaml-mode
+  ;; Emacs 31+ uses built-in yaml-ts-mode (hooked above); this is the <31 path.
+  :if (not (boundp 'treesit-enabled-modes))
   :hook ((yaml-mode . prog-stuff)
          (yaml-mode . apheleia-mode)))
 
@@ -1137,6 +1188,9 @@ commands to prune your LSP workspaces."
   :hook ((prog-mode . ws-butler-mode)))
 
 (use-package dockerfile-mode
+  ;; Emacs 31+ uses built-in dockerfile-ts-mode, which indents from the syntax
+  ;; tree rather than the 'face property, so the workaround below is moot there.
+  :if (not (boundp 'treesit-enabled-modes))
   :config
   ;; Dockerfile mode uses the 'face text property of the text at the beginning
   ;; of the line to compute the correct indentation. Unfortunately lsp-mode and
@@ -1156,6 +1210,9 @@ commands to prune your LSP workspaces."
   ;; (prog-mode . apheleia-mode)
   )
 
+;; Inert once `java-ts-mode' takes over: `google-set-c-style' configures
+;; cc-mode via `c-add-style', which java-ts-mode ignores (it indents with
+;; `java-ts-indent-offset').  Remove when the -ts transition is done.
 (use-package google-c-style
   :hook
   (java-mode . google-set-c-style))
