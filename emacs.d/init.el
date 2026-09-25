@@ -597,7 +597,7 @@ Fall back to the buffer name outside of any project."
          ("C" . #'helpful-command))
   :config
   (setopt help-window-select t
-	  help-window-keep-selected t)
+          help-window-keep-selected t)
   ;; FIXME: Use display-buffer-alist to do this somehow?
   (setq helpful-switch-buffer-function #'my/helpful-switch-to-buffer)
   (defun my/helpful-switch-to-buffer (buffer-or-name)
@@ -962,6 +962,7 @@ installed its sentinel and filter."
     (interactive)
     (magit-project-status)
     (magit-section-show-level-2-all))
+  (magit-add-section-hook 'magit-status-sections-hook #'magit-insert-worktrees nil t)
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1  ; fullscreen status
         magit-bury-buffer-function #'magit-restore-window-configuration  ; restore windows on quit
         magit-prefer-remote-upstream t
