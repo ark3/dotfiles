@@ -102,6 +102,11 @@ def main():
     # Apply model alias if available
     model_name = load_model_aliases().get(model_id, model_id)
 
+    # Annotate with effort level (absent for models without effort support)
+    effort_level = (data.get("effort") or {}).get("level")
+    if effort_level:
+        model_name = f"{model_name} ({effort_level})"
+
     # Get directory name
     directory_name = Path(current_dir).name if current_dir else "Path Unknown"
 
