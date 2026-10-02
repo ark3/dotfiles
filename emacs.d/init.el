@@ -1218,16 +1218,6 @@ commands to prune your LSP workspaces."
   :hook
   (java-mode . google-set-c-style))
 
-(use-package agent-shell
-  :config
-  (setopt agent-shell-command-prefix '("sbox")
-          agent-shell-permission-responder-function #'agent-shell-permission-allow-always)
-  :bind (:map agent-shell-mode-map
-              ("RET" . newline)
-              ("C-<return>" . shell-maker-submit)
-              ("M-<return>" . shell-maker-submit)
-              ("C-c C-c" . agent-shell-interrupt)))
-
 (use-package mu4e
   :disabled
   :config
