@@ -12,20 +12,33 @@
  * by wait. Shell jobs and agent jobs share one registry, one wait, one jobs,
  * one kill, and one cleanup path.
  *
- * See ~/.pi/agent/background-jobs-design.md for the full design + verified
- * constraints. This replaces the live-render subagent.ts; it reuses that file's
- * spawn guts (getPiInvocation, stdout JSON-event parsing, abort ladder) and
- * deletes its entire live-render layer.
+ * Design invariants:
+ *
+ * - The registry is session-scoped. Spawn returns immediately; completed jobs
+ *   remain observable through `wait` and `jobs` until the session ends.
+ * - `wait` is event-driven, honors its abort signal, and never consumes a
+ *   result. A synchronous subagent is `spawn_agent` followed by `wait`, not a
+ *   separate execution path.
+ * - A job is done only after its `close` event: shell output is flushed, and an
+ *   agent's final-answer file has been written. Consumers may then safely read
+ *   the result paths returned by the tools.
+ * - Jobs run in detached process groups, so `kill` and shutdown cleanup signal
+ *   each job and its descendants together. The graceful cleanup path is
+ *   `session_shutdown`; process-exit handlers are only a best-effort backstop.
+ * - The status footer is session-local. The per-turn job digest is injected
+ *   through the `context` event so it informs the current request without
+ *   becoming persistent conversation history.
+ *
+ * This replaces the live-render subagent.ts; it reuses that file's spawn guts
+ * (getPiInvocation, stdout JSON-event parsing, abort ladder) and deletes its
+ * live-render layer.
  *
  * NO-SURVIVORS CAVEAT: the hard guarantee that background jobs never outlive pi
  * is a property of the sbox launch (--unshare-all --die-with-parent + PID
  * namespace: pi is PID 2, so when it dies the namespace reaps every descendant,
  * even kill -9). If pi is ever run OUTSIDE sbox, or a wrapper drops
- * --die-with-parent, survivors become possible; the session_shutdown +
- * process-exit sweeps below are the graceful path, not the hard guarantee.
- *
- * Built incrementally (see design's Build Plan). Stage 1: registry +
- * spawn_shell + jobs + session_shutdown reaper.
+ * --die-with-parent, survivors become possible; the cleanup above is graceful
+ * best effort rather than a hard guarantee.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
