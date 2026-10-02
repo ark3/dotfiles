@@ -31,6 +31,10 @@
       path: config/fish
     ~/.config/agents/AGENTS.md:
       path: config/agents/AGENTS.md
+    ~/.pi/agent/extensions/auto-read-agents-refs.ts:
+      path: pi/extensions/auto-read-agents-refs.ts
+    ~/.pi/agent/extensions/background-jobs.ts:
+      path: pi/extensions/background-jobs.ts
     ~/.editorconfig:
     ~/.inputrc:
     ~/.spacemacs:
