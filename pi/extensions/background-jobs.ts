@@ -562,7 +562,7 @@ const WaitParams = Type.Object({
   timeoutMs: Type.Optional(
     Type.Number({
       description:
-        "Optional cap. If elapsed before the mode condition is met, resolve early; still-running jobs appear with state 'running'.",
+        "Set only when a concrete deadline is required: a user-specified time budget, an external deadline, or an explicitly planned progress check. Never invent a duration. If elapsed before the condition is met, resolve early and still-running jobs appear with state 'running'.",
     }),
   ),
 });
@@ -786,8 +786,9 @@ export default function (pi: ExtensionAPI) {
     description:
       "Block until background jobs finish, then return a per-job status array (with exitCode and " +
       "result paths). mode 'all' (default) waits for all; 'any' returns when the first finishes. " +
-      "Optional timeoutMs returns partial status instead of hanging. Read-only and repeatable: " +
-      "observing a completion does not consume it. Esc cancels a hanging wait; the jobs keep running.",
+      "Set timeoutMs only for a concrete deadline: a user-specified time budget, an external deadline, or an explicitly " +
+      "planned progress check. Never invent a duration. It returns partial status when it elapses. Read-only and repeatable: " +
+      "observing a completion does not consume it. Esc cancels a waiting call; the jobs keep running.",
     parameters: WaitParams,
     async execute(_toolCallId, params, signal) {
       const s = requireState();
