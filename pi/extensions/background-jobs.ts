@@ -70,9 +70,10 @@ interface JobRecord {
   prompt?: string; // agent
   startTime: number;
   exitCode?: number; // when done
-  logPath?: string; // shell
+  logPath?: string; // shell output or agent stderr
   finalAnswerPath?: string; // agent, when done
   sessionFile?: string; // agent, when known
+  error?: string; // launch, assistant, or result-write failure
   // internal (not part of the public contract)
   _child?: ChildProcess;
 }
@@ -91,6 +92,7 @@ interface JobStatus {
   logPath?: string;
   finalAnswerPath?: string;
   sessionFile?: string;
+  error?: string;
 }
 
 interface SessionState {
@@ -135,6 +137,14 @@ function getAgentDepth(): number {
     );
   }
   return depth;
+}
+
+/** Observe launch immediately; retain the error listener for later child errors. */
+function waitForSpawn(child: ChildProcess): Promise<void> {
+  return new Promise((resolve, reject) => {
+    child.once("spawn", () => resolve());
+    child.on("error", reject);
+  });
 }
 
 function ensureSpoolDir(): void {
@@ -200,6 +210,7 @@ function toStatus(r: JobRecord): JobStatus {
     logPath: r.logPath,
     finalAnswerPath: r.finalAnswerPath,
     sessionFile: r.sessionFile,
+    error: r.error,
   };
 }
 
@@ -256,12 +267,13 @@ function buildDigest(s: SessionState): { text: string; toSurface: string[] } {
 
   // Show newly-finished first (the thing to notice), then still-running.
   const ordered = [...newlyDone, ...running];
-  const shown = ordered.slice(0, MAX).map(line);
+  const shownJobs = ordered.slice(0, MAX);
+  const shown = shownJobs.map(line);
   const more = ordered.length > MAX ? `\n  \u2026 ${ordered.length - MAX} more` : "";
 
   return {
     text: `${header}\n${shown.join("\n")}${more}`,
-    toSurface: newlyDone.map((r) => r.jobId),
+    toSurface: shownJobs.filter((r) => r.state === "done").map((r) => r.jobId),
   };
 }
 
@@ -295,11 +307,11 @@ async function reapAll(s: SessionState, graceMs = 500): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Launch a background shell job. Throws synchronously on launch failure
+ * Launch a background shell job. Rejects on launch failure
  * (invalid cwd, cannot create logfile, cannot spawn) so the tool can return an
  * immediate error and create NO job record.
  */
-function spawnShell(s: SessionState, command: string, cwd: string): JobRecord {
+async function spawnShell(s: SessionState, command: string, cwd: string): Promise<JobRecord> {
   ensureSpoolDir();
   const jobId = nextJobId(s);
   const logPath = shellLogPath(s.sessionId, jobId);
@@ -310,6 +322,7 @@ function spawnShell(s: SessionState, command: string, cwd: string): JobRecord {
   const logFd = fs.openSync(logPath, "a");
 
   let child: ChildProcess;
+  let started: Promise<void>;
   try {
     child = spawn("/bin/sh", ["-c", command], {
       cwd,
@@ -317,42 +330,42 @@ function spawnShell(s: SessionState, command: string, cwd: string): JobRecord {
       stdio: ["ignore", logFd, logFd],
       env: process.env,
     });
+    started = waitForSpawn(child);
   } finally {
     // Child dups the fd; close our copy so we don't hold it open.
     fs.closeSync(logFd);
-  }
-
-  if (typeof child.pid !== "number") {
-    throw new Error("failed to spawn shell (no pid)");
   }
 
   const record: JobRecord = {
     jobId,
     kind: "shell",
     state: "running",
-    pid: child.pid,
+    pid: child.pid ?? 0,
     cwd,
     command,
     startTime: Date.now(),
     logPath,
     _child: child,
   };
-  s.registry.set(jobId, record);
+  child.once("spawn", () => {
+    record.pid = child.pid!;
+    s.registry.set(jobId, record);
+  });
 
   let exitCode: number | undefined;
   // 'exit' gives the code; 'close' guarantees stdio is fully drained/flushed.
   child.on("exit", (code, signal) => {
     exitCode = code ?? (signal ? 128 : 0);
   });
-  child.on("error", () => {
-    // async spawn error after we already returned; mark done nonzero
-    exitCode = exitCode ?? 1;
-    finalizeDone(s, record, exitCode);
+  child.on("error", (err) => {
+    record.error = err.message;
+    exitCode = 1;
   });
   child.on("close", () => {
-    finalizeDone(s, record, exitCode ?? 0);
+    if (s.registry.has(jobId)) finalizeDone(s, record, record.error ? (exitCode || 1) : (exitCode ?? 0));
   });
 
+  await started;
   return record;
 }
 
@@ -383,8 +396,8 @@ function assistantText(message: any): string | undefined {
 }
 
 /**
- * Launch a background agent job (a child pi in headless json mode). Throws
- * synchronously on launch failure -> immediate tool error, no record.
+ * Launch a background agent job (a child pi in headless json mode). Rejects
+ * on launch failure -> immediate tool error, no registry record.
  *
  * Two flavors, one code path (the design's "one registry, one wait, one kill"
  * spirit):
@@ -396,10 +409,10 @@ function assistantText(message: any): string | undefined {
  *    appends to that exact session (verified race-free vs --continue), and we
  *    set record.sessionFile up front since we already know it.
  */
-function launchAgentJob(
+async function launchAgentJob(
   s: SessionState,
   opts: { prompt: string; model: string | undefined; cwd: string; sessionFile?: string; agentDepth: number },
-): JobRecord {
+): Promise<JobRecord> {
   const { prompt, model, cwd, sessionFile, agentDepth } = opts;
   // Defense in depth: hidden tools must not be able to launch a sixth level.
   if (agentDepth >= MAX_SUBAGENT_DEPTH) {
@@ -408,6 +421,7 @@ function launchAgentJob(
   ensureSpoolDir();
   const jobId = nextJobId(s);
   const finalAnswerPath = agentAnswerPath(s.sessionId, jobId);
+  const logPath = shellLogPath(s.sessionId, jobId);
 
   // Drop --no-session so the child writes/keeps a resumable session file.
   const args: string[] = ["--mode", "json", "-p"];
@@ -419,35 +433,44 @@ function launchAgentJob(
   // Only needed for fresh-spawn discovery; harmless otherwise.
   const sessDir = sessionsDirForCwd(cwd);
 
-  const child = spawn(invocation.command, invocation.args, {
-    cwd,
-    detached: true, // process-group leader, for group-kill
-    stdio: ["ignore", "pipe", "pipe"],
-    // Resume depth is relative to this caller, not the saved session.
-    // Copy the environment so sibling launches never change the parent depth.
-    env: { ...process.env, [SUBAGENT_DEPTH_ENV]: String(agentDepth + 1) },
-  });
-
-  if (typeof child.pid !== "number") {
-    throw new Error("failed to spawn agent (no pid)");
+  const logFd = fs.openSync(logPath, "a");
+  let child: ChildProcess;
+  let started: Promise<void>;
+  try {
+    child = spawn(invocation.command, invocation.args, {
+      cwd,
+      detached: true, // process-group leader, for group-kill
+      stdio: ["ignore", "pipe", logFd],
+      // Resume depth is relative to this caller, not the saved session.
+      // Copy the environment so sibling launches never change the parent depth.
+      env: { ...process.env, [SUBAGENT_DEPTH_ENV]: String(agentDepth + 1) },
+    });
+    started = waitForSpawn(child);
+  } finally {
+    fs.closeSync(logFd);
   }
 
   const record: JobRecord = {
     jobId,
     kind: "agent",
     state: "running",
-    pid: child.pid,
+    pid: child.pid ?? 0,
     cwd,
     prompt,
     startTime: Date.now(),
     finalAnswerPath,
+    logPath,
     // On resume we already know the session file; on fresh spawn we discover it.
     sessionFile: sessionFile,
     _child: child,
   };
-  s.registry.set(jobId, record);
+  child.once("spawn", () => {
+    record.pid = child.pid!;
+    s.registry.set(jobId, record);
+  });
 
   let lastAnswer = "";
+  let assistantFailure: string | undefined;
   let sessionId: string | undefined;
   let buffer = "";
 
@@ -481,9 +504,13 @@ function launchAgentJob(
     }
     // Capture the agent's final answer from the last assistant message_end.
     // (tool_result_end does not exist in pi v0.83.0 — do not parse it.)
-    if (event.type === "message_end") {
-      const t = assistantText(event.message);
-      if (t !== undefined) lastAnswer = t;
+    if (event.type === "message_end" && event.message?.role === "assistant") {
+      // Replace rather than preserve an earlier answer if the final message is empty.
+      lastAnswer = assistantText(event.message) ?? "";
+      const { stopReason, errorMessage } = event.message;
+      assistantFailure = stopReason === "error" || stopReason === "aborted"
+        ? errorMessage || `Request ${stopReason}`
+        : undefined;
     }
   };
 
@@ -493,27 +520,28 @@ function launchAgentJob(
     buffer = lines.pop() ?? "";
     for (const line of lines) processLine(line);
   });
-  // stderr is drained to avoid backpressure; not spooled in v1.
-  child.stderr?.on("data", () => {});
+  // stderr goes directly to logPath, preserving diagnostics without buffering.
 
   let exitCode: number | undefined;
   child.on("exit", (code, signal) => {
     exitCode = code ?? (signal ? 128 : 0);
   });
-  child.on("error", () => {
-    exitCode = exitCode ?? 1;
-    finalizeAgent(s, record, exitCode, () => {
-      if (buffer.trim()) processLine(buffer);
-      return lastAnswer;
-    });
+  child.on("error", (err) => {
+    record.error = err.message;
+    exitCode = 1;
   });
   child.on("close", () => {
+    if (!s.registry.has(jobId)) return; // launch failed; no published job
     // close guarantees stdio drained; flush any partial trailing line.
     if (buffer.trim()) processLine(buffer);
     if (sessionId && !record.sessionFile) claimSessionFile(sessionId);
-    finalizeAgent(s, record, exitCode ?? 0, () => lastAnswer);
+    if (assistantFailure) record.error = record.error
+      ? `${record.error}; ${assistantFailure}`
+      : assistantFailure;
+    finalizeAgent(s, record, record.error ? (exitCode || 1) : (exitCode ?? 0), () => lastAnswer);
   });
 
+  await started;
   return record;
 }
 
@@ -533,8 +561,11 @@ function finalizeAgent(
     if (record.finalAnswerPath) {
       fs.writeFileSync(record.finalAnswerPath, `${getAnswer()}\n`);
     }
-  } catch {
-    // best-effort; the record still transitions to done with its exit code
+  } catch (err) {
+    const message = `failed to write final answer to ${record.finalAnswerPath}: ${(err as Error).message}`;
+    record.error = record.error ? `${record.error}; ${message}` : message;
+    record.finalAnswerPath = undefined;
+    exitCode = exitCode || 1;
   }
   finalizeDone(s, record, exitCode);
 }
@@ -691,6 +722,10 @@ export default function (pi: ExtensionAPI) {
   }
 
   pi.on("session_start", async (_event, ctx: ExtensionContext) => {
+    process.off("exit", processSweep);
+    process.off("SIGTERM", processSweep);
+    process.on("exit", processSweep);
+    process.on("SIGTERM", processSweep);
     // Defensive: reap any leftover state from a prior session in this process.
     if (state) {
       await reapAll(state).catch(() => {});
@@ -725,6 +760,8 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("session_shutdown", async (_event) => {
+    process.off("exit", processSweep);
+    process.off("SIGTERM", processSweep);
     if (state) {
       try {
         state.ui?.setStatus("bg", undefined);
@@ -769,8 +806,6 @@ export default function (pi: ExtensionAPI) {
       }
     }
   };
-  process.on("exit", processSweep);
-  process.on("SIGTERM", processSweep);
 
   pi.registerTool({
     name: "spawn_shell",
@@ -798,7 +833,7 @@ export default function (pi: ExtensionAPI) {
 
       let record: JobRecord;
       try {
-        record = spawnShell(s, command, resolvedCwd);
+        record = await spawnShell(s, command, resolvedCwd);
       } catch (err) {
         return {
           content: [{ type: "text", text: `spawn_shell failed: ${(err as Error).message}` }],
@@ -873,7 +908,7 @@ export default function (pi: ExtensionAPI) {
       "Launch a background subagent (a fresh pi) as a job and return immediately with { jobId }. " +
       "Runs in the current cwd by default (pass cwd to run in a git worktree). On completion the job " +
       "gains an exitCode, a finalAnswerPath (the subagent's final answer, read it with the read tool) " +
-      "and a resumable sessionFile. Use resume_agent with that sessionFile to continue the same " +
+      "and a resumable sessionFile. logPath preserves stderr; error explains failures. Use resume_agent with that sessionFile to continue the same " +
       "subagent; wait to block, jobs for a snapshot, kill to terminate.",
     parameters: SpawnAgentParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -897,7 +932,7 @@ export default function (pi: ExtensionAPI) {
       }
       let record: JobRecord;
       try {
-        record = launchAgentJob(s, { prompt: params.prompt, model, cwd: resolvedCwd, agentDepth });
+        record = await launchAgentJob(s, { prompt: params.prompt, model, cwd: resolvedCwd, agentDepth });
       } catch (err) {
         return {
           content: [{ type: "text", text: `spawn_agent failed: ${(err as Error).message}` }],
@@ -955,7 +990,7 @@ export default function (pi: ExtensionAPI) {
       // the fresh-spawn dir-diff discovery is skipped entirely.
       let record: JobRecord;
       try {
-        record = launchAgentJob(s, {
+        record = await launchAgentJob(s, {
           prompt: params.prompt,
           model,
           cwd: ctx.cwd,
