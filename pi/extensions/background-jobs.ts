@@ -14,6 +14,9 @@
  *
  * Design invariants:
  *
+ * - Agent nesting is limited to five levels below the root (depth 0).
+ *   PI_SUBAGENT_DEPTH is inherited and incremented for both fresh and resumed
+ *   agents; depth 5 hides agent-launch tools while retaining shell job tools.
  * - The registry is session-scoped. Spawn returns immediately; completed jobs
  *   remain observable through `wait` and `jobs` until the session ends.
  * - `wait` is event-driven, honors its abort signal, and never consumes a
@@ -113,9 +116,26 @@ let state: SessionState | null = null;
 
 const SPOOL_DIR = "/tmp/pi-bg";
 
+// Root is depth 0; depth 5 agents may work but cannot launch another agent.
+const MAX_SUBAGENT_DEPTH = 5;
+const SUBAGENT_DEPTH_ENV = "PI_SUBAGENT_DEPTH";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Missing means root. Reject invalid inherited depth rather than resetting it. */
+function getAgentDepth(): number {
+  const raw = process.env[SUBAGENT_DEPTH_ENV];
+  if (raw === undefined) return 0;
+  const depth = Number(raw);
+  if (!/^(0|[1-9]\d*)$/.test(raw) || !Number.isSafeInteger(depth) || depth > MAX_SUBAGENT_DEPTH) {
+    throw new Error(
+      `background-jobs: ${SUBAGENT_DEPTH_ENV} must be an integer from 0 to ${MAX_SUBAGENT_DEPTH}`,
+    );
+  }
+  return depth;
+}
 
 function ensureSpoolDir(): void {
   fs.mkdirSync(SPOOL_DIR, { recursive: true });
@@ -378,9 +398,13 @@ function assistantText(message: any): string | undefined {
  */
 function launchAgentJob(
   s: SessionState,
-  opts: { prompt: string; model: string | undefined; cwd: string; sessionFile?: string },
+  opts: { prompt: string; model: string | undefined; cwd: string; sessionFile?: string; agentDepth: number },
 ): JobRecord {
-  const { prompt, model, cwd, sessionFile } = opts;
+  const { prompt, model, cwd, sessionFile, agentDepth } = opts;
+  // Defense in depth: hidden tools must not be able to launch a sixth level.
+  if (agentDepth >= MAX_SUBAGENT_DEPTH) {
+    throw new Error(`subagent depth limit reached (${MAX_SUBAGENT_DEPTH}); complete the task directly`);
+  }
   ensureSpoolDir();
   const jobId = nextJobId(s);
   const finalAnswerPath = agentAnswerPath(s.sessionId, jobId);
@@ -399,7 +423,9 @@ function launchAgentJob(
     cwd,
     detached: true, // process-group leader, for group-kill
     stdio: ["ignore", "pipe", "pipe"],
-    env: process.env,
+    // Resume depth is relative to this caller, not the saved session.
+    // Copy the environment so sibling launches never change the parent depth.
+    env: { ...process.env, [SUBAGENT_DEPTH_ENV]: String(agentDepth + 1) },
   });
 
   if (typeof child.pid !== "number") {
@@ -658,6 +684,7 @@ function waitForJobs(
 // ---------------------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
+  const agentDepth = getAgentDepth();
   function requireState(): SessionState {
     if (!state) throw new Error("background-jobs: no active session state");
     return state;
@@ -840,6 +867,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerTool({
     name: "spawn_agent",
+    exposure: agentDepth < MAX_SUBAGENT_DEPTH ? "direct" : "hidden",
     label: "Spawn Agent Job",
     description:
       "Launch a background subagent (a fresh pi) as a job and return immediately with { jobId }. " +
@@ -869,7 +897,7 @@ export default function (pi: ExtensionAPI) {
       }
       let record: JobRecord;
       try {
-        record = launchAgentJob(s, { prompt: params.prompt, model, cwd: resolvedCwd });
+        record = launchAgentJob(s, { prompt: params.prompt, model, cwd: resolvedCwd, agentDepth });
       } catch (err) {
         return {
           content: [{ type: "text", text: `spawn_agent failed: ${(err as Error).message}` }],
@@ -887,6 +915,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerTool({
     name: "resume_agent",
+    exposure: agentDepth < MAX_SUBAGENT_DEPTH ? "direct" : "hidden",
     label: "Resume Agent Job",
     description:
       "Resume a prior subagent by its sessionFile, sending a follow-up prompt into that exact same " +
@@ -931,6 +960,7 @@ export default function (pi: ExtensionAPI) {
           model,
           cwd: ctx.cwd,
           sessionFile,
+          agentDepth,
         });
       } catch (err) {
         return {
